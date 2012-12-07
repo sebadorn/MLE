@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<widget xmlns="http://www.w3.org/ns/widgets" id="http://sebadorn.de/mlp/mle/" version="2.0-dev">
+
+	<name>My Little Emotebox</name>
+	<description>An easy way to insert and manage emotes.</description>
+	<author href="http://sebadorn.de/mlp/mle" email="mle@sebadorn.de">meinstuhlknarrt</author>
+	<icon src="icons/MLE_64.png" />
+
+</widget>

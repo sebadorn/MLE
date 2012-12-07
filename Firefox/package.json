@@ -1,0 +1,9 @@
+{
+    "name": "mle",
+    "license": "MPL 2.0",
+    "author": "meinstuhlknarrt",
+    "version": "2.0-dev",
+    "fullName": "My Little Emotebox",
+    "id": "mle@sebadorn.de",
+    "description": "An easy way to insert and manage emotes."
+}
