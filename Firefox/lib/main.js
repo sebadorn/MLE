@@ -14,31 +14,27 @@ pageMod.PageMod( {
 	contentScriptWhen: "ready",
 	contentScriptFile: myContentScriptFiles,
 	onAttach: function( worker ) {
-		worker.on( "message", handleContentScriptMessage );
+		worker.on( "message", function( msg ) { handleMessage( msg, worker ); } );
 	}
 } );
 
 
-// var bg_worker = pageWorker.Page( {
-// 	contentURL: self.data.url( "bg_page.html" ),
-// 	contentScriptWhen: "start",
-// 	contentScriptFile: [self.data.url( "mle-codes.js" ), self.data.url( "background.js" )],
-// 	onMessage: handleBackgroundScriptMessage
-// } );
 
+// mle-codes.js copy
 
-function handleContentScriptMessage( msg ) {
-	// bg_worker.postMessage( msg );
-}
-
-
-// function handleBackgroundScriptMessage( msg ) {
-// 	console.log( msg );
-// }
+var BG_TASK = {
+	LOAD: 1,
+	SAVE_CONFIG: 2,
+	SAVE_EMOTES: 3,
+	RESET_CONFIG: 4,
+	RESET_EMOTES: 5
+};
 
 
 
 // background.js copy, modified only for Firefox
+
+var ss = require( "simple-storage" );
 
 
 // Keys
@@ -130,8 +126,9 @@ function postError( msg ) {
 /**
  * Receive message from inline script and answer back.
  * @param {Event} e
+ * @param {Object} worker Content script file that sent the message.
  */
-function handleMessage( e ) {
+function handleMessage( e, worker ) {
 	var response,
 	    data = e;
 
@@ -170,7 +167,7 @@ function handleMessage( e ) {
 	// Include received task in response
 	response.task = data.task;
 
-	self.postMessage( response );
+	worker.postMessage( response );
 };
 
 
@@ -228,7 +225,7 @@ function saveToStorage( key, obj ) {
 		return { success: false };
 	}
 
-	widget.preferences[key] = obj_json;
+	ss.storage[key] = obj_json;
 
 	return { success: true };
 };
@@ -239,13 +236,12 @@ function saveToStorage( key, obj ) {
  * @return {Object}
  */
 function loadConfigAndEmotes() {
-	var wpref = widget.preferences;
 	var load_config,
 	    load_emotes;
 
 	try {
-		load_config = wpref[PREF.CONFIG] ? JSON.parse( wpref[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-		load_emotes = wpref[PREF.EMOTES] ? JSON.parse( wpref[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+		load_config = ss.storage[PREF.CONFIG] ? JSON.parse( ss.storage[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+		load_emotes = ss.storage[PREF.EMOTES] ? JSON.parse( ss.storage[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 	}
 	catch( err ) {
 		postError( "Background process: Could not parse preferences as JSON." );
@@ -278,6 +274,3 @@ function saveDefaultToStorage( key, obj ) {
 
 	return obj;
 };
-
-
-self.on( "message", handleMessage );

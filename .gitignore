@@ -1,2 +1,3 @@
 # Files whose hardlinks are used for the different browser extensions
 common resources/*
+Firefox/cfxrun.sh

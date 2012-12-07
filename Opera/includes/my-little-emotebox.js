@@ -198,7 +198,7 @@
 					"background-color: #303030;",
 			// Selection list
 			"#mle% ul":
-					"background-color: #5050505; border: 1px solid #606060; border-left-width: 0; box-sizing: border-box; display: none; overflow: auto; float: left; height: " + ( cfg.boxHeight - 26 ) + "px; margin: 0; max-width: 250px; padding: 0;",
+					"background-color: #505050; border: 1px solid #606060; border-left-width: 0; box-sizing: border-box; display: none; overflow: auto; float: left; height: " + ( cfg.boxHeight - 26 ) + "px; margin: 0; max-width: 250px; padding: 0;",
 			"#mle% li":
 					"background-color: #505050; color: #f0f0f0; cursor: default; border-bottom: 1px solid #303030; border-top: 1px solid #606060; padding: 8px 16px; position: relative;"
 					+ "-moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
@@ -934,7 +934,7 @@
 	 * @param {Object} emotes Lists/emotes to save.
 	 */
 	function saveEmotesToStorage( emotes ) {
-		opera.extension.postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
+		postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
 	};
 
 
@@ -1102,7 +1102,7 @@
 	 */
 	function handleBackgroundMessages( e ) {
 		var g = GLOBAL;
-		var data = e.data;
+		var data = e.data ? e.data : e;
 
 		if( !data.task ) {
 			console.warn( "MyLittleEmotebox: Message from background process didn't contain the handled task." );
@@ -1401,7 +1401,7 @@
 		if( !confirm ) { return; }
 
 		// Okay, let's do this.
-		opera.extension.postMessage( { task: BG_TASK.RESET_EMOTES } );
+		postMessage( { task: BG_TASK.RESET_EMOTES } );
 		showMsg( "Changes will show after next page load.<br />You can still export your current emote lists.", "ppseesyou" );
 	};
 
