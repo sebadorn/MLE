@@ -139,7 +139,9 @@
 			return false;
 		}
 
-		if( node.outerHTML.indexOf( "href=\"/" ) < 0 || node.outerHTML.indexOf( "href=\"/http://" ) > -1 || node.outerHTML.indexOf( "href=\"/r/" ) > -1 ) {
+		if( node.outerHTML.indexOf( "href=\"/" ) < 0
+				|| node.outerHTML.indexOf( "href=\"/http://" ) > -1
+				|| node.outerHTML.indexOf( "href=\"/r/" ) > -1 ) {
 			return false;
 		}
 		return true;
@@ -1675,7 +1677,7 @@
 		var hn = window.location.hostname,
 		    sliceLen;
 
-		// FIXME: Only a workaround for .co.uk TLDs. What about other?
+		// FIXME: Only a workaround for .co.uk TLDs. What about others?
 		// But to be fair: It will only be used on reddit.com anyways.
 		sliceLen = ( hn.substr( hn.length - 6 ) == ".co.uk" ) ? -3 : -2;
 		hn = hn.split( "." ).slice( sliceLen ).join( "." );

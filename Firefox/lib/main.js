@@ -1,22 +1,60 @@
 var self = require( "self" );
 var pageMod = require( "page-mod" );
-var pageWorker = require( "page-worker" );
+var sprefs = require( "simple-prefs" );
+var ss = require( "simple-storage" );
+var tabs = require( "tabs" );
 
-var myContentScriptFiles = [
+
+var csfWebpage = [
 		self.data.url( "mle-codes.js" ),
 		self.data.url( "my-little-emotebox.js" )
+	],
+	csfOptionsPage = [
+		self.data.url( "mle-codes.js" ),
+		self.data.url( "options.js" )
 	];
 
 
+
+/**
+ * Every message a page sends gets redirected to the "background",
+ * together with the worker to respond to.
+ * @param {Object} worker
+ */
+function handleOnAttach( worker ) {
+	worker.on( "message", function( msg ) {
+		handleMessage( msg, worker );
+	} );
+}
+
+
+// Add content scripts to web pages
 pageMod.PageMod( {
 	include: "*",
 	attachTo: ["existing", "top"],
 	contentScriptWhen: "ready",
-	contentScriptFile: myContentScriptFiles,
-	onAttach: function( worker ) {
-		worker.on( "message", function( msg ) { handleMessage( msg, worker ); } );
-	}
+	contentScriptFile: csfWebpage,
+	onAttach: handleOnAttach
 } );
+
+// Add scripts to options page. Has to be done this way instead of
+// a parameter for "tabs.open", so the "self" object can be used.
+pageMod.PageMod( {
+	include: self.data.url( "options.html" ),
+	attachTo: ["existing", "top"],
+	contentScriptWhen: "ready",
+	contentScriptFile: csfOptionsPage,
+	onAttach: handleOnAttach
+} );
+
+
+// Open options page when button in addon manager is clicked.
+// @see package.json
+sprefs.on( "optionsPage", function() {
+	tabs.open( {
+		url: self.data.url( "options.html" )
+	} );
+} )
 
 
 
@@ -33,8 +71,6 @@ var BG_TASK = {
 
 
 // background.js copy, modified only for Firefox
-
-var ss = require( "simple-storage" );
 
 
 // Keys

@@ -1,9 +1,20 @@
 {
-    "name": "mle",
-    "license": "MPL 2.0",
-    "author": "meinstuhlknarrt",
-    "version": "2.0-dev",
-    "fullName": "My Little Emotebox",
-    "id": "mle@sebadorn.de",
-    "description": "An easy way to insert and manage emotes."
+	"name": "mle",
+	"fullName": "My Little Emotebox",
+	"description": "An easy way to insert and manage emotes.",
+	"author": "meinstuhlknarrt",
+	"homepage": "http://sebadorn.de/mlp/mle/",
+	"icon": "./icon.png",
+	"icon64": "./icon64.png",
+	"license": "MPL 2.0",
+	"id": "mle@sebadorn.de",
+	"version": "2.0-dev",
+	"preferences": [
+		{
+			"type": "control",
+			"label": "Options",
+			"name": "optionsPage",
+			"title": "Open options page"
+		}
+	]
 }
