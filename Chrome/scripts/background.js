@@ -1,4 +1,93 @@
-"use strict";
+// Browser
+var BROWSER = {
+	CHROME: 1,
+	FIREFOX: 2,
+	OPERA: 3
+};
+var I_AM = BROWSER.FIREFOX;
+if( typeof opera != "undefined" ) {
+	I_AM = BROWSER.OPERA;
+}
+else if( typeof chrome != "undefined" ) {
+	I_AM = BROWSER.CHROME;
+}
+
+
+// Firefox only.
+// Include content scripts, handle messaging and add options page.
+if( I_AM == BROWSER.FIREFOX ) {
+
+	var self = require( "self" );
+	var pageMod = require( "page-mod" );
+	var sprefs = require( "simple-prefs" );
+	var ss = require( "simple-storage" );
+	var tabs = require( "tabs" );
+
+	var csfWebpage = [
+			self.data.url( "mle-codes.js" ),
+			self.data.url( "my-little-emotebox.js" )
+		],
+		csfOptionsPage = [
+			self.data.url( "mle-codes.js" ),
+			self.data.url( "options.js" )
+		];
+
+
+	/**
+	 * Every message a page sends gets redirected to the "background",
+	 * together with the worker to respond to.
+	 * @param {Object} worker
+	 */
+	function handleOnAttach( worker ) {
+		worker.on( "message", function( msg ) {
+			handleMessage( msg, worker );
+		} );
+	}
+
+
+	// Add content scripts to web pages
+	pageMod.PageMod( {
+		include: "*",
+		attachTo: ["existing", "top"],
+		contentScriptWhen: "ready",
+		contentScriptFile: csfWebpage,
+		onAttach: handleOnAttach
+	} );
+
+	// Add scripts to options page. Has to be done this way instead of
+	// a parameter for "tabs.open", so the "self" object can be used.
+	pageMod.PageMod( {
+		include: self.data.url( "options.html" ),
+		attachTo: ["existing", "top"],
+		contentScriptWhen: "ready",
+		contentScriptFile: csfOptionsPage,
+		onAttach: handleOnAttach
+	} );
+
+
+	// Open options page when button in addon manager is clicked.
+	// @see package.json
+	sprefs.on( "optionsPage", function() {
+		tabs.open( {
+			url: self.data.url( "options.html" )
+		} );
+	} );
+
+
+	// mle-codes.js copy
+	// Because I don't know how to include "mle-codes.js" so
+	// its contents become available here (in Firefox).
+
+	var BG_TASK = {
+		LOAD: 1,
+		SAVE_CONFIG: 2,
+		SAVE_EMOTES: 3,
+		RESET_CONFIG: 4,
+		RESET_EMOTES: 5
+	};
+
+}
+
 
 
 // Keys
@@ -23,19 +112,6 @@ var DEFAULT_CONFIG = {
 	msgTimeout: 7000 // [ms] // How long a popup message is displayed.
 };
 
-// Browser
-var BROWSER = {
-	CHROME: 1,
-	FIREFOX: 2,
-	OPERA: 3
-};
-var I_AM = BROWSER.FIREFOX;
-if( typeof opera != "undefined" ) {
-	I_AM = BROWSER.OPERA;
-}
-else if( typeof chrome != "undefined" ) {
-	I_AM = BROWSER.CHROME;
-}
 
 // Default emotes of r/mylittlepony.
 var DEFAULT_EMOTES = {
@@ -97,7 +173,6 @@ var CURRENT_CONFIG = null;
  * @param  {String} msg
  */
 function postError( msg ) {
-	// Opera
 	if( I_AM == BROWSER.OPERA ) {
 	    opera.postError( msg );
 	}
@@ -110,7 +185,7 @@ function postError( msg ) {
 /**
  * Receive message from inline script and answer back.
  * @param {Event} e
- * @param {Object} sender (Chrome only)
+ * @param {Object} sender (Chrome and Firefox only)
  * @param {Object} sendResponse (Chrome only)
  */
 function handleMessage( e, sender, sendResponse ) {
@@ -153,9 +228,9 @@ function handleMessage( e, sender, sendResponse ) {
 	if( I_AM == BROWSER.OPERA ) {
 		e.source.postMessage( response );
 	}
-	// else if( I_AM == BROWSER.CHROME ) {
-	// 	sendResponse( response );
-	// }
+	else if( I_AM == BROWSER.FIREFOX ) {
+		sender.postMessage( response );
+	}
 };
 
 
@@ -222,49 +297,92 @@ function saveToStorage( key, obj ) {
 		saveObj[key] = obj_json;
 		chrome.storage.sync.set( saveObj );
 	}
+	else if( I_AM == BROWSER.FIREFOX ) {
+		ss.storage[key] = obj_json;
+	}
 
 	return { success: true };
 };
 
 
 /**
+ * Load config and emotes in Opera.
+ * @param {Object} response Response object that will get send to the content script later.
+ * @return {Object} response
+ */
+function loadCaEOpera( response ) {
+	var wpref = widget.preferences;
+	var load_config, load_emotes;
+
+	load_config = wpref[PREF.CONFIG] ? JSON.parse( wpref[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+	load_emotes = wpref[PREF.EMOTES] ? JSON.parse( wpref[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+
+	CURRENT_CONFIG = load_config;
+
+	response.config = load_config;
+	response.emotes = load_emotes;
+
+	return response;
+};
+
+
+/**
+ * Load config and emotes in Chrome.
+ * @param {Object} response Response object that will get send to the content script.
+ * @param {Object} sender Sender of message. Used to send response. (Chrome only)
+ */
+function loadCaEChrome( response, sender ) {
+	chrome.storage.sync.get( [PREF.CONFIG, PREF.EMOTES], function( items ) {
+		var lc = !items[PREF.CONFIG] ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) : JSON.parse( items[PREF.CONFIG] );
+		var le = !items[PREF.EMOTES] ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) : JSON.parse( items[PREF.EMOTES] );
+
+		CURRENT_CONFIG = lc;
+
+		response.config = lc;
+		response.emotes = le;
+
+		// Send loaded items to the tab that sent the request.
+		chrome.tabs.getSelected( null, function( tab ) {
+			chrome.tabs.sendMessage( sender.tab.id, response, handleMessage );
+		} );
+	} );
+};
+
+
+/**
+ * Load config and emotes in Firefox.
+ * @param {Object} response Response object that will get send to the content script later.
+ * @return {Object} response
+ */
+function loadCaEFirefox( response ) {
+	var lc = ss.storage[PREF.CONFIG] ? JSON.parse( ss.storage[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+	var le = ss.storage[PREF.EMOTES] ? JSON.parse( ss.storage[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+
+	CURRENT_CONFIG = lc;
+
+	response.config = lc;
+	response.emotes = le;
+
+	return response;
+};
+
+
+/**
  * Load the configuration and lists/emotes from the extension storage.
  * @param {Object} response Part of the response object to send. Contains the task value.
- * @param {Object} sender Sender of message. Used to send response. (Chrome only)
+ * @param {Object} sender Sender of message. Used to send response. (Chrome and Firefox only)
  * @return {Object} Response with the loaded config and emotes.
  */
 function loadConfigAndEmotes( response, sender ) {
 	try {
 		if( I_AM == BROWSER.OPERA ) {
-			var wpref = widget.preferences;
-			var load_config, load_emotes;
-
-			load_config = wpref[PREF.CONFIG] ? JSON.parse( wpref[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-			load_emotes = wpref[PREF.EMOTES] ? JSON.parse( wpref[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
-
-			CURRENT_CONFIG = load_config;
-
-			response.config = load_config;
-			response.emotes = load_emotes;
+			response = loadCaEOpera( response );
 		}
 		else if( I_AM == BROWSER.CHROME ) {
-			var cstor = chrome.storage.sync;
-
-			cstor.get( [PREF.CONFIG, PREF.EMOTES], function( items ) {
-				var lc, le;
-
-				lc = !items[PREF.CONFIG] ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) : JSON.parse( items[PREF.CONFIG] );
-				le = !items[PREF.EMOTES] ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) : JSON.parse( items[PREF.EMOTES] );
-
-				CURRENT_CONFIG = lc;
-
-				response.config = lc;
-				response.emotes = le;
-
-				chrome.tabs.getSelected( null, function( tab ) {
-					chrome.tabs.sendMessage( sender.tab.id, response, handleMessage );
-				} );
-			} );
+			loadCaEChrome( response, sender );
+		}
+		else if( I_AM == BROWSER.FIREFOX ) {
+			response = loadCaEFirefox( response );
 		}
 		else {
 			throw {
@@ -301,14 +419,12 @@ function saveDefaultToStorage( key, obj ) {
 
 
 // Opera
-if( typeof opera != "undefined" ) {
+if( I_AM == BROWSER.OPERA ) {
 	opera.extension.onmessage = handleMessage;
 }
 // Chrome
-else if( typeof chrome != "undefined" ) {
+else if( I_AM == BROWSER.CHROME ) {
 	chrome.extension.onMessage.addListener( handleMessage );
 }
-// probably Firefox
-else {
-	self.on( "message", handleMessage );
-}
+// Firefox
+// Handled at begin of this file in "handleOnAttach( worker )".
