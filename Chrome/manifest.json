@@ -19,19 +19,21 @@
 			"run_at": "document_end",
 			"all_frames": false,
 			"js": [
-				"scripts/mle-codes.js",
-				"scripts/my-little-emotebox.js"
+				"includes/mle-codes.js",
+				"includes/my-little-emotebox.js"
 			]
 		}
 	],
 
 	"background": {
 		"scripts": [
-			"scripts/mle-codes.js",
+			"includes/mle-codes.js",
 			"scripts/background.js"
 		],
 		"persistent": false
 	},
+
+	"options_page": "options.html",
 
 	"permissions": [
 		"storage"
