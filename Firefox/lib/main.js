@@ -169,17 +169,220 @@ var CURRENT_CONFIG = null;
 
 
 /**
- * Post an error to the error console.
- * @param  {String} msg
+ * Browser "class" for Opera.
+ * @type {Object}
  */
-function postError( msg ) {
-	if( I_AM == BROWSER.OPERA ) {
-	    opera.postError( msg );
+var BrowserOpera = {
+
+	/**
+	 * Save to extension storage.
+	 * @param {String} key
+	 * @param {String} val String as JSON.
+	 */
+	save: function( key, val ) {
+		widget.preferences[key] = val;
+	},
+
+	/**
+	 * Load config and emotes in Opera.
+	 * @param  {Object} response Response object that will get send to the content script later.
+	 * @return {Object} response
+	 */
+	loadConfigAndEmotes: function( response, sender ) {
+		var wpref = widget.preferences;
+		var load_config = wpref[PREF.CONFIG] ? JSON.parse( wpref[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+		var load_emotes = wpref[PREF.EMOTES] ? JSON.parse( wpref[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+
+		CURRENT_CONFIG = load_config;
+		response.config = load_config;
+		response.emotes = load_emotes;
+
+		return response;
+	},
+
+	/**
+	 * Send a response to a page that previously send a message.
+	 * @param {Object} source
+	 * @param {Object} msg
+	 */
+	respond: function( source, msg ) {
+		source.postMessage( msg );
+	},
+
+	/**
+	 * Post an error to the error console.
+	 * @param {String} msg
+	 */
+	logError: function( msg ) {
+		opera.postError( msg );
+	},
+
+	/**
+	 * Register a function to handle messaging between pages.
+	 * @param {function} handler
+	 */
+	registerMessageHandler: function( handler ) {
+		opera.extension.onmessage = handler;
 	}
-	else {
-	    console.error( msg );
-	}
+
 };
+
+
+/**
+ * Browser "class" for Chrome.
+ * @type {Object}
+ */
+var BrowserChrome = {
+
+	/**
+	 * Save to extension storage.
+	 * @param {String} key
+	 * @param {String} val String as JSON.
+	 */
+	save: function( key, val ) {
+		var saveObj = {};
+		saveObj[key] = val;
+		chrome.storage.sync.set( saveObj );
+	},
+
+	/**
+	 * Load config and emotes in Chrome.
+	 * @param  {Object} response Response object that will get send to the content script.
+	 * @param  {Object} sender Sender of message. Used to send response. (Chrome only)
+	 * @return {Object} response
+	 */
+	loadConfigAndEmotes: function( response, sender ) {
+		chrome.storage.sync.get( [PREF.CONFIG, PREF.EMOTES], function( items ) {
+			var lc = !items[PREF.CONFIG] ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) : JSON.parse( items[PREF.CONFIG] );
+			var le = !items[PREF.EMOTES] ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) : JSON.parse( items[PREF.EMOTES] );
+
+			CURRENT_CONFIG = lc;
+			response.config = lc;
+			response.emotes = le;
+
+			// Send loaded items to the tab that sent the request.
+			chrome.tabs.getSelected( null, function( tab ) {
+				chrome.tabs.sendMessage( sender.tab.id, response, handleMessage );
+			} );
+		} );
+
+		return response;
+	},
+
+	/**
+	 * Send a response to a page that previously send a message.
+	 * THIS IS JUST A DUMMY FUNCTION.
+	 * @see   BrowserChrome.loadConfigAndEmotes()
+	 * @param {Object} source
+	 * @param {Object} msg
+	 */
+	respond: function( source, msg ) {
+		// pass
+	},
+
+	/**
+	 * Post an error to the error console.
+	 * @param {String} msg
+	 */
+	logError: function( msg ) {
+		console.error( msg );
+	},
+
+	/**
+	 * Register a function to handle messaging between pages.
+	 * @param {function} handler
+	 */
+	registerMessageHandler: function( handler ) {
+		chrome.extension.onMessage.addListener( handler );
+	}
+
+};
+
+
+/**
+ * Browser "class" for Firefox.
+ * @type {Object}
+ */
+var BrowserFirefox = {
+
+	/**
+	 * Save to extension storage.
+	 * @param {String} key
+	 * @param {String} val String as JSON.
+	 */
+	save: function( key, val ) {
+		ss.storage[key] = val;
+	},
+
+	/**
+	 * Load config and emotes in Firefox.
+	 * @param  {Object} response Response object that will get send to the content script later.
+	 * @return {Object} response
+	 */
+	loadConfigAndEmotes: function( response, sender ) {
+		var lc = ss.storage[PREF.CONFIG] ? JSON.parse( ss.storage[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+		var le = ss.storage[PREF.EMOTES] ? JSON.parse( ss.storage[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+
+		CURRENT_CONFIG = lc;
+		response.config = lc;
+		response.emotes = le;
+
+		return response;
+	},
+
+	/**
+	 * Send a response to a page that previously send a message.
+	 * @param {Object} source
+	 * @param {Object} msg
+	 */
+	respond: function( source, msg ) {
+		source.postMessage( msg );
+	},
+
+	/**
+	 * Post an error to the error console.
+	 * @param  {String} msg
+	 */
+	logError: function( msg ) {
+		console.error( msg );
+	},
+
+	/**
+	 * Register a function to handle messaging between pages.
+	 * THIS IS JUST A DUMMY FUNCTION.
+	 * @see   handleOnAttach()
+	 * @param {function} handler
+	 */
+	registerMessageHandler: function( handler ) {
+		// pass
+	}
+
+};
+
+
+// Assign correct browser "class".
+var MyBrowser = null;
+
+switch( I_AM ) {
+	case BROWSER.OPERA:
+		MyBrowser = BrowserOpera;
+		delete BrowserChrome;
+		delete BrowserFirefox;
+		break;
+
+	case BROWSER.CHROME:
+		MyBrowser = BrowserChrome;
+		delete BrowserOpera;
+		delete BrowserFirefox;
+		break;
+
+	case BROWSER.FIREFOX:
+		MyBrowser = BrowserFirefox;
+		delete BrowserOpera;
+		delete BrowserChrome;
+		break;
+}
+
 
 
 /**
@@ -190,17 +393,18 @@ function postError( msg ) {
  */
 function handleMessage( e, sender, sendResponse ) {
 	var response,
-	    data = e.data ? e.data : e;
+	    data = e.data ? e.data : e,
+	    source = sender ? sender : e.source;
 
 	// Only handle messages which come with a set task.
 	if( !data.task ) {
-		postError( "Background process: No task specified." );
+		MyBrowser.logError( "Background process: No task specified." );
 		return;
 	}
 
 	switch( data.task ) {
 		case BG_TASK.LOAD:
-			response = loadConfigAndEmotes( { task: data.task }, sender );
+			response = loadConfigAndEmotes( { task: data.task }, source );
 			break;
 
 		case BG_TASK.SAVE_EMOTES:
@@ -218,19 +422,12 @@ function handleMessage( e, sender, sendResponse ) {
 			break;
 
 		default:
-			postError( "Background process: Unknown task given - \"" + data.task + "\"." );
+			MyBrowser.logError( "Background process: Unknown task given - \"" + data.task + "\"." );
 			return;
 	}
 
-	// Include received task in response
 	response.task = data.task;
-
-	if( I_AM == BROWSER.OPERA ) {
-		e.source.postMessage( response );
-	}
-	else if( I_AM == BROWSER.FIREFOX ) {
-		sender.postMessage( response );
-	}
+	MyBrowser.respond( source, response );
 };
 
 
@@ -283,117 +480,29 @@ function saveToStorage( key, obj ) {
 		obj_json = JSON.stringify( obj );
 	}
 	catch( err ) {
-		postError( "Background process: Could not stringify in order to save." );
-		postError( err );
+		MyBrowser.logError( err );
 		return { success: false };
 	}
 
-	if( I_AM == BROWSER.OPERA ) {
-		widget.preferences[key] = obj_json;
-	}
-	else if( I_AM == BROWSER.CHROME ) {
-		var saveObj = {};
-
-		saveObj[key] = obj_json;
-		chrome.storage.sync.set( saveObj );
-	}
-	else if( I_AM == BROWSER.FIREFOX ) {
-		ss.storage[key] = obj_json;
-	}
+	MyBrowser.save( key, obj_json );
 
 	return { success: true };
 };
 
 
 /**
- * Load config and emotes in Opera.
- * @param {Object} response Response object that will get send to the content script later.
- * @return {Object} response
- */
-function loadCaEOpera( response ) {
-	var wpref = widget.preferences;
-	var load_config, load_emotes;
-
-	load_config = wpref[PREF.CONFIG] ? JSON.parse( wpref[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-	load_emotes = wpref[PREF.EMOTES] ? JSON.parse( wpref[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
-
-	CURRENT_CONFIG = load_config;
-
-	response.config = load_config;
-	response.emotes = load_emotes;
-
-	return response;
-};
-
-
-/**
- * Load config and emotes in Chrome.
- * @param {Object} response Response object that will get send to the content script.
- * @param {Object} sender Sender of message. Used to send response. (Chrome only)
- */
-function loadCaEChrome( response, sender ) {
-	chrome.storage.sync.get( [PREF.CONFIG, PREF.EMOTES], function( items ) {
-		var lc = !items[PREF.CONFIG] ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) : JSON.parse( items[PREF.CONFIG] );
-		var le = !items[PREF.EMOTES] ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) : JSON.parse( items[PREF.EMOTES] );
-
-		CURRENT_CONFIG = lc;
-
-		response.config = lc;
-		response.emotes = le;
-
-		// Send loaded items to the tab that sent the request.
-		chrome.tabs.getSelected( null, function( tab ) {
-			chrome.tabs.sendMessage( sender.tab.id, response, handleMessage );
-		} );
-	} );
-};
-
-
-/**
- * Load config and emotes in Firefox.
- * @param {Object} response Response object that will get send to the content script later.
- * @return {Object} response
- */
-function loadCaEFirefox( response ) {
-	var lc = ss.storage[PREF.CONFIG] ? JSON.parse( ss.storage[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-	var le = ss.storage[PREF.EMOTES] ? JSON.parse( ss.storage[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
-
-	CURRENT_CONFIG = lc;
-
-	response.config = lc;
-	response.emotes = le;
-
-	return response;
-};
-
-
-/**
  * Load the configuration and lists/emotes from the extension storage.
- * @param {Object} response Part of the response object to send. Contains the task value.
- * @param {Object} sender Sender of message. Used to send response. (Chrome and Firefox only)
+ * @param  {Object} response Part of the response object to send. Contains the task value.
+ * @param  {Object} sender Sender of message. Used to send response. (Chrome and Firefox only)
  * @return {Object} Response with the loaded config and emotes.
  */
 function loadConfigAndEmotes( response, sender ) {
 	try {
-		if( I_AM == BROWSER.OPERA ) {
-			response = loadCaEOpera( response );
-		}
-		else if( I_AM == BROWSER.CHROME ) {
-			loadCaEChrome( response, sender );
-		}
-		else if( I_AM == BROWSER.FIREFOX ) {
-			response = loadCaEFirefox( response );
-		}
-		else {
-			throw {
-				name: "Browser Error",
-				message: "Unknown browser. Don't know how to load from storage."
-			};
-		}
+		response = MyBrowser.loadConfigAndEmotes( response, sender );
 	}
 	catch( err ) {
-		postError( "Background process: Could not load preferences." );
-		postError( err );
+		MyBrowser.logError( "Background process: Could not load preferences." );
+		MyBrowser.logError( err );
 	}
 
 	return response;
@@ -412,19 +521,10 @@ function saveDefaultToStorage( key, obj ) {
 			? "Background process: \"" + key + "\" not in extension preferences yet. Created default."
 			: "Background process: Could not save default value.";
 
-	postError( msg );
+	MyBrowser.logError( msg );
 
 	return obj;
 };
 
 
-// Opera
-if( I_AM == BROWSER.OPERA ) {
-	opera.extension.onmessage = handleMessage;
-}
-// Chrome
-else if( I_AM == BROWSER.CHROME ) {
-	chrome.extension.onMessage.addListener( handleMessage );
-}
-// Firefox
-// Handled at begin of this file in "handleOnAttach( worker )".
+MyBrowser.registerMessageHandler( handleMessage );
