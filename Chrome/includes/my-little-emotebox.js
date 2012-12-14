@@ -5,7 +5,9 @@
 	// Hostnames where this extension should be active.
 	var ALLOWED_HOSTNAMES = ["reddit.com"];
 
-	var VERSION = "2.0-dev";
+	var VERSION = "2.0-dev",
+	    PROJECT_LINK = "<a href=\"https://github.com/sebadorn/Userscripts/tree/master/My%20Little%20Emotebox\">My Little Emotebox on GitHub</a>"; // TODO: Create project repository
+
 	var GLOBAL = {
 		config: null,
 		CTX: {
@@ -215,7 +217,7 @@
 			"#mle% li span":
 					"color: #909090; display: block; font-size: 9px; font-weight: normal !important; text-shadow: 0 1px 0 #303030;",
 			// Emote blocks
-			".mle-block%":
+			".mle-block%, #mle-manage%":
 					"display: none; height: " + ( cfg.boxHeight - 46 ) + "px; overflow: auto; padding: 10px;",
 			".mle-block% a":
 					"display: inline-block; float: none; border: 1px solid #ffffff; border-radius: 2px; min-height: 4px; min-width: 4px; vertical-align: top;",
@@ -235,12 +237,10 @@
 			"#mle% .mng-link:hover":
 					"background-color: #202020;",
 			// Manage page
-			"#mle-manage%":
-					"display: none; height: " + ( cfg.boxHeight - 46 ) + "px; overflow: auto; padding: 10px;",
 			"#mle-manage% label":
 					"border-bottom: 1px solid #e0e0e0; display: block; font-weight: bold; margin-bottom: 10px; padding-bottom: 4px;",
 			"#mle-manage% div":
-					"margin-bottom: 20px;",
+					"padding-bottom: 20px;",
 			"#mle-manage% input[type=\"text\"]":
 					"background-color: #ffffff; border: 1px solid #d0d0d0; padding: 2px 4px; width: 120px;",
 			"#mle-manage% select":
@@ -249,12 +249,8 @@
 					"background-color: #6189b5; border: 0; border-radius: 2px; color: #ffffff; margin-left: 12px; padding: 3px 8px;",
 			"#mle-manage% input[type=\"submit\"]:hover":
 					"background-color: #202020 !important;",
-			"#mle-manage% input[type=\"submit\"].mle-reset":
-					"background-color: #af0206; display: block; font-weight: bold; margin: 0 0 10px 0;",
 			"#previewaddemote%":
 					"display: inline-block; border: 1px solid #505050; border-radius: 2px; float: none; margin-top: 10px; min-height: 4px; min-width: 4px;",
-			"#mle-manage% textarea":
-					"background-color: #ffffff; border: 1px solid #d0d0d0; height: 140px; width: 400px; font-family: \"DejaVu Sans Mono\", \"Courier New\", monospace; padding: 2px; vertical-align: top;",
 			"#mle% em":
 					"font-style: italic;",
 			// Context menu
@@ -608,12 +604,9 @@
 		frag.appendChild( mngAreaForNewEmote() );
 		frag.appendChild( mngAreaForNewList() );
 		frag.appendChild( mngAreaForDelList() );
-		frag.appendChild( mngAreaForExport() );
-		frag.appendChild( mngAreaForImport() );
 		frag.appendChild( mngAreaForMovEmote() );
 		frag.appendChild( mngAreaForDelEmote() );
 		frag.appendChild( mngAreaForMovList() );
-		frag.appendChild( mngAreaForReset() );
 		frag.appendChild( mngAreaForInfo() );
 
 		form.appendChild( frag );
@@ -712,66 +705,6 @@
 
 
 	/**
-	 * Create manage area for exporting.
-	 */
-	function mngAreaForExport() {
-		var d = document,
-		    g = GLOBAL;
-		var areaExport = d.createElement( "div" ),
-		    label = d.createElement( "label" ),
-		    note = d.createElement( "em" ),
-		    exportField = d.createElement( "textarea" ),
-		    submit = d.createElement( "input" );
-
-		label.textContent = "Export";
-		note.textContent = "Export lists and emotes in JSON.";
-
-		exportField.id = g.ID.exportField + g.noise;
-
-		submit.type = "submit";
-		submit.value = "export";
-		submit.addEventListener( "click", exportEmotes, false );
-
-		areaExport.appendChild( label );
-		areaExport.appendChild( note );
-		areaExport.appendChild( exportField );
-		areaExport.appendChild( submit );
-
-		return areaExport;
-	};
-
-
-	/**
-	 * Create manage area for exporting.
-	 */
-	function mngAreaForImport() {
-		var d = document,
-		    g = GLOBAL;
-		var areaImport = d.createElement( "div" ),
-		    label = d.createElement( "label" ),
-		    note = d.createElement( "em" ),
-		    importField = d.createElement( "textarea" ),
-		    submit = d.createElement( "input" );
-
-		label.textContent = "Import";
-		note.textContent = "Import lists and emotes in JSON. Deletes all currently existing lists!";
-
-		importField.id = g.ID.importField + g.noise;
-
-		submit.type = "submit";
-		submit.value = "import";
-		submit.addEventListener( "click", importEmotes, false );
-
-		areaImport.appendChild( label );
-		areaImport.appendChild( note );
-		areaImport.appendChild( importField );
-		areaImport.appendChild( submit );
-
-		return areaImport;
-	};
-
-
-	/**
 	 * Create manage area for moving emotes.
 	 */
 	function mngAreaForMovEmote() {
@@ -860,7 +793,7 @@
 
 		areaInfo.innerHTML = "<label>Info</label>"
 				+ "Version: " + VERSION + "<br />"
-				+ "Project page: <a href=\"https://github.com/sebadorn/Userscripts/tree/master/My%20Little%20Emotebox\">My Little Emotebox on GitHub</a>.";
+				+ "Project page: " + PROJECT_LINK;
 
 		return areaInfo;
 	};
@@ -1086,20 +1019,6 @@
 
 
 	/**
-	 * Export emotes in JSON.
-	 */
-	function exportEmotes( e ) {
-		var g = GLOBAL;
-		var exportField = document.getElementById( g.ID.exportField + g.noise );
-
-		e.preventDefault();
-		exportField.value = JSON.stringify( g.emotes );
-		exportField.focus();
-		exportField.setSelectionRange( 0, exportField.value.length );
-	};
-
-
-	/**
 	 * Handle messages from the background process.
 	 */
 	function handleBackgroundMessages( e ) {
@@ -1127,57 +1046,6 @@
 				break;
 
 		}
-	};
-
-
-	/**
-	 * Import emotes in JSON.
-	 */
-	function importEmotes( e ) {
-		var g = GLOBAL;
-		var importField = document.getElementById( g.ID.importField + g.noise );
-		var imported = null,
-		    ele,
-		    count = 0;
-
-		e.preventDefault();
-		importField.value = importField.value.trim();
-
-		// Nothing to do if empty
-		if( importField.value.length == 0 ) {
-			showMsg( "Nothing to import.", "squintyjack" );
-			return;
-		}
-
-		// Parse JSON
-		try {
-			imported = JSON.parse( importField.value );
-		}
-		catch( err ) {
-			showMsg( "Input not parsable as JSON.<br />Emotes remain unchanged.", "dumbfabric" );
-			console.error( "MyLittleEmotebox: Could not JSON-parse import." );
-			console.error( err );
-			return;
-		}
-
-		// Parsing successful, but empty?
-		for( ele in imported ) {
-			if( imported.hasOwnProperty( ele ) ) {
-				count++;
-				break;
-			}
-		}
-		if( count == 0 ) {
-			showMsg( "Imported emote list is empty?<br />Emotes remain unchanged.", "raritywut" );
-			return;
-		}
-
-		// Okay, okay, let's use the import already.
-		g.emotes = imported;
-		saveEmotesToStorage( g.emotes );
-
-		showMsg( "Import successful.<br />Changes show after next page load.", "flutteryay" );
-		importField.value = "";
 	};
 
 

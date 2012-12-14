@@ -36,6 +36,7 @@
 	"options_page": "options.html",
 
 	"permissions": [
-		"storage"
+		"storage",
+		"contextMenus"
 	]
 }

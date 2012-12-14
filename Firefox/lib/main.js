@@ -421,6 +421,10 @@ function handleMessage( e, sender, sendResponse ) {
 			saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
 			break;
 
+		case BG_TASK.RESET_EMOTES:
+			saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+			break;
+
 		default:
 			MyBrowser.logError( "Background process: Unknown task given - \"" + data.task + "\"." );
 			return;

@@ -1,7 +1,12 @@
 "use strict";
 
 
-var CONFIG = null;
+var CONFIG = null,
+    EMOTES = null;
+
+var OPT_CFG = {
+		MSG_TIMEOUT: 8000 // [ms]
+	};
 
 
 /**
@@ -50,7 +55,6 @@ function saveSetting( e ) {
 	    cfg = {};
 
 	switch( htmlTag ) {
-
 		case "select":
 			val = getOptionValue( e.target );
 			if( val == "true" ) {
@@ -75,7 +79,6 @@ function saveSetting( e ) {
 					break;
 			}
 			break;
-
 	}
 
 	cfg[cfgName] = val;
@@ -85,10 +88,121 @@ function saveSetting( e ) {
 
 
 /**
+ * Save emotes to storage.
+ * @param {Object} emotes [description]
+ */
+function saveEmotes( emotes ) {
+	postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
+};
+
+
+/**
  * Get the value of the currently selected <option>.
  */
 function getOptionValue( select ) {
 	return select.options[select.selectedIndex].value;
+};
+
+
+/**
+ * Display a message box on the page.
+ * @param {String} msg Message to display.
+ * @param {String} mtype "err" or "info".
+ */
+function showMsg( msg, mtype ) {
+	var msg_paragraph = document.getElementById( "msg" );
+
+	msg_paragraph.innerHTML = msg;
+	msg_paragraph.className = mtype;
+	msg_paragraph.parentNode.className = "show";
+	window.setTimeout( hideMsg, OPT_CFG.MSG_TIMEOUT );
+};
+
+
+/**
+ * Hide the message box.
+ */
+function hideMsg() {
+	var msg_box = document.getElementById( "msgbox" );
+
+	msg_box.className = "";
+};
+
+
+/**
+ * Import emotes in JSON.
+ */
+function importEmotes( e ) {
+	var importField = document.getElementById( "import-emotes-ta" );
+	var imported = null,
+	    ele,
+	    count = 0;
+
+	importField.value = importField.value.trim();
+
+	// Nothing to do if empty
+	if( importField.value.length == 0 ) {
+		showMsg( "Nothing to import.", "err" );
+		return;
+	}
+
+	// Parse JSON
+	try {
+		imported = JSON.parse( importField.value );
+	}
+	catch( err ) {
+		showMsg( "Input not parsable as JSON.<br />Emotes remain unchanged.", "err" );
+		console.error( "MyLittleEmotebox: Could not JSON-parse import." );
+		console.error( err );
+		return;
+	}
+
+	// Parsing successful, but empty?
+	for( ele in imported ) {
+		if( imported.hasOwnProperty( ele ) ) {
+			count++;
+			break;
+		}
+	}
+	if( count == 0 ) {
+		showMsg( "Imported emote list is empty?<br />Emotes remain unchanged.", "err" );
+		return;
+	}
+
+	// Okay, okay, let's use the import already.
+	EMOTES = imported;
+	saveEmotes( EMOTES );
+
+	showMsg( "Import (probably) successful.<br />Changes show after next page load.", "info" );
+	importField.value = "";
+};
+
+
+/**
+ * Export emotes in JSON.
+ */
+function exportEmotes( e ) {
+	var ta = document.getElementById( "export-emotes-ta" );
+
+	ta.value = JSON.stringify( EMOTES );
+	showMsg( ta.value.length + " bytes", "info" );
+};
+
+
+/**
+ * Reset all lists/emotes to the default.
+ */
+function resetEmotes( e ) {
+	if( window.confirm( "Do you really want to reset all lists and emotes?" ) ) {
+		exportEmotes();
+		postMessage( { task: BG_TASK.RESET_EMOTES } );
+		showMsg(
+			"Lists and emotes have been reset.<br />"
+			+ "There is an export from right before the reset,<br />"
+			+ "that you can still save before reloading the page. Think about it.",
+			"info"
+		);
+	}
 };
 
 
@@ -110,6 +224,7 @@ function importConfig( e ) {
 	var cfg = ta.value.trim();
 
 	if( cfg == "" ) {
+		showMsg( "Nothing to import.", "err" );
 		console.error( "MyLittleEmotebox: Nothing to import." );
 		return;
 	}
@@ -118,13 +233,15 @@ function importConfig( e ) {
 		cfg = JSON.parse( cfg );
 	}
 	catch( err ) {
+		showMsg( "Input not parsable as JSON.<br />Config remains unchanged.", "err" );
 		console.error( "MyLittleEmotebox: Could not parse input as JSON." );
 		console.error( err );
 		return;
 	}
 
-	ta.value = "";
 	postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
+	ta.value = "";
+	showMsg( "Import (probably) successful.<br />Changes show after next page load.", "info" );
 };
 
 
@@ -135,6 +252,12 @@ function resetConfig( e ) {
 	if( window.confirm( "Do you really want to reset the config?" ) ) {
 		exportConfig();
 		postMessage( { task: BG_TASK.RESET_CONFIG } );
+		showMsg(
+			"Config has been reset.<br />"
+			+ "There is an export from right before the reset,<br />"
+			+ "that you can still save before reloading the page. Think about it.",
+			"info"
+		);
 	}
 };
 
@@ -160,7 +283,10 @@ function registerEventSettingChanged() {
 	var d = document;
 	var selects = d.querySelectorAll( "select" ),
 	    checkboxes = d.querySelectorAll( "input[type='checkbox']" ),
-	    numbers = d.querySelectorAll( "input[type='number']" ),
+	    numbers = d.querySelectorAll( "input[type='number']" );
+	var exportEmotesBtn = d.getElementById( "export-emotes" ),
+	    importEmotesBtn = d.getElementById( "import-emotes" ),
+	    resetEmotesBtn = d.getElementById( "reset-emotes" ),
 	    exportCfg = d.getElementById( "export-config" ),
 	    importCfg = d.getElementById( "import-config" ),
 	    resetCfg = d.getElementById( "reset-config" );
@@ -194,6 +320,11 @@ function registerEventSettingChanged() {
 	}
 
 	// export/import/reset
+	// Emotes
+	exportEmotesBtn.addEventListener( "click", exportEmotes, false );
+	importEmotesBtn.addEventListener( "click", importEmotes, false );
+	resetEmotesBtn.addEventListener( "click", resetEmotes, false );
+	// Config
 	exportCfg.addEventListener( "click", exportConfig, false );
 	importCfg.addEventListener( "click", importConfig, false );
 	resetCfg.addEventListener( "click", resetConfig, false );
@@ -233,6 +364,7 @@ function handleBackgroundMessages( e ) {
 	switch( data.task ) {
 		case BG_TASK.LOAD:
 			CONFIG = data.config;
+			EMOTES = data.emotes;
 			init2();
 			break;
 

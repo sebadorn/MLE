@@ -13,14 +13,20 @@
 
 <h1>My Little Emotebox</h1>
 
+<div id="msgbox" class="">
+	<p id="msg" class=""></p>
+</div>
+
 <nav>
 	<label for="behaviour" class="active">Behaviour</label>
 	<label for="style">Style</label>
+	<label for="emotes">Emotes</label>
 	<label for="advanced">Advanced</label>
 </nav>
 
 <div class="options">
 
+	<!-- Behaviour -->
 	<fieldset>
 		<input type="radio" name="page" id="behaviour" hidden checked />
 		<ul class="form">
@@ -34,6 +40,7 @@
 		</ul>
 	</fieldset>
 
+	<!-- Style -->
 	<fieldset>
 		<input type="radio" name="page" id="style" hidden />
 		<ul class="form">
@@ -87,6 +94,30 @@
 		</ul>
 	</fieldset>
 
+	<!-- Emotes -->
+	<fieldset>
+		<input type="radio" name="page" id="emotes" hidden />
+		<ul class="form">
+			<li class="export-import">
+				<label>Export emotes</label>
+				<textarea id="export-emotes-ta" readonly></textarea>
+				<input type="submit" id="export-emotes" value="export" />
+				<p class="explain">Export format is <a href="http://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
+			</li>
+			<li class="export-import">
+				<label>Import emotes</label>
+				<textarea id="import-emotes-ta"></textarea>
+				<input type="submit" id="import-emotes" value="import" />
+				<p class="explain">Import format is <a href="http://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
+			</li>
+			<li>
+				<input type="submit" id="reset-emotes" class="reset" value="reset emotes" />
+				<p class="explain">Turns the lists and emotes back to the default.</p>
+			</li>
+		</ul>
+	</fieldset>
+
+	<!-- Advanced -->
 	<fieldset>
 		<input type="radio" name="page" id="advanced" hidden />
 		<ul class="form">
@@ -113,7 +144,7 @@
 				<p class="explain">Import format is <a href="http://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
 			</li>
 			<li>
-				<input type="submit" id="reset-config" value="reset config" />
+				<input type="submit" id="reset-config" class="reset" value="reset config" />
 				<p class="explain">Turns the configuration back to the default settings. If an import goes wrong, this may come in handy.</p>
 			</li>
 		</ul>

@@ -61,7 +61,7 @@ input[type="submit"] {
 	border-width: 0;
 	color: #ffffff;
 	cursor: pointer;
-	min-width: 100px;
+	min-width: 110px;
 	padding: 4px 0;
 }
 
@@ -80,6 +80,7 @@ textarea {
 	font-size: 13px;
 	height: 140px;
 	padding: 10px;
+	resize: vertical;
 	width: 500px;
 }
 
@@ -98,10 +99,55 @@ ul {
 /* Same width */
 /* ---------- */
 
-h1, nav, .options {
+h1, nav, #msg, .options {
 	box-sizing: border-box;
 	max-width: 720px;
 }
+
+
+
+/* Message box */
+/* ----------- */
+
+#msgbox {
+	position: fixed;
+	bottom: -200px;
+	-moz-transition: bottom 1200ms;
+	-webkit-transition: bottom 1200ms;
+	-o-transition: bottom 1200ms;
+	transition: bottom 1200ms;
+	width: 100%;
+	z-index: 100;
+}
+
+#msgbox.show {
+	bottom: 0;
+	-moz-transition: bottom 1000ms;
+	-webkit-transition: bottom 1000ms;
+	-o-transition: bottom 1000ms;
+	transition: bottom 1000ms;
+}
+
+	#msg {
+		background-color: #505050;
+		border-top: 3px solid transparent;
+		border-radius: 5px;
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+		color: #f0f0f0;
+		line-height: 24px;
+		margin: 0 auto;
+		padding: 16px 20px;
+		text-align: center;
+	}
+
+	#msg.err {
+		border-color: #E15353;
+	}
+
+	#msg.info {
+		border-color: #63C95C;
+	}
 
 
 
@@ -193,10 +239,10 @@ input[name="page"]:checked ~ .form {
 			vertical-align: top;
 		}
 
-		#reset-config {
-			background-color: #DB0B0B;
+		.reset {
+			background-color: #DB0B0B !important;
 		}
 
-		#reset-config:hover {
-			background-color: #B51414;
+		.reset:hover {
+			background-color: #B51414 !important;
 		}
