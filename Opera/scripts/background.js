@@ -242,7 +242,7 @@ var BrowserChrome = {
 	save: function( key, val ) {
 		var saveObj = {};
 		saveObj[key] = val;
-		chrome.storage.sync.set( saveObj );
+		chrome.storage.local.set( saveObj );
 	},
 
 	/**
@@ -252,7 +252,7 @@ var BrowserChrome = {
 	 * @return {Object} response
 	 */
 	loadConfigAndEmotes: function( response, sender ) {
-		chrome.storage.sync.get( [PREF.CONFIG, PREF.EMOTES], function( items ) {
+		chrome.storage.local.get( [PREF.CONFIG, PREF.EMOTES], function( items ) {
 			var lc = !items[PREF.CONFIG] ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) : JSON.parse( items[PREF.CONFIG] );
 			var le = !items[PREF.EMOTES] ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) : JSON.parse( items[PREF.EMOTES] );
 
