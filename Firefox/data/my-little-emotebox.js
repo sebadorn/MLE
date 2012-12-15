@@ -215,7 +215,7 @@
 			"#mle% li.activelist":
 					"background-color: #303030; font-weight: bold;",
 			"#mle% li span":
-					"color: #909090; display: block; font-size: 9px; font-weight: normal !important; text-shadow: 0 1px 0 #303030;",
+					"color: #909090; display: block; font-size: 9px; font-weight: normal !important; text-shadow: 0 1px 0 #303030; white-space: nowrap;",
 			// Emote blocks
 			".mle-block%, #mle-manage%":
 					"display: none; height: " + ( cfg.boxHeight - 46 ) + "px; overflow: auto; padding: 10px;",
@@ -1289,6 +1289,7 @@
 
 		saveEmote( emote, list );
 		emoteInput.value = "";
+		emoteInput.focus();
 	};
 
 
