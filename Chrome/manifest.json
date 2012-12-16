@@ -3,6 +3,7 @@
 	"version": "2.0",
 	"manifest_version": 2,
 	"description": "An easy way to insert and manage emotes.",
+	"homepage_url": "http://sebadorn.de/mlp/mle/",
 	"update_url": "http://sebadorn.de/mlp/mle/updates-chrome.xml",
 
 	"icons": {
