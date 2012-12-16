@@ -7,7 +7,7 @@
 	<author href="http://sebadorn.de/mlp/mle" email="mle@sebadorn.de">meinstuhlknarrt</author>
 	<icon src="icons/MLE_64.png" />
 	<license href="http://mozilla.org/MPL/2.0/">Licensed under the terms of the MPL 2.0</license>
-	<update-description href="http://sebadorn.de/mlp/mle/opera-updates.xml" />
+	<update-description href="http://sebadorn.de/mlp/mle/updates-opera.xml" />
 
 	<feature name="opera:contextmenus" />
 

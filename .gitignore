@@ -1,3 +1,14 @@
 # Files whose hardlinks are used for the different browser extensions
 common resources/*
+
+# Script containing Firefox SDK command cfx with a parameter for my local profile
 Firefox/cfxrun.sh
+
+# Chrome private key
+*.pem
+
+# Build extension files
+build/*
+*.oex
+*.crx
+*.xpi
