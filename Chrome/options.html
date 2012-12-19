@@ -22,6 +22,7 @@
 	<label for="style">Style</label>
 	<label for="emotes">Emotes</label>
 	<label for="advanced">Advanced</label>
+	<label for="about">About</label>
 </nav>
 
 <div class="options">
@@ -73,7 +74,7 @@
 			</li>
 			<li>
 				<input type="checkbox" id="boxUnderHeader" value="true" />
-				<label for="boxUnderHeader">Display box under reddit header</label>
+				<label for="boxUnderHeader">Box gets hidden by reddit header</label>
 			</li>
 
 			<li>
@@ -146,6 +147,21 @@
 			<li>
 				<input type="submit" id="reset-config" class="reset" value="reset config" />
 				<p class="explain">Turns the configuration back to the default settings. If an import goes wrong, this may come in handy.</p>
+			</li>
+		</ul>
+	</fieldset>
+
+	<!-- About -->
+	<fieldset>
+		<input type="radio" name="page" id="about" hidden />
+		<ul class="form">
+			<li>
+				<label><a href="https://github.com/sebadorn/MLE">https://github.com/sebadorn/MLE</a></label>
+				<p class="explain">Repository on GitHub.</p>
+			</li>
+			<li>
+				<label><a href="http://mozilla.org/MPL/2.0/">http://mozilla.org/MPL/2.0/</a></label>
+				<p class="explain">License: Mozilla Public License, Version 2.0</p>
 			</li>
 		</ul>
 	</fieldset>

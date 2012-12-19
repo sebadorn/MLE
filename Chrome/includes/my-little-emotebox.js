@@ -5,45 +5,42 @@
 	// Hostnames where this extension should be active.
 	var ALLOWED_HOSTNAMES = ["reddit.com"];
 
-	var VERSION = "2.0-dev",
-	    PROJECT_LINK = "<a href=\"https://github.com/sebadorn/Userscripts/tree/master/My%20Little%20Emotebox\">My Little Emotebox on GitHub</a>"; // TODO: Create project repository
-
 	var GLOBAL = {
-		config: null,
-		CTX: {
-			ctxMenu: null,
-			dialogMoveEmote: null,
-			dialogSaveEmote: null,
-			selectedEmote: null
-		},
-		draggingEmote: null,
-		draggingList: null,
-		emoteBlocks: {},
-		emotes: null,
-		focusedInput: null,
-		ID: {
-			ctxmenu: "mle-ctxmenu",
-			exportField: "mle-export",
-			importField: "mle-import",
-			inputAddEmote: "addemote",
-			inputAddList: "addlist",
-			inputAddToList: "addtolist",
-			inputDelList: "dellist",
-			inputPreviewEmote: "previewaddemote",
-			lists: "mle-blocklist",
-			mainbox: "mle",
-			mngForm: "mle-manage",
-			styleNode: "MyLittleEmotebox"
-		},
-		mainCont: null,
-		msg: null,
-		msgTimeout: null,
-		navList: [],
-		// Noise for CSS classes and IDs, to minimise the probability
-		// of accidentally overwriting existing styles.
-		noise: "-bd6acd4a",
-		shownBlock: null
-	};
+			config: null,
+			CTX: {
+				ctxMenu: null,
+				dialogMoveEmote: null,
+				dialogSaveEmote: null,
+				selectedEmote: null
+			},
+			draggingEmote: null,
+			draggingList: null,
+			emoteBlocks: {},
+			emotes: null,
+			focusedInput: null,
+			ID: {
+				ctxmenu: "mle-ctxmenu",
+				exportField: "mle-export",
+				importField: "mle-import",
+				inputAddEmote: "addemote",
+				inputAddList: "addlist",
+				inputAddToList: "addtolist",
+				inputDelList: "dellist",
+				inputPreviewEmote: "previewaddemote",
+				lists: "mle-blocklist",
+				mainbox: "mle",
+				mngForm: "mle-manage",
+				styleNode: "MyLittleEmotebox"
+			},
+			mainCont: null,
+			msg: null,
+			msgTimeout: null,
+			navList: [],
+			// Noise for CSS classes and IDs, to minimise the probability
+			// of accidentally overwriting existing styles.
+			noise: "-bd6acd4a",
+			shownBlock: null
+		};
 
 
 
@@ -58,7 +55,7 @@
 	/**
 	 * Add CSS classes to the emote so it will be displayed
 	 * if it is an out-of-sub emote.
-	 * @param {DOMElement} emote
+	 * @param  {DOMElement} emote
 	 * @return {DOMElement} The emote with CSS classes (or not).
 	 */
 	function addClassesForEmote( emote ) {
@@ -295,32 +292,30 @@
 		    mngForm = d.createElement( "div" ),
 		    msg = d.createElement( "p" );
 
-		// Add label
+		// Add headline
 		labelMain.textContent = "Emotes";
-		fragmentNode.appendChild( labelMain );
 
 		// Add close button
 		close.className = "mleclose";
 		close.textContent = "Close";
 		close.addEventListener( "click", mainContainerHide, false );
-		fragmentNode.appendChild( close );
 
 		// Add manage link
 		mngTrigger.className = "mng-link";
 		mngTrigger.textContent = "Manage";
 		mngTrigger.addEventListener( "click", showManagePage, false );
-		fragmentNode.appendChild( mngTrigger );
-
-		// Create emote blocks filled with emotes
-		fragmentNode.appendChild( createEmoteBlocksAndNav() );
 
 		// Add manage page
 		mngForm.id = g.ID.mngForm + g.noise;
-		fragmentNode.appendChild( mngForm );
 
 		// Add most-of-the-time-hidden message block
 		msg.className = "mle-msg";
-		fragmentNode.appendChild( msg );
+
+		// Append all the above to the DOM fragment
+		fragmentNode = appendChildren(
+			fragmentNode,
+			[labelMain, close, mngTrigger, createEmoteBlocksAndNav(), mngForm, msg]
+		);
 
 		// Add list and emote blocks to main container
 		mainContainer.id = g.ID.mainbox + g.noise;
@@ -348,30 +343,34 @@
 		    g = GLOBAL;
 		var menu = d.createElement( "ul" ),
 		    item;
+		var items = [
+				{
+					className: "out",
+					text: "Save Emote",
+					onclick: ctxMenuSaveEmote
+				},
+				{
+					className: "in",
+					text: "Delete Emote",
+					onclick: ctxMenuDelEmote
+				},
+				{
+					className: "in",
+					text: "Move to list",
+					onclick: ctxMenuMoveEmote
+				},
+			];
 
 		menu.id = g.ID.ctxmenu + g.noise;
-		menu.className = "";
 
-		// Item: Save emote
-		item = d.createElement( "li" );
-		item.className = "out";
-		item.textContent = "Save Emote";
-		item.addEventListener( "click", ctxMenuSaveEmote, false );
-		menu.appendChild( item );
-
-		// Item: Move emote to another list
-		item = d.createElement( "li" );
-		item.className = "in";
-		item.textContent = "Delete Emote";
-		item.addEventListener( "click", ctxMenuDelEmote, false );
-		menu.appendChild( item );
-
-		// Item: Delete emote
-		item = d.createElement( "li" );
-		item.className = "in";
-		item.textContent = "Move to List";
-		item.addEventListener( "click", ctxMenuMoveEmote, false );
-		menu.appendChild( item );
+		// Add items to menu
+		for( var i = 0; i < items.length; i++ ) {
+			item = d.createElement( "li" );
+			item.className = items[i]["className"];
+			item.textContent = items[i]["text"];
+			item.addEventListener( "click", items[i]["onclick"], false );
+			menu.appendChild( item );
+		}
 
 		// Add listener for context menu (will only be used on emotes)
 		d.body.addEventListener( "contextmenu", showCtxMenu, false );
@@ -527,12 +526,12 @@
 
 		// The "dragenter" and "dragover" events have
 		// to be stopped in order for "drop" to work.
-		emote.addEventListener( "dragenter", function( e ) { e.preventDefault(); }, false );
-		emote.addEventListener( "dragover", function( e ) { e.preventDefault(); }, false );
+		emote.addEventListener( "dragenter", stopEvent, false );
+		emote.addEventListener( "dragover", stopEvent, false );
 
 		// Stop "dragend" as well, so if the drop target isn't
 		// an emote, the browser doesn't open the emote URL.
-		emote.addEventListener( "dragend", function( e ) { e.preventDefault(); }, false );
+		emote.addEventListener( "dragend", stopEvent, false );
 
 		emote.addEventListener( "drop", moveEmoteDrop, false );
 
@@ -561,12 +560,24 @@
 
 		// The "dragenter" and "dragover" events have
 		// to be stopped in order for "drop" to work.
-		listLink.addEventListener( "dragenter", function( e ) { e.preventDefault(); }, false );
-		listLink.addEventListener( "dragover", function( e ) { e.preventDefault(); }, false );
+		listLink.addEventListener( "dragenter", stopEvent, false );
+		listLink.addEventListener( "dragover", stopEvent, false );
 
 		listLink.addEventListener( "drop", moveListDrop, false );
 
 		return listLink;
+	};
+
+
+	/**
+	 * Create a label.
+	 * @param  {String} text Text for the label.
+	 * @return {DOMElement} label
+	 */
+	function createLabel( text ) {
+		var label = document.createElement( "label" );
+		label.textContent = text;
+		return label;
 	};
 
 
@@ -599,17 +610,31 @@
 	 * @param {DOMElement} form The manage page (container).
 	 */
 	function createManagePage( form ) {
-		var frag = document.createDocumentFragment();
-
-		frag.appendChild( mngAreaForNewEmote() );
-		frag.appendChild( mngAreaForNewList() );
-		frag.appendChild( mngAreaForDelList() );
-		frag.appendChild( mngAreaForMovEmote() );
-		frag.appendChild( mngAreaForDelEmote() );
-		frag.appendChild( mngAreaForMovList() );
-		frag.appendChild( mngAreaForInfo() );
+		var areas = [
+				mngAreaForNewEmote(),
+				mngAreaForNewList(),
+				mngAreaForDelList(),
+				mngAreaForMovEmote(),
+				mngAreaForDelEmote(),
+				mngAreaForMovList()
+			];
+		var frag = appendChildren( document.createDocumentFragment(), areas );
 
 		form.appendChild( frag );
+	};
+
+
+	/**
+	 * Append multiple children to a DOMElement.
+	 * @param  {DOMElement} parent
+	 * @param  {Array} children List of children to append.
+	 * @return {DOMElement} parent
+	 */
+	function appendChildren( parent, children ) {
+		for( var i = 0; i < children.length; i++ ) {
+			parent.appendChild( children[i] );
+		}
+		return parent;
 	};
 
 
@@ -619,14 +644,11 @@
 	function mngAreaForNewEmote() {
 		var d = document,
 		    g = GLOBAL;
-		var areaAddEmote = d.createElement( "div" ),
-		    labelEmote = d.createElement( "label" ),
-		    inputEmote = d.createElement( "input" ),
+		var inputEmote = d.createElement( "input" ),
 		    preview = d.createElement( "a" ),
 		    selList,
 		    submitEmote = d.createElement( "input" );
 
-		labelEmote.textContent = "Add emote";
 		inputEmote.type = "text";
 		inputEmote.id = g.ID.inputAddEmote + g.noise;
 		inputEmote.addEventListener( "keyup", updatePreview, false );
@@ -639,15 +661,18 @@
 		submitEmote.value = "save emote";
 		submitEmote.addEventListener( "click", saveNewEmote, false );
 
-		areaAddEmote.appendChild( labelEmote );
-		areaAddEmote.appendChild( inputEmote );
-		areaAddEmote.appendChild( d.createTextNode( " to " ) );
-		areaAddEmote.appendChild( selList );
-		areaAddEmote.appendChild( submitEmote );
-		areaAddEmote.appendChild( d.createElement( "br" ) );
-		areaAddEmote.appendChild( preview );
-
-		return areaAddEmote;
+		return appendChildren(
+			d.createElement( "div" ),
+			[
+				createLabel( "Add emote" ),
+				inputEmote,
+				d.createTextNode( " to " ),
+				selList,
+				submitEmote,
+				d.createElement( "br" ),
+				preview
+			]
+		);
 	};
 
 
@@ -657,12 +682,9 @@
 	function mngAreaForNewList() {
 		var d = document,
 		    g = GLOBAL;
-		var areaAddList = d.createElement( "div" ),
-		    labelList = d.createElement( "label" ),
-		    inputList = d.createElement( "input" ),
+		var inputList = d.createElement( "input" ),
 		    submitList = d.createElement( "input" );
 
-		labelList.textContent = "Add list";
 		inputList.type = "text";
 		inputList.id = g.ID.inputAddList + g.noise;
 
@@ -670,11 +692,10 @@
 		submitList.value = "create new list";
 		submitList.addEventListener( "click", saveNewList, false );
 
-		areaAddList.appendChild( labelList );
-		areaAddList.appendChild( inputList );
-		areaAddList.appendChild( submitList );
-
-		return areaAddList;
+		return appendChildren(
+			d.createElement( "div" ),
+			[createLabel( "Add list" ), inputList, submitList]
+		);
 	};
 
 
@@ -684,23 +705,20 @@
 	function mngAreaForDelList() {
 		var d = document,
 		    g = GLOBAL;
-		var areaDelList = d.createElement( "div" ),
-		    label = d.createElement( "label" ),
-		    selList,
-		    submitDel = d.createElement( "input" );
-
-		label.textContent = "Delete list";
-		selList = createListSelect( g.ID.inputDelList + g.noise );
+		var submitDel = d.createElement( "input" );
 
 		submitDel.type = "submit";
 		submitDel.value = "delete list";
 		submitDel.addEventListener( "click", delList, false );
 
-		areaDelList.appendChild( label );
-		areaDelList.appendChild( selList );
-		areaDelList.appendChild( submitDel );
-
-		return areaDelList;
+		return appendChildren(
+			d.createElement( "div" ),
+			[
+				createLabel( "Delete list" ),
+				createListSelect( g.ID.inputDelList + g.noise ),
+				submitDel
+			]
+		);
 	};
 
 
@@ -709,17 +727,14 @@
 	 */
 	function mngAreaForMovEmote() {
 		var d = document;
-		var areaMoveEmote = d.createElement( "div" ),
-		    label = d.createElement( "label" ),
-		    note = d.createElement( "em" );
+		var note = d.createElement( "em" );
 
-		label.textContent = "Move emotes";
 		note.innerHTML = "Use drag&drop to move emotes.<br />To move it to another list, right-click on it and select \"Move to List\".";
 
-		areaMoveEmote.appendChild( label );
-		areaMoveEmote.appendChild( note );
-
-		return areaMoveEmote;
+		return appendChildren(
+			d.createElement( "div" ),
+			[createLabel( "Move emotes" ), note]
+		);
 	};
 
 
@@ -728,17 +743,14 @@
 	 */
 	function mngAreaForDelEmote() {
 		var d = document;
-		var areaDelEmote = d.createElement( "div" ),
-		    label = d.createElement( "label" ),
-		    note = d.createElement( "em" );
+		var note = d.createElement( "em" );
 
-		label.textContent = "Delete emotes";
 		note.textContent = "Right-click on the emote and select \"Delete Emote\".";
 
-		areaDelEmote.appendChild( label );
-		areaDelEmote.appendChild( note );
-
-		return areaDelEmote;
+		return appendChildren(
+			d.createElement( "div" ),
+			[createLabel( "Delete emotes" ), note]
+		);
 	};
 
 
@@ -747,55 +759,14 @@
 	 */
 	function mngAreaForMovList() {
 		var d = document;
-		var areaMoveList = d.createElement( "div" ),
-		    label = d.createElement( "label" ),
-		    note = d.createElement( "em" );
+		var note = d.createElement( "em" );
 
-		label.textContent = "Move list";
 		note.textContent = "Use drag&drop to move lists.";
 
-		areaMoveList.appendChild( label );
-		areaMoveList.appendChild( note );
-
-		return areaMoveList;
-	};
-
-
-	/**
-	 * Create manage area for reset.
-	 */
-	function mngAreaForReset() {
-		var d = document;
-		var areaReset = d.createElement( "div" ),
-		    label = d.createElement( "label" ),
-		    submitResetList = d.createElement( "input" );
-
-		label.textContent = "Reset lists";
-
-		submitResetList.type = "submit";
-		submitResetList.className = "mle-reset reset-lists";
-		submitResetList.value = "Reset Lists";
-		submitResetList.addEventListener( "click", resetLists, false );
-
-		areaReset.appendChild( label );
-		areaReset.appendChild( submitResetList );
-
-		return areaReset;
-	};
-
-
-	/**
-	 * Create info area.
-	 */
-	function mngAreaForInfo() {
-		var d = document;
-		var areaInfo = d.createElement( "div" );
-
-		areaInfo.innerHTML = "<label>Info</label>"
-				+ "Version: " + VERSION + "<br />"
-				+ "Project page: " + PROJECT_LINK;
-
-		return areaInfo;
+		return appendChildren(
+			d.createElement( "div" ),
+			[createLabel( "Move list" ), note]
+		);
 	};
 
 
@@ -1031,7 +1002,6 @@
 		}
 
 		switch( data.task ) {
-
 			case BG_TASK.LOAD:
 				g.config = data.config;
 				g.emotes = data.emotes;
@@ -1044,7 +1014,6 @@
 					console.error( "MyLittleEmotebox: Could not save emotes." );
 				}
 				break;
-
 		}
 	};
 
@@ -1255,28 +1224,6 @@
 
 
 	/**
-	 * Reset MLE: Reset all lists and emotes.
-	 */
-	function resetLists( e ) {
-		var confirm = false;
-
-		// Better be sure about this.
-		confirm = window.confirm(
-			"My Little Emotebox:\n\n"
-			+ "A reset means all your lists and emotes will be deleted. You will be back at the default lists.\n"
-			+ "Consider exporting your lists first.\n\n"
-			+ "Proceed with list reset?"
-		);
-
-		if( !confirm ) { return; }
-
-		// Okay, let's do this.
-		postMessage( { task: BG_TASK.RESET_EMOTES } );
-		showMsg( "Changes will show after next page load.<br />You can still export your current emote lists.", "ppseesyou" );
-	};
-
-
-	/**
 	 * From the options page: Save new emote.
 	 */
 	function saveNewEmote( e ) {
@@ -1398,6 +1345,15 @@
 		}
 
 		form.className = "show-manage";
+	};
+
+
+	/**
+	 * Prevent the default action of an event.
+	 * @param {Event} e The event.
+	 */
+	function stopEvent( e ) {
+		e.preventDefault();
 	};
 
 
@@ -1540,14 +1496,13 @@
 
 	/**
 	 * Checks if this is a page, where MLE should be active.
-	 * @return {bool}
+	 * @return {Boolean}
 	 */
 	function isAllowedHostname() {
 		var hn = window.location.hostname,
 		    sliceLen;
 
 		// FIXME: Only a workaround for .co.uk TLDs. What about others?
-		// But to be fair: It will only be used on reddit.com anyways.
 		sliceLen = ( hn.substr( hn.length - 6 ) == ".co.uk" ) ? -3 : -2;
 		hn = hn.split( "." ).slice( sliceLen ).join( "." );
 

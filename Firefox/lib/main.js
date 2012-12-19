@@ -109,7 +109,8 @@ var DEFAULT_CONFIG = {
 	adjustForBetterPonymotes: true,
 	adjustForGrEmB: false,
 	msgAnimationSpeed: 1000, // [ms]
-	msgTimeout: 7000 // [ms] // How long a popup message is displayed.
+	msgTimeout: 7000, // [ms] // How long a popup message is displayed.
+	toolbarButton: true
 };
 
 
@@ -193,6 +194,8 @@ var BrowserOpera = {
 		var load_config = wpref[PREF.CONFIG] ? JSON.parse( wpref[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
 		var load_emotes = wpref[PREF.EMOTES] ? JSON.parse( wpref[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
+		updateConfig( load_config );
+
 		CURRENT_CONFIG = load_config;
 		response.config = load_config;
 		response.emotes = load_emotes;
@@ -256,14 +259,18 @@ var BrowserChrome = {
 			var lc = !items[PREF.CONFIG] ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) : JSON.parse( items[PREF.CONFIG] );
 			var le = !items[PREF.EMOTES] ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) : JSON.parse( items[PREF.EMOTES] );
 
+			updateConfig( lc );
+
 			CURRENT_CONFIG = lc;
 			response.config = lc;
 			response.emotes = le;
 
 			// Send loaded items to the tab that sent the request.
-			chrome.tabs.getSelected( null, function( tab ) {
-				chrome.tabs.sendMessage( sender.tab.id, response, handleMessage );
-			} );
+			if( sender ) {
+				chrome.tabs.getSelected( null, function( tab ) {
+					chrome.tabs.sendMessage( sender.tab.id, response, handleMessage );
+				} );
+			}
 		} );
 
 		return response;
@@ -322,6 +329,8 @@ var BrowserFirefox = {
 	loadConfigAndEmotes: function( response, sender ) {
 		var lc = ss.storage[PREF.CONFIG] ? JSON.parse( ss.storage[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
 		var le = ss.storage[PREF.EMOTES] ? JSON.parse( ss.storage[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+
+		updateConfig( lc );
 
 		CURRENT_CONFIG = lc;
 		response.config = lc;
@@ -446,7 +455,7 @@ function mergeWithConfig( obj ) {
 	var key, obj_new = {};
 
 	if( CURRENT_CONFIG == null ) {
-		loadConfigAndEmotes();
+		loadConfigAndEmotes( {} ); // This part may cause trouble in Chrome for some use cases.
 	}
 
 	// Remove unknown config keys
@@ -464,6 +473,23 @@ function mergeWithConfig( obj ) {
 	}
 
 	return obj_new;
+};
+
+
+/**
+ * Update the currently stored config in case of newly added options.
+ * @param  {Object} current_config The config as it is currently stored (not JSON).
+ * @return {Object} The updated config.
+ */
+function updateConfig( current_config ) {
+	for( key in DEFAULT_CONFIG ) {
+		if( !current_config.hasOwnProperty( key ) ) {
+			current_config[key] = DEFAULT_CONFIG[key];
+			MyBrowser.save( key, DEFAULT_CONFIG[key] );
+		}
+	}
+
+	return current_config;
 };
 
 
@@ -501,6 +527,10 @@ function saveToStorage( key, obj ) {
  * @return {Object} Response with the loaded config and emotes.
  */
 function loadConfigAndEmotes( response, sender ) {
+	if( !response ) {
+		response = {};
+	}
+
 	try {
 		response = MyBrowser.loadConfigAndEmotes( response, sender );
 	}
