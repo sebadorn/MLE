@@ -182,44 +182,48 @@
 					"display: block;",
 			"#mle%, #mle-ctxmenu%":
 					"font: 12px Verdana, Arial, Helvetica, \"DejaVu Sans\", sans-serif; line-height: 14px; text-align: left;",
+			"#mle% .btn":
+					"background-color: #707070; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; font-weight: bold; padding: 5px 0 6px; text-align: center;",
+			"#mle% .btn:hover":
+					"background-color: #909090;",
 			// Inactive state
 			"#mle%":
-					"background-color: #ffffff; border: 3px solid #6189b5; border-radius: 1px; position: fixed; " + boxPos + " top: " + cfg.boxPosTop + "px; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px;"
+					"background-color: #f4f4f4; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; " + boxPos + " top: " + cfg.boxPosTop + "px; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px;"
 					+ "-moz-transition: width " + cfg.boxAnimationSpeed + "ms; -webkit-transition: width " + cfg.boxAnimationSpeed + "ms; -o-transition: width " + cfg.boxAnimationSpeed + "ms; transition: width " + cfg.boxAnimationSpeed + "ms;",
 			// Active state
 			"#mle%.show":
-					"width: " + cfg.boxWidth + "px; height: " + cfg.boxHeight + "px; z-index: 10000;",
+					"width: " + cfg.boxWidth + "px; height: " + cfg.boxHeight + "px; padding: 36px 10px 10px; z-index: 10000;",
 			// Header
 			"#mle% strong":
-					"background-color: #6189b5; color: #ffffff; display: block; font-weight: bold; padding: 6px 0; text-align: center;",
+					"display: block; color: #303030; font-weight: bold; padding: 6px 0; text-align: center;",
+			"#mle%.show strong":
+					"display: none;",
 			// Close button
 			"#mle% .mleclose":
-					"background-color: #3B6797; color: #ffffff; font-weight: bold; text-align: center; cursor: default; display: none; position: absolute; right: 0; top: 0; z-index: 12; padding: 6px 0; width: 62px;",
-			"#mle% .mleclose:hover":
-					"background-color: #303030;",
+					"display: none; position: absolute; right: 10px; top: -1px; z-index: 12; padding-left: 12px; padding-right: 12px;",
 			// Selection list
 			"#mle% ul":
-					"background-color: #505050; border: 1px solid #606060; border-left-width: 0; box-sizing: border-box; display: none; overflow: auto; float: left; height: " + ( cfg.boxHeight - 26 ) + "px; margin: 0; max-width: 250px; padding: 0;",
+					"box-sizing: border-box; -moz-box-sizing: border-box; direction: rtl; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 250px; padding: 0;",
 			"#mle% li":
-					"background-color: #505050; color: #f0f0f0; cursor: default; border-bottom: 1px solid #303030; border-top: 1px solid #606060; padding: 8px 16px; position: relative;"
+					"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; position: relative;"
 					+ "-moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
 			"#mle% li:first-child":
 					"border-top-width: 0;",
 			"#mle% li:last-child":
 					"border-bottom-width: 0;",
 			"#mle% li:hover":
-					"background-color: #303030;",
+					"background-color: #d0d0d0;",
 			"#mle% li.activelist":
-					"background-color: #303030; font-weight: bold;",
+					"background-color: transparent; font-weight: bold;",
 			"#mle% li span":
-					"color: #909090; display: block; font-size: 9px; font-weight: normal !important; text-shadow: 0 1px 0 #303030; white-space: nowrap;",
+					"color: #909090; display: block; font-size: 9px; font-weight: normal !important; white-space: nowrap;",
 			// Emote blocks
 			".mle-block%, #mle-manage%":
-					"display: none; height: " + ( cfg.boxHeight - 46 ) + "px; overflow: auto; padding: 10px;",
+					"box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;",
 			".mle-block% a":
-					"display: inline-block; float: none; border: 1px solid #ffffff; border-radius: 2px; min-height: 4px; min-width: 4px; vertical-align: top;",
+					"display: inline-block; float: none; border: 1px solid #ffffff; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;",
 			".mle-block% a:hover":
-					"border-color: #cee3f8;",
+					"border-color: #96BFE9;",
 			// Notifier
 			"#mle% .mle-msg":
 					"background-color: #303030; color: #ffffff; border-radius: 2px; line-height: 19px; display: none; position: fixed; left: " + ( cfg.boxWidth + 13 ) + "px; top: -200px; padding: 10px;"
@@ -230,9 +234,7 @@
 					"top: " + cfg.boxPosTop + "px;",
 			// Manage link
 			"#mle% .mng-link":
-					"background-color: #3B6797; color: #ffffff; cursor: default; display: none; font-weight: bold; padding: 6px 0; text-align: center; width: 72px; position: absolute; top: 0; left: 0; z-index: 10;",
-			"#mle% .mng-link:hover":
-					"background-color: #202020;",
+					"display: none; width: 72px; position: absolute; top: -1px; z-index: 10;",
 			// Manage page
 			"#mle-manage% label":
 					"border-bottom: 1px solid #e0e0e0; display: block; font-weight: bold; margin-bottom: 10px; padding-bottom: 4px;",
@@ -296,12 +298,12 @@
 		labelMain.textContent = "Emotes";
 
 		// Add close button
-		close.className = "mleclose";
-		close.textContent = "Close";
+		close.className = "mleclose btn";
+		close.textContent = "x";
 		close.addEventListener( "click", mainContainerHide, false );
 
 		// Add manage link
-		mngTrigger.className = "mng-link";
+		mngTrigger.className = "mng-link btn";
 		mngTrigger.textContent = "Manage";
 		mngTrigger.addEventListener( "click", showManagePage, false );
 
@@ -550,6 +552,7 @@
 		    count = document.createElement( "span" );
 
 		count.textContent = elementCount + " emotes";
+		count.addEventListener( "click", toggleEmoteBlock, false );
 
 		listLink.textContent = listName;
 		listLink.appendChild( count );
@@ -1363,15 +1366,21 @@
 	function toggleEmoteBlock( e ) {
 		var g = GLOBAL,
 		    geb = g.emoteBlocks,
-		    gnl = g.navList;
+		    gnl = g.navList,
+		    e_target = e.target;
 		var form, listName, i;
+
+		// In case the "x emotes" was clicked instead of the (parent) list element container
+		if( e_target != this ) {
+			e_target = e_target.parentNode;
+		}
 
 		// Set chosen list to active
 		for( i = 0; i < gnl.length; i++ ) {
 			gnl[i].className = "";
 		}
 		if( e ) {
-			e.target.className = "activelist";
+			e_target.className = "activelist";
 		}
 
 		// Show "Manage" page
@@ -1386,7 +1395,7 @@
 			form.className = "";
 
 			for( listName in geb ) {
-				if( e && strToValidID( listName ) == e.target.id ) {
+				if( e && strToValidID( listName ) == e_target.id ) {
 					if( !g.shownBlock ) {
 						g.mainCont.appendChild( geb[listName] );
 					}
