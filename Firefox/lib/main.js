@@ -98,6 +98,7 @@ var PREF = {
 
 // Default config
 var DEFAULT_CONFIG = {
+	addBlankAfterInsert: true,
 	boxAlign: "left", // "left" or "right"
 	boxWidthMinimized: 70, // [px]
 	boxHeight: 330, // [px]

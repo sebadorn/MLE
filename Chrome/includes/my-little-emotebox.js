@@ -140,7 +140,8 @@
 
 		if( node.outerHTML.indexOf( "href=\"/" ) < 0
 				|| node.outerHTML.indexOf( "href=\"/http://" ) > -1
-				|| node.outerHTML.indexOf( "href=\"/r/" ) > -1 ) {
+				|| node.outerHTML.indexOf( "href=\"/r/" ) > -1
+				|| node.outerHTML.indexOf( "href=\"/user/" ) > -1 ) {
 			return false;
 		}
 		return true;
@@ -178,14 +179,14 @@
 		// '%' will be replaced with noise
 		var css = {
 			// Collection of same CSS
-			"#mle%.show .mleclose, #mle%.show ul, #mle%.show .mle-block%, #mle%.show .mle-msg, #mle%.show .mng-link, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
+			"#mle%.show .mleclose, #mle%.show ul, #mle%.show .mle-block%, #mle%.show .mng-link, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
 					"display: block;",
 			"#mle%, #mle-ctxmenu%":
 					"font: 12px Verdana, Arial, Helvetica, \"DejaVu Sans\", sans-serif; line-height: 14px; text-align: left;",
 			"#mle% .btn":
-					"background-color: #707070; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; font-weight: bold; padding: 5px 0 6px; text-align: center;",
+					"background-color: #808080; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; font-weight: bold; padding: 5px 0 6px; text-align: center;",
 			"#mle% .btn:hover":
-					"background-color: #909090;",
+					"background-color: #404040;",
 			// Inactive state
 			"#mle%":
 					"background-color: #f4f4f4; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; " + boxPos + " top: " + cfg.boxPosTop + "px; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px;"
@@ -226,7 +227,7 @@
 					"border-color: #96BFE9;",
 			// Notifier
 			"#mle% .mle-msg":
-					"background-color: #303030; color: #ffffff; border-radius: 2px; line-height: 19px; display: none; position: fixed; left: " + ( cfg.boxWidth + 13 ) + "px; top: -200px; padding: 10px;"
+					"background-color: #303030; color: #ffffff; border-radius: 2px; line-height: 19px; position: fixed; left: " + ( cfg.boxWidth + 13 ) + "px; top: -200px; padding: 10px;"
 					+ "-moz-transition: top " + cfg.msgAnimationSpeed + "ms; -webkit-transition: top " + cfg.msgAnimationSpeed + "ms; -o-transition: top " + cfg.msgAnimationSpeed + "ms; transition: top " + cfg.msgAnimationSpeed + "ms;",
 			"#mle% .mle-msg span":
 					"float: left; margin-left: 10px;",
@@ -1040,7 +1041,7 @@
 		// Emote name
 		emoteLink = emoteLink[emoteLink.length - 1];
 		// Insert reversed emote version
-		emoteLink = e.ctrlKey ? "r" + emoteLink : emoteLink;
+		emoteLink = e.ctrlKey ? emoteLink + "-r" : emoteLink;
 
 		// Nothing selected, just insert at position
 		if( selStart == selEnd ) {
@@ -1050,6 +1051,11 @@
 		else {
 			altText = ta.value.substring( selStart, selEnd );
 			emoteLink = "[](/" + emoteLink + " \"" + altText + "\")";
+		}
+
+		// Add a blank after the emote
+		if( GLOBAL.config.addBlankAfterInsert ) {
+			emoteLink += ' ';
 		}
 
 		ta.value = ta.value.substring( 0, selStart )
