@@ -557,7 +557,7 @@
 
 		listLink.textContent = listName;
 		listLink.appendChild( count );
-		listLink.id = strToValidID( listName );
+		listLink.id = strToValidID( listName ) + GLOBAL.noise;
 		listLink.setAttribute( "draggable", "true" );
 		listLink.addEventListener( "click", toggleEmoteBlock, false );
 		listLink.addEventListener( "dragstart", moveListStart, false );
@@ -954,7 +954,7 @@
 		    selectAddHTML = d.getElementById( g.ID.inputAddToList + g.noise ),
 		    listName = getOptionValue( selectDelHTML ),
 		    listBlocks = d.getElementById( g.ID.lists + g.noise ),
-		    listToDel = d.getElementById( strToValidID( listName ) );
+		    listToDel = d.getElementById( strToValidID( listName ) + g.noise );
 		var confirmDel = false,
 		    children,
 		    i;
@@ -967,12 +967,12 @@
 		);
 		if( !confirmDel ) { return; }
 
+		// Delete from emote lists
 		delete g.emotes[listName];
 		saveEmotesToStorage( g.emotes );
 
 		// Remove from DOM.
 		listBlocks.removeChild( listToDel );
-		g.mainCont.removeChild( g.emoteBlocks[listName] );
 		delete g.emoteBlocks[listName];
 
 		children = selectDelHTML.childNodes;
@@ -990,6 +990,10 @@
 				break;
 			}
 		}
+
+		// Remove context menus.
+		// Will be rebuild when needed.
+		destroyCtxMenus();
 	};
 
 
@@ -1281,17 +1285,12 @@
 		inputField.value = "";
 
 		// Add to emote block selection
-		navLink.textContent = listName;
-		navLink.id = strToValidID( listName );
-		navLink.addEventListener( "click", toggleEmoteBlock, false );
+		navLink = createListLink( listName, 0 );
 		listNav.appendChild( navLink );
-
 		g.navList.push( navLink );
 
 		// Add (empty) emote block to main container
 		newBlock.className = "mle-block" + g.noise;
-		g.mainCont.appendChild( newBlock );
-
 		g.emoteBlocks[listName] = newBlock;
 
 		// Add <option>s to <select>s
@@ -1304,6 +1303,27 @@
 		selOption.value = listName;
 		selOption.textContent = listName;
 		selDelHTML.appendChild( selOption );
+
+		// Destroy context menus.
+		// Will be rebuild when needed.
+		destroyCtxMenus();
+	};
+
+
+	/**
+	 * Destroy the context menu parts that have to do with the emote lists.
+	 */
+	function destroyCtxMenus() {
+		var g = GLOBAL;
+
+		if( g.CTX.dialogMoveEmote ) {
+			g.CTX.dialogMoveEmote.parentNode.removeChild( g.CTX.dialogMoveEmote );
+			g.CTX.dialogMoveEmote = null;
+		}
+		if( g.CTX.dialogSaveEmote ) {
+			g.CTX.dialogSaveEmote.parentNode.removeChild( g.CTX.dialogSaveEmote );
+			g.CTX.dialogSaveEmote = null;
+		}
 	};
 
 
@@ -1401,7 +1421,7 @@
 			form.className = "";
 
 			for( listName in geb ) {
-				if( e && strToValidID( listName ) == e_target.id ) {
+				if( e && strToValidID( listName ) + g.noise == e_target.id ) {
 					if( !g.shownBlock ) {
 						g.mainCont.appendChild( geb[listName] );
 					}
