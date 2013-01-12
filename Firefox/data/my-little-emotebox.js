@@ -11,7 +11,8 @@
 				ctxMenu: null,
 				dialogMoveEmote: null,
 				dialogSaveEmote: null,
-				selectedEmote: null
+				selectedEmote: null,
+				trigger: null
 			},
 			draggingEmote: null,
 			draggingList: null,
@@ -114,6 +115,7 @@
 	function hideCtxMenu() {
 		var g = GLOBAL;
 
+		g.CTX.trigger = null;
 		g.CTX.ctxMenu.className = "";
 		if( g.CTX.dialogSaveEmote ) {
 			g.CTX.dialogSaveEmote.className = "diag";
@@ -149,6 +151,23 @@
 
 
 	/**
+	 * Checks if a given DOM node is a draggable list element.
+	 * @param  {DOMElement} node
+	 * @return {Boolean} True if list, false otherwise.
+	 */
+	function isList( node ) {
+		if( node.tagName.toLowerCase() != "li" ) {
+			return false;
+		}
+		if( !node.getAttribute( "draggable" ) ) {
+			return false;
+		}
+
+		return true;
+	};
+
+
+	/**
 	 * Change a string to a valid ID (HTML attribute) value.
 	 */
 	function strToValidID( name ) {
@@ -179,7 +198,7 @@
 		// '%' will be replaced with noise
 		var css = {
 			// Collection of same CSS
-			"#mle%.show .mleclose, #mle%.show ul, #mle%.show .mle-block%, #mle%.show .mng-link, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
+			"#mle%.show .mle-close, #mle%.show ul, #mle%.show .mle-block%, #mle%.show .mng-link, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
 					"display: block;",
 			"#mle%, #mle-ctxmenu%":
 					"font: 12px Verdana, Arial, Helvetica, \"DejaVu Sans\", sans-serif; line-height: 14px; text-align: left;",
@@ -195,12 +214,12 @@
 			"#mle%.show":
 					"width: " + cfg.boxWidth + "px; height: " + cfg.boxHeight + "px; padding: 36px 10px 10px; z-index: 10000;",
 			// Header
-			"#mle% strong":
+			"#mle% .mle-header":
 					"display: block; color: #303030; font-weight: bold; padding: 6px 0; text-align: center;",
-			"#mle%.show strong":
+			"#mle%.show .mle-header":
 					"display: none;",
 			// Close button
-			"#mle% .mleclose":
+			"#mle% .mle-close":
 					"display: none; position: absolute; right: 10px; top: -1px; z-index: 12; padding-left: 12px; padding-right: 12px;",
 			// Selection list
 			"#mle% ul":
@@ -215,7 +234,11 @@
 			"#mle% li:hover":
 					"background-color: #d0d0d0;",
 			"#mle% li.activelist":
-					"background-color: transparent; font-weight: bold;",
+					"background-color: transparent;",
+			"#mle% li.activelist strong":
+					"font-weight: bold;",
+			"#mle% li strong":
+					"font-weight: normal; white-space: nowrap;",
 			"#mle% li span":
 					"color: #909090; display: block; font-size: 9px; font-weight: normal !important; white-space: nowrap;",
 			// Emote blocks
@@ -256,12 +279,14 @@
 			// Context menu
 			"#mle-ctxmenu%, .diag":
 					"cursor: default; display: none; position: fixed; z-index: 10010; white-space: nowrap; background-color: #ffffff; border: 1px solid #d0d0d0; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;",
+			"#mle-ctxmenu% li":
+					"display: none;",
 			"#mle-ctxmenu% li, .diag li":
 					"margin: 2px 0; padding: 5px 14px;",
 			"#mle-ctxmenu% li:hover, .diag li:hover":
 					"background-color: #cee3f8;",
-			"#mle-ctxmenu%.in-box .out, #mle-ctxmenu%.out-of-box .in":
-					"display: none;",
+			"#mle-ctxmenu%.in-box .in, #mle-ctxmenu%.out-of-box .out, #mle-ctxmenu%.list-trigger .list":
+					"display: block;",
 			// Dialog "Save Emote"
 			".diag":
 					"max-height: 200px; max-width: 180px; overflow: auto; z-index: 10020;"
@@ -296,10 +321,11 @@
 		    msg = d.createElement( "p" );
 
 		// Add headline
+		labelMain.className = "mle-header";
 		labelMain.textContent = "Emotes";
 
 		// Add close button
-		close.className = "mleclose btn";
+		close.className = "mle-close btn";
 		close.textContent = "x";
 		close.addEventListener( "click", mainContainerHide, false );
 
@@ -359,9 +385,14 @@
 				},
 				{
 					className: "in",
-					text: "Move to list",
+					text: "Move to List",
 					onclick: ctxMenuMoveEmote
 				},
+				{
+					className: "list",
+					text: "Rename List",
+					onclick: ctxMenuRenameList
+				}
 			];
 
 		menu.id = g.ID.ctxmenu + g.noise;
@@ -413,6 +444,30 @@
 		g.CTX.dialogMoveEmote.className = "diag show";
 		g.CTX.dialogMoveEmote.style.left = x + "px";
 		g.CTX.dialogMoveEmote.style.top = y + "px";
+	};
+
+
+	/**
+	 * Create dialog for the option "Rename List".
+	 * @param {int} x X coordinate from the left.
+	 * @param {int} y Y coordinate from the top.
+	 */
+	function createDialogRenameList( x, y ) {
+		var d = document,
+		    g = GLOBAL;
+		var list = g.CTX.trigger,
+		    name = list.children[0],
+		    input = d.createElement( "input" );
+
+		input.type = "text";
+		input.value = name.textContent;
+		input.addEventListener( "keydown", function( e ) {
+			ctxRenameList( list, e );
+		}, false );
+
+		list.replaceChild( input, name );
+
+		hideCtxMenu();
 	};
 
 
@@ -549,25 +604,26 @@
 	 * @return {DOMElement}
 	 */
 	function createListLink( listName, elementCount ) {
-		var listLink = document.createElement( "li" ),
-		    count = document.createElement( "span" );
+		var d = document;
+		var listLink = d.createElement( "li" ),
+		    name = d.createElement( "strong" ),
+		    count = d.createElement( "span" );
+
+		name.textContent = listName;
+		name.addEventListener( "click", toggleEmoteBlock, false );
 
 		count.textContent = elementCount + " emotes";
 		count.addEventListener( "click", toggleEmoteBlock, false );
 
-		listLink.textContent = listName;
-		listLink.appendChild( count );
 		listLink.id = strToValidID( listName ) + GLOBAL.noise;
 		listLink.setAttribute( "draggable", "true" );
 		listLink.addEventListener( "click", toggleEmoteBlock, false );
 		listLink.addEventListener( "dragstart", moveListStart, false );
-
-		// The "dragenter" and "dragover" events have
-		// to be stopped in order for "drop" to work.
 		listLink.addEventListener( "dragenter", stopEvent, false );
 		listLink.addEventListener( "dragover", stopEvent, false );
-
 		listLink.addEventListener( "drop", moveListDrop, false );
+
+		appendChildren( listLink, [name, count] );
 
 		return listLink;
 	};
@@ -733,7 +789,7 @@
 		var d = document;
 		var note = d.createElement( "em" );
 
-		note.innerHTML = "Use drag&drop to move emotes.<br />To move it to another list, right-click on it and select \"Move to List\".";
+		note.innerHTML = "Use Drag&amp;Drop to move emotes.<br />To move it to another list, right-click on it and select “Move to List”.";
 
 		return appendChildren(
 			d.createElement( "div" ),
@@ -749,7 +805,7 @@
 		var d = document;
 		var note = d.createElement( "em" );
 
-		note.textContent = "Right-click on the emote and select \"Delete Emote\".";
+		note.textContent = "Right-click on the emote and select “Delete Emote”.";
 
 		return appendChildren(
 			d.createElement( "div" ),
@@ -765,7 +821,7 @@
 		var d = document;
 		var note = d.createElement( "em" );
 
-		note.textContent = "Use drag&drop to move lists.";
+		note.textContent = "Use Drag&amp;Drop to move lists. A dragged object will be inserted before the one it was dropped on.";
 
 		return appendChildren(
 			d.createElement( "div" ),
@@ -901,6 +957,17 @@
 
 
 	/**
+	 * Rename a list.
+	 */
+	function ctxMenuRenameList( e ) {
+		var pos = getPosForCtxMenu( e.target.parentNode );
+
+		createDialogRenameList( pos.x, pos.y );
+		e.stopPropagation(); // Keep the context menu open.
+	};
+
+
+	/**
 	 * Show available lists for the emote.
 	 */
 	function ctxMenuSaveEmote( e ) {
@@ -925,6 +992,45 @@
 
 		g.CTX.dialogMoveEmote.className = "diag";
 		g.CTX.selectedEmote = null;
+	};
+
+
+	/**
+	 * Rename a list.
+	 * @param {Object} list The list element that triggered the name change.
+	 */
+	function ctxRenameList( list, e ) {
+		if( e.keyCode == "13" ) { // 13 == Enter
+			var g = GLOBAL;
+			var name = document.createElement( "strong" ),
+			    listNameOld = list.id.replace( g.noise, '' ),
+			    listNameNew = e.target.value;
+
+			// Length: at least 1 char
+			if( listNameNew.length > 0 && listNameOld != listNameNew ) {
+				// Change emotes object (memory, not storage)
+				g.emotes[listNameNew] = g.emotes[listNameOld];
+				delete g.emotes[listNameOld];
+
+				// Change attribute name in emoteBlocks object
+				g.emoteBlocks[listNameNew] = g.emoteBlocks[listNameOld];
+				delete g.emoteBlocks[listNameOld];
+
+				// Change name of the currently shown block if necessary
+				if( g.shownBlock == listNameOld ) {
+					g.shownBlock = listNameNew;
+				}
+
+				// Change ID in list
+				list.id = strToValidID( listNameNew ) + g.noise;
+
+				// Save changes to storage
+				saveEmotesToStorage( g.emotes );
+			}
+
+			name.textContent = listNameNew;
+			list.replaceChild( name, e.target );
+		}
 	};
 
 
@@ -1191,9 +1297,9 @@
 		e.target.parentNode.removeChild( g.draggingList );
 		e.target.parentNode.insertBefore( g.draggingList, e.target );
 
-		// Save new order to local storage
-		nameSource = g.draggingList.textContent;
-		nameTarget = e.target.textContent;
+		// Save new order to storage
+		nameSource = g.draggingList.id.replace( g.noise, '' );
+		nameTarget = e.target.id.replace( g.noise, '' );
 
 		for( block in g.emotes ) {
 			if( block == nameSource ) {
@@ -1328,16 +1434,41 @@
 
 
 	/**
-	 * Show the context menu for an emote.
+	 * Show the context menu for either an emote or list element.
 	 */
 	function showCtxMenu( e ) {
-		if( !isEmote( e.target ) ) {
+		var bIsEmote = isEmote( e.target ),
+		    bIsList = isList( e.target );
+
+		if( !bIsEmote && !bIsList ) {
 			hideCtxMenu();
 			return;
 		}
 		var g = GLOBAL;
 
+		g.CTX.trigger = e.target;
 		g.CTX.ctxMenu.className = "show";
+
+		if( bIsEmote ) {
+			showCtxMenuEmote( e );
+		}
+		else if( bIsList ) {
+			showCtxMenuList( e );
+		}
+
+		g.CTX.ctxMenu.style.left = ( e.clientX + 2 ) + "px";
+		g.CTX.ctxMenu.style.top = e.clientY + "px";
+
+		e.preventDefault();
+	};
+
+
+	/**
+	 * Show the context menu for an emote.
+	 */
+	function showCtxMenuEmote( e ) {
+		var g = GLOBAL;
+
 		g.CTX.selectedEmote = e.target;
 
 		// Click occured in emote box.
@@ -1348,11 +1479,14 @@
 		else {
 			g.CTX.ctxMenu.className += " out-of-box";
 		}
+	};
 
-		g.CTX.ctxMenu.style.left = ( e.clientX + 2 ) + "px";
-		g.CTX.ctxMenu.style.top = e.clientY + "px";
 
-		e.preventDefault();
+	/**
+	 * Show the context menu for a list element.
+	 */
+	function showCtxMenuList( e ) {
+		GLOBAL.CTX.ctxMenu.className += " list-trigger";
 	};
 
 
@@ -1396,7 +1530,7 @@
 		    e_target = e.target;
 		var form, listName, i;
 
-		// In case the "x emotes" was clicked instead of the (parent) list element container
+		// In case a child element was clicked instead of the (parent) list element container
 		if( e_target != this ) {
 			e_target = e_target.parentNode;
 		}
