@@ -611,9 +611,15 @@
 
 		name.textContent = listName;
 		name.addEventListener( "click", toggleEmoteBlock, false );
+		name.addEventListener( "dragenter", stopEvent, false );
+		name.addEventListener( "dragover", stopEvent, false );
+		name.addEventListener( "drop", moveListDrop, false );
 
 		count.textContent = elementCount + " emotes";
 		count.addEventListener( "click", toggleEmoteBlock, false );
+		count.addEventListener( "dragenter", stopEvent, false );
+		count.addEventListener( "dragover", stopEvent, false );
+		count.addEventListener( "drop", moveListDrop, false );
 
 		listLink.id = strToValidID( listName ) + GLOBAL.noise;
 		listLink.setAttribute( "draggable", "true" );
@@ -1275,31 +1281,37 @@
 	 */
 	function moveListDrop( e ) {
 		var g = GLOBAL;
-		var nameSource,
+		var e_target = e.target,
+		    nameSource,
 		    nameTarget,
-		    reordered = {};
+		    reordered;
 
 		e.preventDefault();
 
 		// Do nothing if source and target are the same
-		if( e.target == g.draggingList ) {
+		if( e_target == g.draggingList ) {
 			g.draggingList = null;
 			return;
+		}
+
+		// If we drop on an element inside of the list, go one up
+		if( isList( e_target.parentNode ) ) {
+			e_target = e_target.parentNode;
 		}
 
 		// Different parent means we may drag an emote.
 		// We don't drop emotes on lists, stop it.
-		if( e.target.parentNode != g.draggingList.parentNode ) {
+		if( e_target.parentNode != g.draggingList.parentNode ) {
 			g.draggingList = null;
 			return;
 		}
 
-		e.target.parentNode.removeChild( g.draggingList );
-		e.target.parentNode.insertBefore( g.draggingList, e.target );
+		e_target.parentNode.removeChild( g.draggingList );
+		e_target.parentNode.insertBefore( g.draggingList, e_target );
 
 		// Reorder and save to storage
 		nameSource = g.draggingList.id.replace( g.noise, '' );
-		nameTarget = e.target.id.replace( g.noise, '' );
+		nameTarget = e_target.id.replace( g.noise, '' );
 
 		reordered = reorderList( nameSource, nameTarget );
 
