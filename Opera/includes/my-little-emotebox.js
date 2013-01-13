@@ -1010,6 +1010,7 @@
 			if( listNameNew.length > 0 && listNameOld != listNameNew ) {
 				// Change emotes object (memory, not storage)
 				g.emotes[listNameNew] = g.emotes[listNameOld];
+				g.emotes = reorderList( listNameNew, listNameOld );
 				delete g.emotes[listNameOld];
 
 				// Change attribute name in emoteBlocks object
@@ -1277,7 +1278,6 @@
 		var nameSource,
 		    nameTarget,
 		    reordered = {};
-		var block;
 
 		e.preventDefault();
 
@@ -1297,24 +1297,45 @@
 		e.target.parentNode.removeChild( g.draggingList );
 		e.target.parentNode.insertBefore( g.draggingList, e.target );
 
-		// Save new order to storage
+		// Reorder and save to storage
 		nameSource = g.draggingList.id.replace( g.noise, '' );
 		nameTarget = e.target.id.replace( g.noise, '' );
 
-		for( block in g.emotes ) {
-			if( block == nameSource ) {
-				continue;
-			}
-			if( block == nameTarget ) {
-				reordered[nameSource] = g.emotes[nameSource];
-			}
-			reordered[block] = g.emotes[block];
-		}
+		reordered = reorderList( nameSource, nameTarget );
 
 		g.emotes = reordered;
 		saveEmotesToStorage( g.emotes );
 
 		g.draggingList = null;
+	};
+
+
+	/**
+	 * Reorder emote list. (Not the emotes, but the lists itself.)
+	 * @param  {String} moving    Name of list to insert before "inFrontOf".
+	 * @param  {String} inFrontOf Name of list, that "moving" will be inserted in front of.
+	 * @return {Object} Reordered list.
+	 */
+	function reorderList( moving, inFrontOf ) {
+		var g = GLOBAL;
+		var reordered = {},
+		    block;
+
+		if( moving == inFrontOf ) {
+			return g.emotes;
+		}
+
+		for( block in g.emotes ) {
+			if( block == moving ) {
+				continue;
+			}
+			if( block == inFrontOf ) {
+				reordered[moving] = g.emotes[moving];
+			}
+			reordered[block] = g.emotes[block];
+		}
+
+		return reordered;
 	};
 
 

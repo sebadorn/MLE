@@ -118,52 +118,41 @@ var DEFAULT_CONFIG = {
 // Default emotes of r/mylittlepony.
 var DEFAULT_EMOTES = {
 	"A": [
-		"ajlie", "priceless", "flutterjerk", "flutterroll",
-		"twipride", "celestiamad", "twicrazy", "spikemeh",
-		"lunateehee", "lunawait", "derpwizard", "abmeh",
-		"ajhappy", "pinkiefear", "twibeam", "scootaderp",
-		"raritydaww", "scootacheer", "swagintosh", "pinkeawe",
-		"ajsup", "flutterwhoa", "rdsad", "silverspoon",
-		"ohcomeon", "ppcute", "abbored",
-		"raritynews", "sbbook", "scootaplease",
-		"twiright", "celestiawut", "grannysmith",
-		"shiningarmor", "chrysalis", "cadence"
+		"twipride", "twicrazy", "twiright", "twibeam", "spikemeh",
+		"celestiawut", "celestiamad", "lunateehee", "lunawait", "derpwizard",
+		"pinkiefear", "ppcute", "pinkieawe", "ajhappy", "ajsup",
+		"ajlie", "abbored", "abmeh", "swagintosh", "grannysmith",
+		"flutterwhoa", "flutterroll", "flutterjerk", "rdcry", "scootaderp",
+		"scootaplease", "scootacheer", "ohcomeon", "sbbook", "raritynews",
+		"raritydaww", "shiningarmor", "cadence", "chrysalis", "priceless",
+		"silverspoon", "rarityreally", "applegasp", "rarishock", "applederp"
 	],
 	"B": [
-		"flutterfear", "ppboring", "rarityyell", "fluttershy",
-		"ajcower", "ajsly", "eeyup", "rdsmile",
-		"fluttersrs", "raritydress", "takealetter", "rdwut",
-		"ppshrug", "spikenervous", "noooo", "dj",
-		"fluttershh", "flutteryay", "squintyjack", "spikepushy",
-		"ajugh", "raritywut", "dumbfabric", "raritywhy",
-		"trixiesmug", "flutterwink", "rarityannoyed", "soawesome",
-		"ajwut", "twisquint", "raritywhine", "rdcool",
-		"abwut", "manspike", "cockatrice", "facehoof",
-		"rarityjudge", "rarityprimp", "twirage", "ppseesyou"
+		"ppseesyou", "ppshrug", "ppboring", "rdcool", "rdsmile",
+		"soawesome", "rdwut", "squintyjack", "ajsly", "ajcower",
+		"ajugh", "ajwut", "abwut", "eeyup", "fluttershh",
+		"fluttershy", "fluttersrs", "flutterfear", "flutterwink", "flutteryay",
+		"spikenervous", "takealetter", "noooo", "spikepushy", "manspike",
+		"facehoof", "twisquint", "twirage", "dumbfabric", "rarityyell",
+		"raritywhine", "raritydress", "rarityannoyed", "raritywut", "raritywhy",
+		"rarityjudge", "rarityprimp", "trixiesmug", "dj", "cockatrice"
 	],
 	"C": [
-		"rdsitting", "rdhappy", "rdannoyed",
-		"twismug", "twismile", "twistare",
-		"ohhi", "party", "hahaha",
-		"flutterblush", "gross", "derpyhappy",
-		"ajfrown", "hmmm", "joy",
-		"raritysad", "fabulous", "derp",
-		"louder", "lunasad", "derpyshock",
-		"pinkamina", "loveme", "lunagasp",
-		"scootaloo", "celestia", "angel",
-		"allmybits", "zecora", "photofinish"
+		"rdsitting", "rdhappy", "rdannoyed", "gross", "louder",
+		"twistare", "twismug", "twismile", "ohhi", "party",
+		"hahaha", "joy", "pinkamina", "ajfrown", "hmmm",
+		"raritysad", "fabulous", "derpyhappy", "derp", "derpyshock",
+		"flutterblush", "loveme", "lunasad", "lunagasp", "celestia",
+		"scootaloo", "angel", "allmybits", "zecora", "photofinish",
+		"trixiesad", "changeling"
 	],
 	"E": [
-		"fillytgap", "rdhuh", "snails",
-		"lyra", "bonbon", "spitfire",
-		"cutealoo", "lunahappy", "sptrue",
-		"wahaha", "sbstare", "punchdrunk",
-		"huhhuh", "absmile", "dealwithit",
-		"nmm", "whooves", "rdsalute",
-		"octavia", "colgate", "cheerilee",
-		"ajbaffle", "abhuh", "thehorror",
-		"twiponder", "spikewtf", "awwyeah",
-		"e09", "discentia", "macintears"
+		"fillytgap", "rdhuh", "rdsalute", "awwyeah", "twiponder",
+		"spikewtf", "huhhuh", "wahaha", "sbstare", "cutealoo",
+		"ajbaffle", "absmile", "abhuh", "macintears", "lyra",
+		"bonbon", "spitfire", "lunahappy", "sotrue", "nmm",
+		"punchdrunk", "whooves", "octavia", "colgate", "cheerilee",
+		"thehorror", "gilda", "snails", "dealwithit", "discentia"
 	]
 };
 
