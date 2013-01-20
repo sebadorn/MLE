@@ -1185,6 +1185,11 @@
 			selStart + emoteLink.length,
 			selStart + emoteLink.length
 		);
+
+		// Fire input event, so that RedditEnhancementSuite updates the preview
+		var inputEvent = document.createEvent( "Events" );
+		inputEvent.initEvent( "input", true, true );
+		ta.dispatchEvent( inputEvent );
 	};
 
 
