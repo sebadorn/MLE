@@ -77,6 +77,9 @@ function saveSetting( e ) {
 						return;
 					}
 					break;
+				case "text":
+					val = e.target.value;
+					break;
 			}
 			break;
 	}
@@ -283,14 +286,16 @@ function registerEventSettingChanged() {
 	var d = document;
 	var selects = d.querySelectorAll( "select" ),
 	    checkboxes = d.querySelectorAll( "input[type='checkbox']" ),
-	    numbers = d.querySelectorAll( "input[type='number']" );
+	    numbers = d.querySelectorAll( "input[type='number']" ),
+	    texts = d.querySelectorAll( "input[type='text']" );
 	var exportEmotesBtn = d.getElementById( "export-emotes" ),
 	    importEmotesBtn = d.getElementById( "import-emotes" ),
 	    resetEmotesBtn = d.getElementById( "reset-emotes" ),
 	    exportCfg = d.getElementById( "export-config" ),
 	    importCfg = d.getElementById( "import-config" ),
 	    resetCfg = d.getElementById( "reset-config" );
-	var i, j, val, select, chkbox, nmbr;
+	var i, j, val, select, chkbox, nmbr, txt;
+
 
 	// <select>s
 	for( i = 0; i < selects.length; i++ ) {
@@ -317,6 +322,13 @@ function registerEventSettingChanged() {
 		nmbr = numbers[i];
 		nmbr.addEventListener( "change", saveSetting, false );
 		nmbr.value = CONFIG[nmbr.id];
+	}
+
+	// <input type="text">s
+	for( i = 0; i < texts.length; i++ ) {
+		txt = texts[i];
+		txt.addEventListener( "change", saveSetting, false );
+		txt.value = CONFIG[txt.id];
 	}
 
 	// export/import/reset

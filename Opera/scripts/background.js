@@ -101,6 +101,7 @@ var DEFAULT_CONFIG = {
 	addBlankAfterInsert: true,
 	boxAlign: "left", // "left" or "right"
 	boxWidthMinimized: 70, // [px]
+	boxLabelMinimized: "Emotes",
 	boxHeight: 330, // [px]
 	boxWidth: 650, // [px]
 	boxPosTop: 60, // [px]
@@ -109,9 +110,9 @@ var DEFAULT_CONFIG = {
 	ctxMenu: true,
 	adjustForBetterPonymotes: true,
 	adjustForGrEmB: false,
+	msgPosition: "top", // "top" or "bottom"
 	msgAnimationSpeed: 1000, // [ms]
-	msgTimeout: 7000, // [ms] // How long a popup message is displayed.
-	toolbarButton: true
+	msgTimeout: 7000 // [ms] // How long a popup message is displayed.
 };
 
 

@@ -249,13 +249,11 @@
 			".mle-block% a:hover":
 					"border-color: #96BFE9;",
 			// Notifier
-			"#mle% .mle-msg":
-					"background-color: #303030; color: #ffffff; border-radius: 2px; line-height: 19px; position: fixed; left: " + ( cfg.boxWidth + 13 ) + "px; top: -200px; padding: 10px;"
-					+ "-moz-transition: top " + cfg.msgAnimationSpeed + "ms; -webkit-transition: top " + cfg.msgAnimationSpeed + "ms; -o-transition: top " + cfg.msgAnimationSpeed + "ms; transition: top " + cfg.msgAnimationSpeed + "ms;",
-			"#mle% .mle-msg span":
-					"float: left; margin-left: 10px;",
-			"#mle% .mle-msg.show":
-					"top: " + cfg.boxPosTop + "px;",
+			".mle-msg%":
+					"background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; " + cfg.msgPosition + ": -200px; padding: 19px 0; text-align: center; width: 100%;"
+					+ "-moz-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -webkit-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -o-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms;",
+			".mle-msg%.show":
+					cfg.msgPosition + ": 0;",
 			// Manage link
 			"#mle% .mng-link":
 					"display: none; width: 72px; position: absolute; top: -1px; z-index: 10;",
@@ -322,7 +320,7 @@
 
 		// Add headline
 		labelMain.className = "mle-header";
-		labelMain.textContent = "Emotes";
+		labelMain.textContent = g.config.boxLabelMinimized;
 
 		// Add close button
 		close.className = "mle-close btn";
@@ -338,12 +336,13 @@
 		mngForm.id = g.ID.mngForm + g.noise;
 
 		// Add most-of-the-time-hidden message block
-		msg.className = "mle-msg";
+		// (NOT a part of the main container)
+		msg.className = "mle-msg" + g.noise;
 
 		// Append all the above to the DOM fragment
 		fragmentNode = appendChildren(
 			fragmentNode,
-			[labelMain, close, mngTrigger, createEmoteBlocksAndNav(), mngForm, msg]
+			[labelMain, close, mngTrigger, createEmoteBlocksAndNav(), mngForm]
 		);
 
 		// Add list and emote blocks to main container
@@ -356,6 +355,7 @@
 		g.mainCont = mainContainer;
 
 		d.body.appendChild( mainContainer );
+		d.body.appendChild( msg );
 
 		if( g.config.ctxMenu ) {
 			d.body.appendChild( createCtxMenu() );
@@ -878,7 +878,7 @@
 
 		// Ignore empty
 		if( emote.length == 0 ) {
-			showMsg( "That ain't no emote, sugarcube.", "squintyjack" );
+			showMsg( "That ain't no emote, sugarcube." );
 			return;
 		}
 
@@ -889,7 +889,7 @@
 
 		// Only save if not already in list
 		if( g.emotes[list].indexOf( emote ) > -1 ) {
-			showMsg( "Um, this emote is already in the list.", "fluttershy" );
+			showMsg( "Um, this emote is already in the list." );
 			return;
 		}
 
@@ -911,27 +911,20 @@
 
 
 	/**
-	 * Display a little popup message, that disappears after a few seconds again.
+	 * Display a little popup message, that disappears again after a few seconds.
 	 */
-	function showMsg( text, emote ) {
-		var g = GLOBAL,
-		    cfg = g.config;
+	function showMsg( text ) {
+		var g = GLOBAL;
 
 		if( !g.msg || g.msg == null ) { return; }
 
 		clearTimeout( g.msgTimeout );
 		g.msg.className += " show";
-
-		if( emote.trim().length > 0 ) {
-			g.msg.innerHTML = "<a href=\"/" + emote + "\"></a><span>" + text + "</span>";
-		}
-		else {
-			g.msg.textContent = text;
-		}
+		g.msg.textContent = text;
 
 		g.msgTimeout = setTimeout( function() {
-			GLOBAL.msg.className = "mle-msg";
-		}, cfg.msgTimeout );
+			GLOBAL.msg.className = "mle-msg" + GLOBAL.noise;
+		}, g.config.msgTimeout );
 	};
 
 
@@ -1131,7 +1124,7 @@
 
 			case BG_TASK.SAVE_EMOTES:
 				if( !data.success ) {
-					showMsg( "Um, I'm sorry, but the changes could not be saved.", "fluttershy" );
+					showMsg( "Um, I'm sorry, but the changes could not be saved." );
 					console.error( "MyLittleEmotebox: Could not save emotes." );
 				}
 				break;
@@ -1414,13 +1407,13 @@
 
 		// Ignore empty
 		if( listName.length == 0 ) {
-			showMsg( "That ain't no valid name for a list.", "squintyjack" );
+			showMsg( "That ain't no valid name for a list." );
 			return;
 		}
 
 		// Only create list if it doesn't exist already
 		if( listName in g.emotes ) {
-			showMsg( "This list already exists.", "fluttershy" );
+			showMsg( "This list already exists." );
 			return;
 		}
 

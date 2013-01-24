@@ -56,6 +56,11 @@ input[type="number"] {
 	width: 70px;
 }
 
+input[type="text"] {
+	margin-right: 6px;
+	width: 97px;
+}
+
 input[type="submit"] {
 	background-color: #9AB4D1;
 	border-width: 0;
@@ -70,8 +75,8 @@ input[type="submit"]:hover {
 }
 
 select {
-	margin-right: 8px;
-	min-width: 70px;
+	margin-right: 6px;
+	min-width: 97px;
 	padding: 3px 6px;
 }
 
@@ -219,7 +224,8 @@ input[name="page"]:checked ~ .form {
 			color: #a0a0a0;
 			display: inline-block;
 			margin-left: -6px;
-			margin-right: 8px;
+			margin-right: 6px;
+			width: 21px;
 		}
 
 		.explain {
