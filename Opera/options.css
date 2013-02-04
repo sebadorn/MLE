@@ -34,6 +34,12 @@ h1 {
 	text-transform: uppercase;
 }
 
+h2 {
+	font-size: 19px;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
 input, select, textarea {
 	background-color: #ffffff;
 	border: 1px solid #e0e0e0;
@@ -59,6 +65,11 @@ input[type="number"] {
 input[type="text"] {
 	margin-right: 6px;
 	width: 97px;
+}
+
+input.color {
+	font-family: monospace;
+	width: 160px;
 }
 
 input[type="submit"] {

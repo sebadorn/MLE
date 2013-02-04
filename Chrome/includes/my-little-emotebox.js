@@ -186,29 +186,26 @@
 		var rule,
 		    rules = '\n';
 		var zIndex = cfg.boxUnderHeader ? 10 : 10000,
-		    boxPos;
+		    boxPos,
+		    listDirection;
 
-		if( cfg.boxAlign == "left" ) {
-			boxPos = "left: 5px;";
-		}
-		else if( cfg.boxAlign == "right" ) {
-			boxPos = "right: 5px;";
-		}
+		boxPos = ( cfg.boxAlign == "left" ) ? "left: 5px;" : "right: 5px;";
+		listDirection = ( cfg.boxScrollbar == "left" ) ? "ltr" : "rtl";
 
 		// '%' will be replaced with noise
 		var css = {
 			// Collection of same CSS
-			"#mle%.show .mle-close, #mle%.show ul, #mle%.show .mle-block%, #mle%.show .mng-link, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
+			"#mle%.show ul, #mle%.show .mle-block%, #mle%.show .btn, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
 					"display: block;",
 			"#mle%, #mle-ctxmenu%":
 					"font: 12px Verdana, Arial, Helvetica, \"DejaVu Sans\", sans-serif; line-height: 14px; text-align: left;",
 			"#mle% .btn":
-					"background-color: #808080; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; font-weight: bold; padding: 5px 0 6px; text-align: center;",
+					"background-color: #808080; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; display: none; font-weight: bold; padding: 5px 0 6px; position: absolute; text-align: center; top: -1px;",
 			"#mle% .btn:hover":
 					"background-color: #404040;",
 			// Inactive state
 			"#mle%":
-					"background-color: #f4f4f4; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; " + boxPos + " top: " + cfg.boxPosTop + "px; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px;"
+					"background-color: " + cfg.boxBgColor + "; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; " + boxPos + " top: " + cfg.boxPosTop + "px; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px;"
 					+ "-moz-transition: width " + cfg.boxAnimationSpeed + "ms; -webkit-transition: width " + cfg.boxAnimationSpeed + "ms; -o-transition: width " + cfg.boxAnimationSpeed + "ms; transition: width " + cfg.boxAnimationSpeed + "ms;",
 			// Active state
 			"#mle%.show":
@@ -218,12 +215,20 @@
 					"display: block; color: #303030; font-weight: bold; padding: 6px 0; text-align: center;",
 			"#mle%.show .mle-header":
 					"display: none;",
+			// Manage button
+			"#mle% .mng-link":
+					"width: 72px; z-index: 10;",
+			// Options button
+			"#mle% .opt-link":
+					"background-color: #f4f4f4 !important; border-top-color: #b0b0b0; color: #a0a0a0; font-weight: normal !important; left: 98px; padding-left: 8px; padding-right: 8px; z-index: 14;",
+			"#mle% .opt-link:hover":
+					"border-top-color: #606060; color: #000000;",
 			// Close button
 			"#mle% .mle-close":
-					"display: none; position: absolute; right: 10px; top: -1px; z-index: 12; padding-left: 12px; padding-right: 12px;",
+					"right: 10px; z-index: 20; padding-left: 12px; padding-right: 12px;",
 			// Selection list
 			"#mle% ul":
-					"box-sizing: border-box; -moz-box-sizing: border-box; direction: rtl; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 250px; padding: 0;",
+					"box-sizing: border-box; -moz-box-sizing: border-box; direction: " + listDirection + "; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 250px; padding: 0;",
 			"#mle% li":
 					"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; position: relative;"
 					+ "-moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
@@ -245,18 +250,15 @@
 			".mle-block%, #mle-manage%":
 					"box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;",
 			".mle-block% a":
-					"display: inline-block; float: none; border: 1px solid #ffffff; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;",
+					"display: inline-block; float: none; border: 1px solid " + cfg.boxEmoteBorder + "; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;",
 			".mle-block% a:hover":
 					"border-color: #96BFE9;",
 			// Notifier
 			".mle-msg%":
-					"background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; " + cfg.msgPosition + ": -200px; padding: 19px 0; text-align: center; width: 100%;"
+					"background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; " + cfg.msgPosition + ": -200px; padding: 19px 0; text-align: center; width: 100%; z-index: 10100;"
 					+ "-moz-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -webkit-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -o-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms;",
 			".mle-msg%.show":
 					cfg.msgPosition + ": 0;",
-			// Manage link
-			"#mle% .mng-link":
-					"display: none; width: 72px; position: absolute; top: -1px; z-index: 10;",
 			// Manage page
 			"#mle-manage% label":
 					"border-bottom: 1px solid #e0e0e0; display: block; font-weight: bold; margin-bottom: 10px; padding-bottom: 4px;",
@@ -316,7 +318,8 @@
 		    close = d.createElement( "span" ),
 		    mngTrigger = d.createElement( "span" ),
 		    mngForm = d.createElement( "div" ),
-		    msg = d.createElement( "p" );
+		    msg = d.createElement( "p" ),
+		    optTrigger = d.createElement( "span" );
 
 		// Add headline
 		labelMain.className = "mle-header";
@@ -332,6 +335,14 @@
 		mngTrigger.textContent = "Manage";
 		mngTrigger.addEventListener( "click", showManagePage, false );
 
+		// Add options link
+		optTrigger.className = "opt-link btn";
+		optTrigger.textContent = "Options";
+		optTrigger.title = "Opens the options page";
+		optTrigger.addEventListener( "click", function( e ) {
+			postMessage( { task: BG_TASK.OPEN_OPTIONS } );
+		}, false );
+
 		// Add manage page
 		mngForm.id = g.ID.mngForm + g.noise;
 
@@ -342,7 +353,7 @@
 		// Append all the above to the DOM fragment
 		fragmentNode = appendChildren(
 			fragmentNode,
-			[labelMain, close, mngTrigger, createEmoteBlocksAndNav(), mngForm]
+			[labelMain, close, mngTrigger, optTrigger, createEmoteBlocksAndNav(), mngForm]
 		);
 
 		// Add list and emote blocks to main container
@@ -889,7 +900,7 @@
 
 		// Only save if not already in list
 		if( g.emotes[list].indexOf( emote ) > -1 ) {
-			showMsg( "Um, this emote is already in the list." );
+			showMsg( "This emote is already in the list." );
 			return;
 		}
 
@@ -1124,7 +1135,7 @@
 
 			case BG_TASK.SAVE_EMOTES:
 				if( !data.success ) {
-					showMsg( "Um, I'm sorry, but the changes could not be saved." );
+					showMsg( "I'm sorry, but the changes could not be saved." );
 					console.error( "MyLittleEmotebox: Could not save emotes." );
 				}
 				break;

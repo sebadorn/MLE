@@ -46,6 +46,25 @@ function toggleNav( e ) {
 
 
 /**
+ * Validate if given value is a color acceptable in CSS.
+ * @param  {String}  color
+ * @return {Boolean} True if the value is a color, false otherwise.
+ */
+function isColor( color ) {
+	if( color.match( /^#[0-9a-f]{6}$/ ) ) {
+		return true;
+	}
+	if( color.match( /^rgb\([0-9]{1,3},[0-9]{1,3},[0-9]{1,3}\)$/ ) ) {
+		return true;
+	}
+	if( color.match( /^rgba\([0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[01]\.[0-9]+\)$/ ) ) {
+		return true;
+	}
+	return false;
+};
+
+
+/**
  * Save a setting that just changed.
  */
 function saveSetting( e ) {
@@ -79,6 +98,14 @@ function saveSetting( e ) {
 					break;
 				case "text":
 					val = e.target.value;
+					if( e.target.className == "color" ) {
+						val = val.replace( / /g, '' );
+						val = val.toLowerCase();
+
+						if( !isColor( val ) ) {
+							return;
+						}
+					}
 					break;
 			}
 			break;

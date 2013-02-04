@@ -39,6 +39,11 @@
 				<label>Context menu for emotes</label>
 			</li>
 			<li>
+				<input type="checkbox" id="boxUnderHeader" value="true" />
+				<label for="boxUnderHeader">Box gets hidden by reddit header</label>
+				<p class="explain">May not work in every sub-reddit, due to custom CSS.</p>
+			</li>
+			<li>
 				<input type="checkbox" id="addBlankAfterInsert" value="true" />
 				<label>Add a blank after inserted emotes.</label>
 			</li>
@@ -50,11 +55,21 @@
 		<input type="radio" name="page" id="style" hidden />
 		<ul class="form">
 			<li>
+				<h2>Emote box</h2>
+			</li>
+			<li>
 				<select id="boxAlign">
 					<option value="left">left</option>
 					<option value="right">right</option>
 				</select>
 				<label>Box position on page</label>
+			</li>
+			<li>
+				<select id="boxScrollbar">
+					<option value="left">left</option>
+					<option value="right">right</option>
+				</select>
+				<label>Side the list scrollbar is on</label>
 			</li>
 			<li>
 				<input type="number" id="boxPosTop" value="" />
@@ -81,15 +96,22 @@
 				<label>Box height</label>
 			</li>
 			<li>
-				<input type="checkbox" id="boxUnderHeader" value="true" />
-				<label for="boxUnderHeader">Box gets hidden by reddit header</label>
-				<p class="explain">May not work in every sub-reddit, due to custom CSS.</p>
-			</li>
-
-			<li>
 				<input type="number" id="boxAnimationSpeed" value="" />
 				<span class="unit">ms</span>
 				<label>Time needed for the box to open</label>
+			</li>
+			<li>
+				<input type="text" class="color" id="boxBgColor" value="" />
+				<label>Box background color</label>
+				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
+			</li>
+			<li>
+				<input type="text" class="color" id="boxEmoteBorder" value="" />
+				<label>Border color around emotes</label>
+				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
+			</li>
+			<li>
+				<h2>Notifier</h2>
 			</li>
 			<li>
 				<select id="msgPosition">

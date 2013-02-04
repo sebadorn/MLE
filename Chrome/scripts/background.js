@@ -83,7 +83,8 @@ if( I_AM == BROWSER.FIREFOX ) {
 		SAVE_CONFIG: 2,
 		SAVE_EMOTES: 3,
 		RESET_CONFIG: 4,
-		RESET_EMOTES: 5
+		RESET_EMOTES: 5,
+		OPEN_OPTIONS: 6
 	};
 
 }
@@ -99,19 +100,22 @@ var PREF = {
 // Default config
 var DEFAULT_CONFIG = {
 	addBlankAfterInsert: true,
-	boxAlign: "left", // "left" or "right"
-	boxWidthMinimized: 70, // [px]
-	boxLabelMinimized: "Emotes",
-	boxHeight: 330, // [px]
-	boxWidth: 650, // [px]
-	boxPosTop: 60, // [px]
-	boxUnderHeader: true,
-	boxAnimationSpeed: 420, // [ms]
-	ctxMenu: true,
 	adjustForBetterPonymotes: true,
 	adjustForGrEmB: false,
-	msgPosition: "top", // "top" or "bottom"
+	boxAlign: "left", // "left" or "right"
+	boxAnimationSpeed: 420, // [ms]
+	boxBgColor: "#f4f4f4", // CSS valid color, examples: "#f6f6f6", "rgba(20,20,20,0.6)"
+	boxEmoteBorder: "#ffffff", // CSS valid color
+	boxHeight: 330, // [px]
+	boxLabelMinimized: "Emotes",
+	boxPosTop: 60, // [px]
+	boxScrollbar: "left", // "left" or "right"
+	boxWidth: 650, // [px]
+	boxWidthMinimized: 70, // [px]
+	boxUnderHeader: true,
+	ctxMenu: true,
 	msgAnimationSpeed: 1000, // [ms]
+	msgPosition: "top", // "top" or "bottom"
 	msgTimeout: 7000 // [ms] // How long a popup message is displayed.
 };
 
@@ -195,6 +199,16 @@ var BrowserOpera = {
 	},
 
 	/**
+	 * Open the options page.
+	 */
+	openOptions: function() {
+		opera.extension.tabs.create( {
+			url: "options.html",
+			focused: true
+		} );
+	},
+
+	/**
 	 * Send a response to a page that previously send a message.
 	 * @param {Object} source
 	 * @param {Object} msg
@@ -268,6 +282,16 @@ var BrowserChrome = {
 	},
 
 	/**
+	 * Open the options page.
+	 */
+	openOptions: function() {
+		chrome.tabs.create( {
+			url: chrome.extension.getURL( "options.html" ),
+			active: true
+		} );
+	},
+
+	/**
 	 * Send a response to a page that previously send a message.
 	 * THIS IS JUST A DUMMY FUNCTION.
 	 * @see   BrowserChrome.loadConfigAndEmotes()
@@ -328,6 +352,15 @@ var BrowserFirefox = {
 		response.emotes = le;
 
 		return response;
+	},
+
+	/**
+	 * Open the options page.
+	 */
+	openOptions: function() {
+		tabs.open( {
+			url: self.data.url( "options.html" )
+		} );
 	},
 
 	/**
@@ -392,7 +425,7 @@ switch( I_AM ) {
  * @param {Object} sendResponse (Chrome only)
  */
 function handleMessage( e, sender, sendResponse ) {
-	var response,
+	var response = {},
 	    data = e.data ? e.data : e,
 	    source = sender ? sender : e.source;
 
@@ -423,6 +456,10 @@ function handleMessage( e, sender, sendResponse ) {
 
 		case BG_TASK.RESET_EMOTES:
 			saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+			break;
+
+		case BG_TASK.OPEN_OPTIONS:
+			MyBrowser.openOptions();
 			break;
 
 		default:
