@@ -46,11 +46,14 @@ function toggleNav( e ) {
 
 
 /**
- * Validate if given value is a color acceptable in CSS.
+ * Validate if given value is a color acceptable in CSS, excluding named colors.
  * @param  {String}  color
  * @return {Boolean} True if the value is a color, false otherwise.
  */
 function isColor( color ) {
+	if( color == "transparent" ) {
+		return true;
+	}
 	if( color.match( /^#[0-9a-f]{6}$/ ) ) {
 		return true;
 	}

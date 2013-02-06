@@ -1,10 +1,10 @@
 {
 	"name": "My Little Emotebox",
-	"version": "2.0",
+	"version": "%MLE_VERSION%",
 	"manifest_version": 2,
 	"description": "An easy way to insert and manage emotes.",
-	"homepage_url": "http://sebadorn.de/mlp/mle/",
-	"update_url": "http://sebadorn.de/mlp/mle/updates-chrome.xml",
+	"homepage_url": "%MLE_URL%/",
+	"update_url": "%MLE_URL%/updates-chrome.xml",
 
 	"icons": {
 		"16": "icons/MLE_16.png",
