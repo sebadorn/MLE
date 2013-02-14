@@ -3,17 +3,178 @@
 <html>
 <head>
 	<meta charset="utf-8" />
+	<meta name="robots" content="noindex" />
 	<title>My Little Emotebox – A browser extension for Opera, Chrome and Firefox</title>
+	<link rel="shortcut icon" href="MLE_32.png" />
 	<link rel="stylesheet" href="mle.css" />
 	<script src="mle.js"></script>
 </head>
 <body>
 
-<a href="mle.oex" class="install_link opera">Install MLE in Opera</a>
+<h1>My Little Emotebox</h1>
 
-<a href="mle.crx" class="install_link chrome">Install MLE in Chrome</a>
+<nav>
+	<label for="install" class="active">Install</label>
+	<label for="help">Help</label>
+	<label for="features">Features</label>
+	<label for="changelog">Changelog</label>
+	<label for="lists">Lists</label>
+	<!-- <label for="configs">Configs</label> -->
+</nav>
 
-<a href="mle.xpi" class="install_link firefox">Install MLE in Firefox</a>
+<div class="options">
+
+	<!-- Install -->
+	<section class="install">
+		<input type="radio" name="page" id="install" hidden checked />
+		<ul class="form">
+			<li>
+				<h2>Chrome</h2>
+				<a href="mle.crx" id="link_chrome" class="install_link chrome">Install MLE in Chrome</a>
+				<p class="explain">
+					Download the file and drag&amp;drop it on the chrome://extensions page.<br />
+					More info under “Help”.
+				</p>
+			</li>
+			<li>
+				<h2>Firefox</h2>
+				<a href="mle.xpi" id="link_firefox" class="install_link firefox">Install MLE in Firefox</a>
+			</li>
+			<li>
+				<h2>Opera</h2>
+				<a href="mle.oex" id="link_opera" class="install_link opera">Install MLE in Opera</a>
+				<p class="explain">
+					You have to add this domain (http://sebadorn.de) to the list of trusted websites.<br />
+					More info under “Help”.
+				</p>
+			</li>
+		</ul>
+	</section>
+
+	<!-- Help -->
+	<section class="help">
+		<input type="radio" name="page" id="help" hidden />
+		<ul class="form">
+			<li>
+				<h2>Chrome</h2>
+				<ol>
+					<li>
+						Download the extension (mle.crx).<br />
+						(Right-click and “Save Link As…”.)
+					</li>
+					<li>Open <code>Tools &gt; Extensions</code>.</li>
+					<li>
+						Drag&amp;drop the downloaded file on the page.<br />
+						<a href="mle_install_chrome.png">(Screenshot)</a>
+					</li>
+					<li>You can delete the mle.crx file now.</li>
+				</ol>
+			</li>
+			<li>
+				<h2>Firefox</h2>
+				<p>
+					Actually, this should work just fine by clicking the install link.<br />
+					If not, try downloading the mle.xpi file and drag&amp;drop it on Firefox.
+				</p>
+			</li>
+			<li>
+				<h2>Opera</h2>
+				<ol>
+					<li>Open <code>Settings &gt; Preferences…</code>.</li>
+					<li>In the <code>Advanced</code> tab, select <code>Security</code>.</li>
+					<li>
+						Open the <code>Trusted Websites…</code> dialog and add <code>http://sebadorn.de</code>.<br />
+						<a href="mle_install_opera.png">(Screenshot)</a>
+					</li>
+					<li>You can click the “Install MLE in Opera” link now.</li>
+				</ol>
+			</li>
+		</ul>
+	</section>
+
+	<!-- Features -->
+	<section class="features">
+		<input type="radio" name="page" id="features" hidden />
+		<ul class="form">
+			<li>
+				<img src="mle_box.png" style="width: 650px; height: 330px;" alt="MLE – opened box." />
+				<p class="explain">Opened emotebox with more than the default lists.</p>
+			</li>
+			<li>
+				<strong>Lists.</strong><br />
+				Create different lists to bring some system into this sea of emotes.<br />
+				Drag&amp;drop lists and emotes to change their order.
+			</li>
+			<li>
+				<strong>Default emotes.</strong><br />
+				Pre-shipped with the emotes of r/mylittlepony.
+				<p class="explain">But if new emotes become available, you will have to add them yourself.</p>
+			</li>
+			<li>
+				<strong>Custom context menu for emotes.</strong><br />
+				See an emote you want to add? Just right-click it and choose “Save Emote”.
+				<img src="mle_ctx.png" style="width: 326px; height: 279px;" alt="MLE – context menu." />
+			</li>
+			<li>
+				<strong>Export/Import.</strong><br />
+				Export and import your lists, emotes and config as JSON.
+				<p class="explain">
+					Which is an easy way to do backups. Do backups. Just save it in some .txt file. Copy and paste, nothing more.<br />
+					Do backups.
+				</p>
+			</li>
+		</ul>
+	</section>
+
+	<!-- Changelog -->
+	<section class="changelog">
+		<input type="radio" name="page" id="changelog" hidden />
+		<ul class="form">
+			<li>
+				<a href="https://github.com/sebadorn/MLE">Source code available on GitHub.</a>
+				<span style="color: transparent; position: absolute; top: 0; right: 0;">[](/ppoutofnowhere-r "Hi")</span>
+			</li>
+			<li>
+				<h2>2.0</h2>
+				Initial release. (Version 1 was a plain userscript.)
+			</li>
+		</ul>
+	</section>
+
+	<!-- Lists -->
+	<section class="lists">
+		<input type="radio" name="page" id="lists" hidden />
+		<ul class="form">
+			<li>
+				<strong><a href="lists/mle_default.json">mle_default.json</a></strong><br />
+				The default lists for r/mylittlepony, containing a list for each table.<br />
+				<p class="explain">Last update: 2013-02-14</p>
+			</li>
+			<li>
+				<strong><a href="lists/mle_extended.json">mle_extended.json</a></strong><br />
+				Back from when MLE was first published as userscript. A friendly user provided a lot of lists. Which showed me, that the script couldn't handle so much. Well, it can <em>now</em>.
+				<p class="explain" style="margin-bottom: 10px;">
+					r/mylittlepony + r/plounge + r/mylittlelivestream + r/mlas1 + r/mylittlewtf + r/idliketobeatree + r/mylittleonions + r/vinylscratch + r/applejack + r/mylittlesquidward + r/mylittlefortress + r/mylittlenopenopenope + r/daylightemotes + r/mylittledaww + r/mylittlenanners + r/mylittlenosleep + r/mylittledamon + r/thebestpony + r/tbpimagedump + r/roseluck + r/mylittlemusician + r/mylittlecelestias + r/mylittlechaos + r/mylittlealcoholic + r/mylittlelistentothis + r/surprise + r/pinkiepie + r/twilightsparkle + r/colgate + r/lyra + r/mylittlefoodmanes + r/mylittlesports + r/ilovedashie + r/flitter + r/falloutequestria
+				</p>
+				The emotes of the subs are very likely incomplete, given the time that has passed since then.
+				<p class="explain">Last update: 2012-08-08</p>
+			</li>
+		</ul>
+	</section>
+
+	<!-- Configs -->
+<!-- 	<section class="configs">
+		<input type="radio" name="page" id="configs" hidden />
+		<ul class="form">
+			<li>
+				<strong><a href="lists/config_default.json">config_default.json</a></strong><br />
+				The default config.<br />
+				<p class="explain">Last update: 2013-02-14</p>
+			</li>
+		</ul>
+	</section> -->
+
+</div>
 
 </body>
 </html>

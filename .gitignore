@@ -1,6 +1,9 @@
 # Files whose hardlinks are used for the different browser extensions
 common resources/*
 
+# Just some screenshots
+server/mle_*.png
+
 # Script containing Firefox SDK command cfx with a parameter for my local profile
 Firefox/cfxrun.sh
 

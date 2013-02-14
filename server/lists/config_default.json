@@ -1,0 +1,20 @@
+{
+	"boxEmoteBorder": "#ffffff",
+	"boxScrollbar": "right",
+	"boxBgColor": "#f4f4f4",
+	"msgPosition": "top",
+	"boxWidthMinimized": 70,
+	"boxLabelMinimized": "Emotes",
+	"boxAlign": "right",
+	"ctxMenu": true,
+	"boxWidth": 650,
+	"boxHeight": 330,
+	"adjustForGrEmB": false,
+	"boxPosTop": 60,
+	"boxUnderHeader": true,
+	"boxAnimationSpeed": 420,
+	"adjustForBetterPonymotes": true,
+	"msgAnimationSpeed": 1000,
+	"msgTimeout": 7000,
+	"addBlankAfterInsert": true
+}

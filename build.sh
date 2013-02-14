@@ -70,6 +70,12 @@ function build_firefox {
 	# Sign update RDF
 	$MCCOY -signRDF build/updates-firefox.rdf -key "My Little Emotebox"
 	# $MCCOY -verifyRDF build/updates-firefox.rdf -key "My Little Emotebox"
+
+	# Replace XPI hash in mle.js
+	cd server/
+	cp mle-template.js mle.js
+	sed -i "s;%XPI_HASH%;sha256:$XPI_HASH;g" mle.js
+	cd ../
 }
 
 
