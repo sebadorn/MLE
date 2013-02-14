@@ -39,6 +39,17 @@ h1 {
 	text-transform: uppercase;
 }
 
+	#version {
+		display: inline-block;
+		font-size: 22px;
+		font-weight: normal;
+		left: 8px;
+		line-height: 22px;
+		position: relative;
+		top: -4px;
+		vertical-align: top;
+	}
+
 h2 {
 	font-size: 24px;
 	font-weight: bold;

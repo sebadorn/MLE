@@ -57,9 +57,19 @@ function setFirefoxInstallTrigger() {
 
 
 /**
+ * Set current version of MLE in headline.
+ */
+function setVersion() {
+	var v = document.getElementById( "version" );
+	v.textContent = "%MLE_VERSION%";
+};
+
+
+/**
  * Get started.
  */
 function init() {
+	setVersion();
 	registerEventToggleNav();
 	setFirefoxInstallTrigger();
 }

@@ -81,9 +81,18 @@ function build_firefox {
 
 function hint_firefox {
 	echo " ---------- ---------- ---------- "
-	echo "Maybe you have to change min/maxVersion in updates-firefox-template.rdf."
-	echo "See: .firefox-addon-sdk-1.13.1/app-extension/install.rdf (also check for updates)"
+	echo "Remember to update Firefox SDK if a new version becomes available. Currently using 1.13.1."
 	echo "Current Firefox: $(firefox -v)"
+}
+
+
+function build_page {
+	local XPI_HASH=$(sha256sum build/mle.xpi | sed "s/ .*//g" -)
+	cd server/
+	cp mle-template.js mle.js
+	sed -i "s;%XPI_HASH%;sha256:$XPI_HASH;g" mle.js
+	set_version_and_url mle.js
+	cd ../
 }
 
 
@@ -117,5 +126,7 @@ elif [ $BROWSER == "firefox" ]; then
 	build_firefox
 	hint_firefox
 fi
+
+build_page
 
 echo " ---------- ---------- ---------- "
