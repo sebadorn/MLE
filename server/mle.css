@@ -131,6 +131,10 @@ p {
 	line-height: 24px;
 }
 
+.changelog li {
+	line-height: 26px;
+}
+
 .features li:first-child {
 	border-top: 0;
 	text-align: center;

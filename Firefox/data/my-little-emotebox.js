@@ -140,10 +140,13 @@
 			return false;
 		}
 
-		if( node.outerHTML.indexOf( "href=\"/" ) < 0
-				|| node.outerHTML.indexOf( "href=\"/http://" ) > -1
-				|| node.outerHTML.indexOf( "href=\"/r/" ) > -1
-				|| node.outerHTML.indexOf( "href=\"/user/" ) > -1 ) {
+		var nodeHTML = node.outerHTML;
+
+		if( nodeHTML.indexOf( "href=\"/" ) < 0
+				|| nodeHTML.indexOf( "href=\"/http://" ) > -1
+				|| nodeHTML.indexOf( "href=\"/r/" ) > -1
+				|| nodeHTML.indexOf( "href=\"/user/" ) > -1
+				|| nodeHTML.indexOf( "href=\"/message/" ) > -1 ) {
 			return false;
 		}
 		return true;
@@ -1297,6 +1300,11 @@
 
 		e.preventDefault();
 
+		// Hooray for weird bugs. Opera fires the drop event two times.
+		if( g.draggingList == null ) {
+			return;
+		}
+
 		// Do nothing if source and target are the same
 		if( e_target == g.draggingList ) {
 			g.draggingList = null;
@@ -1319,8 +1327,8 @@
 		e_target.parentNode.insertBefore( g.draggingList, e_target );
 
 		// Reorder and save to storage
-		nameSource = g.draggingList.id.replace( g.noise, '' );
-		nameTarget = e_target.id.replace( g.noise, '' );
+		nameSource = g.draggingList.querySelector( "strong" ).textContent;
+		nameTarget = e_target.querySelector( "strong" ).textContent;
 
 		reordered = reorderList( nameSource, nameTarget );
 
@@ -1486,6 +1494,9 @@
 			hideCtxMenu();
 			return;
 		}
+
+		e.preventDefault();
+
 		var g = GLOBAL;
 
 		g.CTX.trigger = e.target;
@@ -1500,8 +1511,6 @@
 
 		g.CTX.ctxMenu.style.left = ( e.clientX + 2 ) + "px";
 		g.CTX.ctxMenu.style.top = e.clientY + "px";
-
-		e.preventDefault();
 	};
 
 
