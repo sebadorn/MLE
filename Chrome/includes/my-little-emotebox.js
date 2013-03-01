@@ -394,7 +394,8 @@
 	function addMLEButtons() {
 		var d = document;
 		var textareas = d.querySelectorAll( ".help-toggle" ),
-		    button;
+		    button,
+		    refEle;
 
 		for( var i = 0; i < textareas.length; i++ ) {
 			button = d.createElement( "button" );
@@ -403,7 +404,14 @@
 			button.textContent = "open MLE";
 			button.addEventListener( "click", mainContainerShow, false );
 
-			textareas[i].appendChild( button );
+			refEle = textareas[i].querySelector( ".bpm-search-toggle" );
+
+			if( refEle ) {
+				textareas[i].insertBefore( button, refEle );
+			}
+			else {
+				textareas[i].appendChild( button );
+			}
 		}
 
 		observeReplyChangesForMLEButtons();
