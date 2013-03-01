@@ -79,11 +79,8 @@ function saveSetting( e ) {
 	switch( htmlTag ) {
 		case "select":
 			val = getOptionValue( e.target );
-			if( val == "true" ) {
-				val = true;
-			}
-			else if( val == "false" ) {
-				val = false;
+			if( e.target.id == "ctxMenu" ) {
+				val = ( val == "true" );
 			}
 			break;
 

@@ -5,7 +5,8 @@
 * `[Feature]` Add easy way to use modifiers (-combine, -i, -in, -r, -shift, -slide, -spin)
 * `[Feature]` Add option for a context menu per browser API (not HTML, but actually extending it)
 * `[Feature]` Options to style context menu
-* `[Feature]` Make it a toolbar button instead of an in-page element
+* `[Feature]` Make it a toolbar button
+* `[Feature]` Make it just a little button next to the textarea(s)
 * `[Feature]` MLE ctx menu active inside the BPM emote search
 * `[Bug]` Context menu being positioned partly out of view
 * `[Bug]` Context sub menu taking its time on first opening

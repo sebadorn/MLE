@@ -110,6 +110,7 @@ var DEFAULT_CONFIG = {
 	boxLabelMinimized: "Emotes",
 	boxPosTop: 60, // [px]
 	boxScrollbar: "left", // "left" or "right"
+	boxTrigger: "float", // "float" or "button"
 	boxWidth: 650, // [px]
 	boxWidthMinimized: 70, // [px]
 	boxUnderHeader: true,
@@ -223,6 +224,41 @@ var BrowserOpera = {
 	 */
 	logError: function( msg ) {
 		opera.postError( msg );
+	},
+
+	/**
+	 * Extend the normal context menu with the context menu API.
+	 */
+	registerContextMenu: function() {
+		var menu = opera.contexts.menu;
+		var itemPropsLine = {
+				contexts: ["link"],
+				targetURLPatterns: [
+					"http://*.reddit.com/*",
+					"https://*.reddit.com/*",
+					"http://reddit.com/*",
+					"https://reddit.com/*"
+				],
+				type: "line"
+			},
+			itemPropsFolder = {
+				contexts: ["link"],
+				// Really limited, so the menu item will show up on a lot of links,
+				// that aren't emotes. RegExp would be nice, but '*' is the only wildcard.
+				targetURLPatterns: [
+					"http://*.reddit.com/*",
+					"https://*.reddit.com/*",
+					"http://reddit.com/*",
+					"https://reddit.com/*"
+				],
+				title: "My Little Emotebox",
+				type: "folder"
+			};
+		var itemLine = menu.createItem( itemPropsLine ),
+		    itemFolder = menu.createItem( itemPropsFolder );
+
+		menu.addItem( itemLine );
+		//menu.addItem( itemFolder );
 	},
 
 	/**
@@ -513,9 +549,9 @@ function updateConfig( current_config ) {
 	for( key in DEFAULT_CONFIG ) {
 		if( !current_config.hasOwnProperty( key ) ) {
 			current_config[key] = DEFAULT_CONFIG[key];
-			MyBrowser.save( key, DEFAULT_CONFIG[key] );
 		}
 	}
+	saveToStorage( PREF.CONFIG, current_config );
 
 	return current_config;
 };
@@ -590,3 +626,4 @@ function saveDefaultToStorage( key, obj ) {
 
 
 MyBrowser.registerMessageHandler( handleMessage );
+// MyBrowser.registerContextMenu();

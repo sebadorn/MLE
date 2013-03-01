@@ -198,7 +198,7 @@
 		// '%' will be replaced with noise
 		var css = {
 			// Collection of same CSS
-			"#mle%.show ul, #mle%.show .mle-block%, #mle%.show .btn, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
+			"#mle%.show, #mle%.show ul, #mle%.show .mle-block%, #mle%.show .btn, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
 					"display: block;",
 			"#mle%, #mle-ctxmenu%":
 					"font: 12px Verdana, Arial, Helvetica, \"DejaVu Sans\", sans-serif; line-height: 14px; text-align: left;",
@@ -295,6 +295,13 @@
 					"max-height: 200px; max-width: 180px; overflow: auto; z-index: 10020;"
 		};
 
+		if( cfg.boxTrigger != "float" ) {
+			css["#mle%"] += " display: none;";
+		}
+		if( cfg.boxTrigger == "button" ) {
+			css[".mle-open-btn"] = "margin: 0 0 0 4px !important;";
+		}
+
 		styleNode.type = "text/css";
 		styleNode.id = g.ID.styleNode + g.noise;
 
@@ -373,6 +380,63 @@
 
 		if( g.config.ctxMenu ) {
 			d.body.appendChild( createCtxMenu() );
+		}
+
+		if( g.config.boxTrigger == "button" ) {
+			addMLEButtons();
+		}
+	};
+
+
+	/**
+	 * Add buttons top open MLE next to every textarea.
+	 */
+	function addMLEButtons() {
+		var d = document;
+		var textareas = d.querySelectorAll( ".help-toggle" ),
+		    button;
+		var i;
+
+		for( i = 0; i < textareas.length; i++ ) {
+			button = d.createElement( "button" );
+			button.className = "mle-open-btn";
+			button.type = "button";
+			button.textContent = "open MLE";
+			button.addEventListener( "click", mainContainerShow, false );
+
+			textareas[i].appendChild( button );
+		}
+
+		// Add the click event to comment replies, too.
+		var MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
+
+		// No MutationObserver in Opera yet
+		if( !MutationObserver ) {
+			d.addEventListener( "DOMNodeInserted", function( e ) {
+				// "usertext cloneable" is the whole reply-to-comment section
+				if( e.target.className == "usertext cloneable" ) {
+					var buttonMLE = e.target.querySelector( ".mle-open-btn" );
+					buttonMLE.addEventListener( "click", mainContainerShow, false );
+				}
+			}, false );
+		}
+		// ... but in Chrome and Firefox
+		else {
+			var observer = new MutationObserver( function( mutations ) {
+					console.log( mutations );
+					// TODO: check for our button and add the event listener
+				} );
+
+			var targets = d.querySelectorAll( ".child" ),
+			    observerConfig = {
+			    	attributes: true,
+			    	childList: true,
+			    	characterData: true
+			    };
+
+			for( i = 0; i < targets.length; i++ ) {
+				observer.observe( targets[i], observerConfig );
+			}
 		}
 	};
 
@@ -1381,7 +1445,7 @@
 
 	/**
 	 * Remember the currently focused/active textarea
-	 * (if there is on) as input for the emotes.
+	 * (if there is one) as input for the emotes.
 	 */
 	function rememberActiveTextarea( e ) {
 		var ae = document.activeElement;

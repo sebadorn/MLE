@@ -32,6 +32,17 @@
 		<input type="radio" name="page" id="behaviour" hidden checked />
 		<ul class="form">
 			<li>
+				<select id="boxTrigger">
+					<option value="float">float</option>
+					<option value="button">button</option>
+				</select>
+				<label>Page integration when minimized</label>
+				<p class="explain">
+					<strong>float</strong> – A little box at the side, that stays on top of other elements and scrolls with the view.<br />
+					<strong>button</strong> – A button next to every textarea.
+				</p>
+			</li>
+			<li>
 				<select id="ctxMenu">
 					<option value="true">enabled</option>
 					<option value="false">disabled</option>

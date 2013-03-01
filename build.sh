@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CFX=~/.firefox-addon-sdk-1.13.1/bin/cfx
+CFX=~/.firefox-addon-sdk-1.13.2/bin/cfx
 MCCOY=~/.mccoy/mccoy
 CHROME=google-chrome
 
@@ -81,7 +81,8 @@ function build_firefox {
 
 function hint_firefox {
 	echo " ---------- ---------- ---------- "
-	echo "Remember to update Firefox SDK if a new version becomes available. Currently using 1.13.1."
+	echo "Remember to update Firefox SDK if a new version becomes available."
+	echo "Currently using $CFX."
 	echo "Current Firefox: $(firefox -v)"
 }
 
