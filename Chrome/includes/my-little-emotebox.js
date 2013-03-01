@@ -193,7 +193,7 @@
 		    listDirection;
 
 		boxPos = ( cfg.boxAlign == "left" ) ? "left: 5px;" : "right: 5px;";
-		listDirection = ( cfg.boxScrollbar == "left" ) ? "ltr" : "rtl";
+		listDirection = ( cfg.boxScrollbar == "right" ) ? "ltr" : "rtl";
 
 		// '%' will be replaced with noise
 		var css = {
@@ -395,9 +395,8 @@
 		var d = document;
 		var textareas = d.querySelectorAll( ".help-toggle" ),
 		    button;
-		var i;
 
-		for( i = 0; i < textareas.length; i++ ) {
+		for( var i = 0; i < textareas.length; i++ ) {
 			button = d.createElement( "button" );
 			button.className = "mle-open-btn";
 			button.type = "button";
@@ -407,12 +406,22 @@
 			textareas[i].appendChild( button );
 		}
 
+		observeReplyChangesForMLEButtons();
+	};
+
+
+	/**
+	 * Observe document for dynamically inserted reply areas.
+	 * If this happens, add the "click" event listener to the inserted MLE button.
+	 * (Sometimes you just don't know what to call a function.)
+	 */
+	function observeReplyChangesForMLEButtons() {
 		// Add the click event to comment replies, too.
 		var MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
 
 		// No MutationObserver in Opera yet
 		if( !MutationObserver ) {
-			d.addEventListener( "DOMNodeInserted", function( e ) {
+			document.addEventListener( "DOMNodeInserted", function( e ) {
 				// "usertext cloneable" is the whole reply-to-comment section
 				if( e.target.className == "usertext cloneable" ) {
 					var buttonMLE = e.target.querySelector( ".mle-open-btn" );
@@ -420,22 +429,42 @@
 				}
 			}, false );
 		}
-		// ... but in Chrome and Firefox
+
+		// ... but in Chrome (vendor prefixed with "Webkit") and Firefox
 		else {
-			var observer = new MutationObserver( function( mutations ) {
-					console.log( mutations );
-					// TODO: check for our button and add the event listener
-				} );
+			var observer = new MutationObserver( mutationHandler );
+			var targets = document.querySelectorAll( ".child" ),
+			    observerConfig = { attributes: false, childList: true, characterData: false };
 
-			var targets = d.querySelectorAll( ".child" ),
-			    observerConfig = {
-			    	attributes: true,
-			    	childList: true,
-			    	characterData: true
-			    };
-
-			for( i = 0; i < targets.length; i++ ) {
+			for( var i = 0; i < targets.length; i++ ) {
 				observer.observe( targets[i], observerConfig );
+			}
+		}
+	};
+
+
+	/**
+	 * Callback function for the MutationObserver.
+	 * @param {MutationRecord} mutations
+	 */
+	function mutationHandler( mutations ) {
+		var mutation, node, buttonMLE;
+		var i, j;
+
+		for( i = 0; i < mutations.length; i++ ) {
+			mutation = mutations[i];
+
+			for( j = 0; j < mutation.addedNodes.length; j++ ) {
+				node = mutation.addedNodes[j];
+
+				if( node.className == "usertext cloneable" ) {
+					buttonMLE = node.querySelector( ".mle-open-btn" );
+
+					if( buttonMLE ) {
+						buttonMLE.addEventListener( "click", mainContainerShow, false );
+						return;
+					}
+				}
 			}
 		}
 	};

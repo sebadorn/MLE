@@ -73,47 +73,78 @@ function isColor( color ) {
 function saveSetting( e ) {
 	var htmlTag = e.target.tagName.toLowerCase(),
 	    cfgName = e.target.id;
-	var val,
+	var val = null,
 	    cfg = {};
 
 	switch( htmlTag ) {
 		case "select":
-			val = getOptionValue( e.target );
-			if( e.target.id == "ctxMenu" ) {
-				val = ( val == "true" );
-			}
+			val = saveHandleSelect( e );
 			break;
 
 		case "input":
-			switch( e.target.type ) {
-				case "checkbox":
-					val = e.target.checked;
-					break;
-				case "number":
-					val = parseInt( e.target.value );
-					if( isNaN( val ) || val < 0 ) {
-						e.target.value = CONFIG[cfgName];
-						return;
-					}
-					break;
-				case "text":
-					val = e.target.value;
-					if( e.target.className == "color" ) {
-						val = val.replace( / /g, '' );
-						val = val.toLowerCase();
+			try {
+				val = saveHandleInput( e );
+			}
+			catch( err ) { return; }
+			break;
+	}
 
-						if( !isColor( val ) ) {
-							return;
-						}
-					}
-					break;
+	if( val != null ) {
+		cfg[cfgName] = val;
+		postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
+	}
+};
+
+
+/**
+ * Get the config value of a changed <input>.
+ * @throws {Boolean} If no valid config value can be extracted.
+ * @return {mixed} String, boolean or integer.
+ */
+function saveHandleInput( e ) {
+	var val;
+
+	switch( e.target.type ) {
+		case "checkbox":
+			val = e.target.checked;
+			break;
+
+		case "number":
+			val = parseInt( e.target.value );
+			if( isNaN( val ) || val < 0 ) {
+				e.target.value = CONFIG[cfgName];
+				throw false;
+			}
+			break;
+
+		case "text":
+			val = e.target.value;
+			if( e.target.className == "color" ) {
+				val = val.replace( / /g, '' );
+				val = val.toLowerCase();
+
+				if( !isColor( val ) ) {
+					throw false;
+				}
 			}
 			break;
 	}
 
-	cfg[cfgName] = val;
+	return val;
+};
 
-	postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
+
+/**
+ * Get the config value of a changed <select>.
+ * @return {mixed} String or boolean.
+ */
+function saveHandleSelect( e ) {
+	var val = getOptionValue( e.target );
+
+	if( e.target.id == "ctxMenu" ) {
+		val = ( val == "true" );
+	}
+	return val;
 };
 
 

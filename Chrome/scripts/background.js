@@ -481,9 +481,9 @@ function handleMessage( e, sender, sendResponse ) {
 			break;
 
 		case BG_TASK.SAVE_CONFIG:
-			data.config = mergeWithConfig( data.config );
-			response = saveToStorage( PREF.CONFIG, data.config );
-			response.config = data.config;
+			CURRENT_CONFIG = mergeWithConfig( data.config );
+			response = saveToStorage( PREF.CONFIG, CURRENT_CONFIG );
+			response.config = CURRENT_CONFIG;
 			break;
 
 		case BG_TASK.RESET_CONFIG:
