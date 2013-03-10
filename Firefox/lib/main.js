@@ -150,7 +150,7 @@ var DEFAULT_EMOTES = {
 		"raritysad", "fabulous", "derpyhappy", "derp", "derpyshock",
 		"flutterblush", "loveme", "lunasad", "lunagasp", "celestia",
 		"scootaloo", "angel", "allmybits", "zecora", "photofinish",
-		"trixiesad", "changeling"
+		"trixiesad", "changeling", "rdscared", "twidaw", "whattheflut"
 	],
 	"E": [
 		"fillytgap", "rdhuh", "rdsalute", "awwyeah", "twiponder",
