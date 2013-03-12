@@ -1,3 +1,8 @@
+## Self-hosted
+
+[The latest non-dev version can be found here.](http://sebadorn.de/mlp/mle/)
+
+
 ## ToDo
 
 * `[Feature]` Search for list names
