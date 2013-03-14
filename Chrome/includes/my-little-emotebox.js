@@ -942,7 +942,7 @@
 		var d = document;
 		var note = d.createElement( "em" );
 
-		note.textContent = "Use Drag&amp;Drop to move lists. A dragged object will be inserted before the one it was dropped on.";
+		note.textContent = "Use Drag&Drop to move lists. A dragged object will be inserted before the one it was dropped on.";
 
 		return appendChildren(
 			d.createElement( "div" ),

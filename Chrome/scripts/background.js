@@ -546,7 +546,7 @@ function mergeWithConfig( obj ) {
  * @return {Object} The updated config.
  */
 function updateConfig( current_config ) {
-	for( key in DEFAULT_CONFIG ) {
+	for( var key in DEFAULT_CONFIG ) {
 		if( !current_config.hasOwnProperty( key ) ) {
 			current_config[key] = DEFAULT_CONFIG[key];
 		}
