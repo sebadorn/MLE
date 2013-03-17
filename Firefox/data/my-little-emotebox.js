@@ -6,40 +6,44 @@
 	var ALLOWED_HOSTNAMES = ["reddit.com"];
 
 	var GLOBAL = {
+			// Loaded config
 			config: null,
+			// References to DOMElements associated with the HTML context menu
 			CTX: {
 				ctxMenu: null,
 				dialogMoveEmote: null,
 				dialogSaveEmote: null,
 				selectedEmote: null,
+				// DOMElement that triggered the context menu
 				trigger: null
 			},
-			draggingEmote: null,
-			draggingList: null,
-			emoteBlocks: {},
+			// Loaded emotes
 			emotes: null,
-			focusedInput: null,
+			// IDs of some HTML elements
 			ID: {
-				ctxmenu: "mle-ctxmenu",
-				exportField: "mle-export",
-				importField: "mle-import",
 				inputAddEmote: "addemote",
 				inputAddList: "addlist",
 				inputAddToList: "addtolist",
-				inputDelList: "dellist",
-				inputPreviewEmote: "previewaddemote",
-				lists: "mle-blocklist",
-				mainbox: "mle",
-				mngForm: "mle-manage",
-				styleNode: "MyLittleEmotebox"
+				inputDelList: "dellist"
 			},
-			mainCont: null,
-			msg: null,
+			// Reference to the timeout object for the notifier
 			msgTimeout: null,
-			navList: [],
 			// Noise for CSS classes and IDs, to minimise the probability
 			// of accidentally overwriting existing styles.
 			noise: "-bd6acd4a",
+			// Holding references to DOMElements
+			REF: {
+				emoteBlocks: {},
+				draggedEmote: null,
+				draggedList: null,
+				focusedInput: null,
+				lists: null,
+				mainCont: null,
+				mngForm: null,
+				msg: null,
+				navList: []
+			},
+			// String, key of block in REF.emoteBlocks
 			shownBlock: null
 		};
 
@@ -61,9 +65,9 @@
 	 */
 	function addClassesForEmote( emote ) {
 		var cfg = GLOBAL.config;
-		var cn = emote.href.split( "/" );
+		var emoteName = emote.href.split( "/" );
 
-		cn = cn[cn.length - 1];
+		emoteName = emoteName[emoteName.length - 1];
 
 		if( !emote.className ) {
 			emote.className = "";
@@ -71,11 +75,11 @@
 
 		// If BetterPonymotes is used for out-of-sub emotes
 		if( cfg.adjustForBetterPonymotes ) {
-			emote.className += " bpmote-" + cn;
+			emote.className += " bpmote-" + emoteName;
 		}
 		// If GrEmB is used
 		if( cfg.adjustForGrEmB ) {
-			emote.className += " G_" + cn + "_";
+			emote.className += " G_" + emoteName + "_";
 		}
 
 		emote.className = emote.className.trim();
@@ -113,17 +117,17 @@
 	 * Hide the context menu of this userscript.
 	 */
 	function hideCtxMenu() {
-		var g = GLOBAL;
+		var ctx = GLOBAL.CTX;
 
-		g.CTX.trigger = null;
-		g.CTX.ctxMenu.className = "";
-		if( g.CTX.dialogSaveEmote ) {
-			g.CTX.dialogSaveEmote.className = "diag";
+		ctx.trigger = null;
+		ctx.ctxMenu.className = "";
+		if( ctx.dialogSaveEmote ) {
+			ctx.dialogSaveEmote.className = "diag";
 		}
-		if( g.CTX.dialogMoveEmote ) {
-			g.CTX.dialogMoveEmote.className = "diag";
+		if( ctx.dialogMoveEmote ) {
+			ctx.dialogMoveEmote.className = "diag";
 		}
-		g.CTX.selectedEmote = null;
+		ctx.selectedEmote = null;
 	};
 
 
@@ -189,22 +193,19 @@
 		var rule,
 		    rules = '\n';
 		var zIndex = cfg.boxUnderHeader ? 10 : 10000,
-		    boxPos,
-		    listDirection;
-
-		boxPos = ( cfg.boxAlign == "left" ) ? "left: 5px;" : "right: 5px;";
-		listDirection = ( cfg.boxScrollbar == "right" ) ? "ltr" : "rtl";
+		    boxPos = ( cfg.boxAlign == "left" ) ? "left: 5px;" : "right: 5px;",
+		    listDirection = ( cfg.boxScrollbar == "right" ) ? "ltr" : "rtl";
 
 		// '%' will be replaced with noise
 		var css = {
 			// Collection of same CSS
-			"#mle%.show, #mle%.show ul, #mle%.show .mle-block%, #mle%.show .btn, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
+			"#mle%.show, #mle%.show ul, #mle%.show .mle-block%, #mle%.show .mle-btn, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
 					"display: block;",
 			"#mle%, #mle-ctxmenu%":
 					"font: 12px Verdana, Arial, Helvetica, \"DejaVu Sans\", sans-serif; line-height: 14px; text-align: left;",
-			"#mle% .btn":
+			"#mle% .mle-btn":
 					"background-color: #808080; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; display: none; font-weight: bold; padding: 5px 0 6px; position: absolute; text-align: center; top: -1px;",
-			"#mle% .btn:hover":
+			"#mle% .mle-btn:hover":
 					"background-color: #404040;",
 			// Inactive state
 			"#mle%":
@@ -303,7 +304,7 @@
 		}
 
 		styleNode.type = "text/css";
-		styleNode.id = g.ID.styleNode + g.noise;
+		styleNode.id = "MyLittleEmotebox" + g.noise;
 
 		for( rule in css ) {
 			rules += rule.replace( /%/g, g.noise );
@@ -322,12 +323,12 @@
 	function addHTML() {
 		var d = document,
 		    g = GLOBAL;
-		var mainContainer = d.createElement( "div" ),
+		var close = d.createElement( "span" ),
 		    fragmentNode = d.createDocumentFragment(),
 		    labelMain = d.createElement( "strong" ),
-		    close = d.createElement( "span" ),
-		    mngTrigger = d.createElement( "span" ),
+		    mainContainer = d.createElement( "div" ),
 		    mngForm = d.createElement( "div" ),
+		    mngTrigger = d.createElement( "span" ),
 		    msg = d.createElement( "p" ),
 		    optTrigger = d.createElement( "span" );
 
@@ -336,17 +337,17 @@
 		labelMain.textContent = g.config.boxLabelMinimized;
 
 		// Add close button
-		close.className = "mle-close btn";
+		close.className = "mle-close mle-btn";
 		close.textContent = "x";
 		close.addEventListener( "click", mainContainerHide, false );
 
 		// Add manage link
-		mngTrigger.className = "mng-link btn";
+		mngTrigger.className = "mng-link mle-btn";
 		mngTrigger.textContent = "Manage";
 		mngTrigger.addEventListener( "click", showManagePage, false );
 
 		// Add options link
-		optTrigger.className = "opt-link btn";
+		optTrigger.className = "opt-link mle-btn";
 		optTrigger.textContent = "Options";
 		optTrigger.title = "Opens the options page";
 		optTrigger.addEventListener( "click", function( e ) {
@@ -354,7 +355,7 @@
 		}, false );
 
 		// Add manage page
-		mngForm.id = g.ID.mngForm + g.noise;
+		mngForm.id = "mle-manage" + g.noise;
 
 		// Add most-of-the-time-hidden message block
 		// (NOT a part of the main container)
@@ -367,13 +368,14 @@
 		);
 
 		// Add list and emote blocks to main container
-		mainContainer.id = g.ID.mainbox + g.noise;
+		mainContainer.id = "mle" + g.noise;
 		mainContainer.appendChild( fragmentNode );
 		mainContainer.addEventListener( "mouseover", rememberActiveTextarea, false );
 		mainContainer.addEventListener( "mouseover", mainContainerShow, false );
 
-		g.msg = msg;
-		g.mainCont = mainContainer;
+		g.REF.msg = msg;
+		g.REF.mngForm = mngForm;
+		g.REF.mainCont = mainContainer;
 
 		d.body.appendChild( mainContainer );
 		d.body.appendChild( msg );
@@ -407,6 +409,7 @@
 			refEle = textareas[i].querySelector( ".bpm-search-toggle" );
 
 			if( refEle ) {
+				// Place MLE button to the left of the BPM button
 				textareas[i].insertBefore( button, refEle );
 			}
 			else {
@@ -427,19 +430,8 @@
 		// Add the click event to comment replies, too.
 		var MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
 
-		// No MutationObserver in Opera yet
-		if( !MutationObserver ) {
-			document.addEventListener( "DOMNodeInserted", function( e ) {
-				// "usertext cloneable" is the whole reply-to-comment section
-				if( e.target.className == "usertext cloneable" ) {
-					var buttonMLE = e.target.querySelector( ".mle-open-btn" );
-					buttonMLE.addEventListener( "click", mainContainerShow, false );
-				}
-			}, false );
-		}
-
-		// ... but in Chrome (vendor prefixed with "Webkit") and Firefox
-		else {
+		// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
+		if( MutationObserver ) {
 			var observer = new MutationObserver( mutationHandler );
 			var targets = document.querySelectorAll( ".child" ),
 			    observerConfig = { attributes: false, childList: true, characterData: false };
@@ -447,6 +439,17 @@
 			for( var i = 0; i < targets.length; i++ ) {
 				observer.observe( targets[i], observerConfig );
 			}
+		}
+
+		// ... but not in Opera, so we have to do this the deprecated way
+		else {
+			document.addEventListener( "DOMNodeInserted", function( e ) {
+				// "usertext cloneable" is the whole reply-to-comment section
+				if( e.target.className == "usertext cloneable" ) {
+					var buttonMLE = e.target.querySelector( ".mle-open-btn" );
+					buttonMLE.addEventListener( "click", mainContainerShow, false );
+				}
+			}, false );
 		}
 	};
 
@@ -510,7 +513,7 @@
 				}
 			];
 
-		menu.id = g.ID.ctxmenu + g.noise;
+		menu.id = "mle-ctxmenu" + g.noise;
 
 		// Add items to menu
 		for( var i = 0; i < items.length; i++ ) {
@@ -633,7 +636,7 @@
 		    countBlocks = 0;
 
 		// Add navigation
-		listNav.id = g.ID.lists + g.noise;
+		listNav.id = "mle-blocklist" + g.noise;
 		fragmentNode.appendChild( listNav );
 
 		for( listName in g.emotes ) {
@@ -657,11 +660,13 @@
 				fragmentNode.appendChild( emoteBlock );
 			}
 
-			g.navList[countBlocks] = listLink;
-			g.emoteBlocks[listName] = emoteBlock;
+			g.REF.navList[countBlocks] = listLink;
+			g.REF.emoteBlocks[listName] = emoteBlock;
 
 			countBlocks++;
 		}
+
+		g.REF.listNav = listNav;
 
 		return fragmentNode;
 	};
@@ -833,7 +838,7 @@
 		inputEmote.type = "text";
 		inputEmote.id = g.ID.inputAddEmote + g.noise;
 		inputEmote.addEventListener( "keyup", updatePreview, false );
-		preview.id = g.ID.inputPreviewEmote + g.noise;
+		preview.id = "previewaddemote" + g.noise;
 
 		// Select a list to add the emote to.
 		selList = createListSelect( "addtolist" + g.noise );
@@ -972,11 +977,11 @@
 		saveEmotesToStorage( g.emotes );
 
 		// Remove from DOM
-		children = g.emoteBlocks[list].childNodes;
+		children = g.REF.emoteBlocks[list].childNodes;
 		emoteSlash = "/" + emote;
 		for( i = 0; i < children.length; i++ ) {
 			if( children[i].pathname == emoteSlash ) {
-				g.emoteBlocks[list].removeChild( children[i] );
+				g.REF.emoteBlocks[list].removeChild( children[i] );
 				break;
 			}
 		}
@@ -1012,7 +1017,7 @@
 		saveEmotesToStorage( g.emotes );
 
 		// Add to DOM
-		g.emoteBlocks[list].appendChild( createEmote( '/' + emote ) );
+		g.REF.emoteBlocks[list].appendChild( createEmote( '/' + emote ) );
 	};
 
 
@@ -1031,14 +1036,14 @@
 	function showMsg( text ) {
 		var g = GLOBAL;
 
-		if( !g.msg || g.msg == null ) { return; }
+		if( !g.REF.msg || g.REF.msg == null ) { return; }
 
 		clearTimeout( g.msgTimeout );
-		g.msg.className += " show";
-		g.msg.textContent = text;
+		g.REF.msg.className += " show";
+		g.REF.msg.textContent = text;
 
 		g.msgTimeout = setTimeout( function() {
-			GLOBAL.msg.className = "mle-msg" + GLOBAL.noise;
+			GLOBAL.REF.msg.className = "mle-msg" + GLOBAL.noise;
 		}, g.config.msgTimeout );
 	};
 
@@ -1128,8 +1133,8 @@
 				delete g.emotes[listNameOld];
 
 				// Change attribute name in emoteBlocks object
-				g.emoteBlocks[listNameNew] = g.emoteBlocks[listNameOld];
-				delete g.emoteBlocks[listNameOld];
+				g.REF.emoteBlocks[listNameNew] = g.REF.emoteBlocks[listNameOld];
+				delete g.REF.emoteBlocks[listNameOld];
 
 				// Change name of the currently shown block if necessary
 				if( g.shownBlock == listNameOld ) {
@@ -1174,7 +1179,6 @@
 		var selectDelHTML = d.getElementById( g.ID.inputDelList + g.noise ),
 		    selectAddHTML = d.getElementById( g.ID.inputAddToList + g.noise ),
 		    listName = getOptionValue( selectDelHTML ),
-		    listBlocks = d.getElementById( g.ID.lists + g.noise ),
 		    listToDel = d.getElementById( strToValidID( listName ) + g.noise );
 		var confirmDel = false,
 		    children,
@@ -1193,8 +1197,8 @@
 		saveEmotesToStorage( g.emotes );
 
 		// Remove from DOM.
-		listBlocks.removeChild( listToDel );
-		delete g.emoteBlocks[listName];
+		g.REF.lists.removeChild( listToDel );
+		delete g.REF.emoteBlocks[listName];
 
 		children = selectDelHTML.childNodes;
 		for( i = 0; i < children.length; i++ ) {
@@ -1252,7 +1256,7 @@
 	 */
 	function insertEmote( e ) {
 		e.preventDefault(); // Don't follow emote link
-		var ta = GLOBAL.focusedInput;
+		var ta = GLOBAL.REF.focusedInput;
 
 		mainContainerHide( e );
 		if( !ta ) { return; }
@@ -1313,10 +1317,10 @@
 		// Afterwards add it again.
 		// Prevents the box from opening again, if mouse cursor hovers
 		// over the closing (CSS3 transition) box.
-		g.mainCont.removeEventListener( "mouseover", mainContainerShow, false );
-		g.mainCont.className = "";
+		g.REF.mainCont.removeEventListener( "mouseover", mainContainerShow, false );
+		g.REF.mainCont.className = "";
 		setTimeout( function() {
-			GLOBAL.mainCont.addEventListener( "mouseover", mainContainerShow, false );
+			GLOBAL.REF.mainCont.addEventListener( "mouseover", mainContainerShow, false );
 		}, g.config.boxAnimationSpeed + 100 );
 	};
 
@@ -1325,7 +1329,7 @@
 	 * Fully display main container.
 	 */
 	function mainContainerShow( e ) {
-		GLOBAL.mainCont.className = "show";
+		GLOBAL.REF.mainCont.className = "show";
 	};
 
 
@@ -1342,22 +1346,22 @@
 
 		// Different parent means we may drag a list element.
 		// We don't drop list elements on emotes, stop it.
-		if( e.target.parentNode != g.draggingEmote.parentNode ) {
-			g.draggingList = null;
+		if( e.target.parentNode != g.REF.draggedEmote.parentNode ) {
+			g.REF.draggedList = null;
 			return;
 		}
 
-		emoteNameSource = g.draggingEmote.pathname.substring( 1 );
+		emoteNameSource = g.REF.draggedEmote.pathname.substring( 1 );
 		emoteNameTarget = e.target.pathname.substring( 1 );
 
 		// Do nothing if source and target are the same
 		if( emoteNameSource == emoteNameTarget ) {
-			g.draggingEmote = null;
+			g.REF.draggedEmote = null;
 			return;
 		}
 
-		e.target.parentNode.removeChild( g.draggingEmote );
-		e.target.parentNode.insertBefore( g.draggingEmote, e.target );
+		e.target.parentNode.removeChild( g.REF.draggedEmote );
+		e.target.parentNode.insertBefore( g.REF.draggedEmote, e.target );
 
 		// Save new order to local storage
 		list = g.emotes[g.shownBlock];
@@ -1376,7 +1380,7 @@
 
 		saveEmotesToStorage( g.emotes );
 
-		g.draggingEmote = null;
+		g.REF.draggedEmote = null;
 	};
 
 
@@ -1384,7 +1388,7 @@
 	 * Remember the currently dragged around emote.
 	 */
 	function moveEmoteStart( e ) {
-		GLOBAL.draggingEmote = e.target;
+		GLOBAL.REF.draggedEmote = e.target;
 	};
 
 
@@ -1402,13 +1406,13 @@
 		e.preventDefault();
 
 		// Hooray for weird bugs. Opera fires the drop event two times.
-		if( g.draggingList == null ) {
+		if( g.REF.draggedList == null ) {
 			return;
 		}
 
 		// Do nothing if source and target are the same
-		if( e_target == g.draggingList ) {
-			g.draggingList = null;
+		if( e_target == g.REF.draggedList ) {
+			g.REF.draggedList = null;
 			return;
 		}
 
@@ -1419,16 +1423,16 @@
 
 		// Different parent means we may drag an emote.
 		// We don't drop emotes on lists, stop it.
-		if( e_target.parentNode != g.draggingList.parentNode ) {
-			g.draggingList = null;
+		if( e_target.parentNode != g.REF.draggedList.parentNode ) {
+			g.REF.draggedList = null;
 			return;
 		}
 
-		e_target.parentNode.removeChild( g.draggingList );
-		e_target.parentNode.insertBefore( g.draggingList, e_target );
+		e_target.parentNode.removeChild( g.REF.draggedList );
+		e_target.parentNode.insertBefore( g.REF.draggedList, e_target );
 
 		// Reorder and save to storage
-		nameSource = g.draggingList.querySelector( "strong" ).textContent;
+		nameSource = g.REF.draggedList.querySelector( "strong" ).textContent;
 		nameTarget = e_target.querySelector( "strong" ).textContent;
 
 		reordered = reorderList( nameSource, nameTarget );
@@ -1436,7 +1440,7 @@
 		g.emotes = reordered;
 		saveEmotesToStorage( g.emotes );
 
-		g.draggingList = null;
+		g.REF.draggedList = null;
 	};
 
 
@@ -1473,7 +1477,7 @@
 	 * Remember the currently dragged around list element.
 	 */
 	function moveListStart( e ) {
-		GLOBAL.draggingList = e.target;
+		GLOBAL.REF.draggedList = e.target;
 
 		// Drag&Drop won't work on the list in Firefox 14 without set data.
 		e.dataTransfer.setData( "text/plain", "" );
@@ -1487,14 +1491,14 @@
 	function rememberActiveTextarea( e ) {
 		var ae = document.activeElement;
 
-		if( ae && ae.tagName.toLowerCase() == "textarea" ) {
-			GLOBAL.focusedInput = ae;
+		if( ae && ae.tagName && ae.tagName.toLowerCase() == "textarea" ) {
+			GLOBAL.REF.focusedInput = ae;
 		}
 	};
 
 
 	/**
-	 * From the options page: Save new emote.
+	 * From the manage page: Save new emote.
 	 */
 	function saveNewEmote( e ) {
 		var d = document,
@@ -1511,13 +1515,12 @@
 
 
 	/**
-	 * From the options page: Save new list.
+	 * From the manage page: Save new list.
 	 */
 	function saveNewList( e ) {
 		var d = document,
 		    g = GLOBAL;
 		var inputField = d.getElementById( g.ID.inputAddList + g.noise ),
-		    listNav = d.getElementById( g.ID.lists + g.noise ),
 		    navLink = d.createElement( "li" ),
 		    newBlock = d.createElement( "div" ),
 		    selAddHTML = d.getElementById( g.ID.inputAddToList + g.noise ),
@@ -1543,12 +1546,12 @@
 
 		// Add to emote block selection
 		navLink = createListLink( listName, 0 );
-		listNav.appendChild( navLink );
-		g.navList.push( navLink );
+		g.REF.lists.appendChild( navLink );
+		g.REF.navList.push( navLink );
 
 		// Add (empty) emote block to main container
 		newBlock.className = "mle-block" + g.noise;
-		g.emoteBlocks[listName] = newBlock;
+		g.REF.emoteBlocks[listName] = newBlock;
 
 		// Add <option>s to <select>s
 		selOption = d.createElement( "option" );
@@ -1648,8 +1651,7 @@
 	 * it won't be needed that often, probably.
 	 */
 	function showManagePage( e ) {
-		var g = GLOBAL;
-		var form = document.getElementById( g.ID.mngForm + g.noise );
+		var form = GLOBAL.REF.mngForm;
 
 		// Hide emote blocks
 		toggleEmoteBlock( false );
@@ -1677,8 +1679,8 @@
 	 */
 	function toggleEmoteBlock( e ) {
 		var g = GLOBAL,
-		    geb = g.emoteBlocks,
-		    gnl = g.navList,
+		    geb = g.REF.emoteBlocks,
+		    gnl = g.REF.navList,
 		    e_target = e.target;
 		var form, listName, i;
 
@@ -1697,22 +1699,22 @@
 
 		// Show "Manage" page
 		if( !e ) {
-			g.mainCont.removeChild( geb[g.shownBlock] );
+			g.REF.mainCont.removeChild( geb[g.shownBlock] );
 			g.shownBlock = null;
 		}
 
 		// Show emotes of chosen block
 		else {
-			form = document.getElementById( g.ID.mngForm + g.noise )
+			form = g.REF.mngForm;
 			form.className = "";
 
 			for( listName in geb ) {
 				if( e && strToValidID( listName ) + g.noise == e_target.id ) {
 					if( !g.shownBlock ) {
-						g.mainCont.appendChild( geb[listName] );
+						g.REF.mainCont.appendChild( geb[listName] );
 					}
 					else {
-						g.mainCont.replaceChild( geb[listName], geb[g.shownBlock] );
+						g.REF.mainCont.replaceChild( geb[listName], geb[g.shownBlock] );
 					}
 					g.shownBlock = listName;
 					break;
