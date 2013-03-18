@@ -2,21 +2,12 @@
 
 ( function() {
 
-	// Hostnames where this extension should be active.
-	var ALLOWED_HOSTNAMES = ["reddit.com"];
 
 	var GLOBAL = {
 			// Loaded config
 			config: null,
 			// Loaded emotes
 			emotes: null,
-			// IDs of some HTML elements
-			ID: {
-				inputAddEmote: "addemote",
-				inputAddList: "addlist",
-				inputAddToList: "addtolist",
-				inputDelList: "dellist"
-			},
 			// Reference to the timeout object for the notifier
 			msgTimeout: null,
 			// Noise for CSS classes and IDs, to minimise the probability
@@ -26,11 +17,15 @@
 			REF: {
 				emoteBlocks: {},
 				focusedInput: null,
+				inputAddEmote: null,
+				inputAddList: null,
 				lists: null,
 				mainCont: null,
 				mngForm: null,
 				msg: null,
-				navList: []
+				navList: [],
+				selectListAddEmote: null,
+				selectListDelete: null
 			},
 			// String, key of block in REF.emoteBlocks
 			shownBlock: null
@@ -39,29 +34,162 @@
 
 
 	/**
-	 * Load saved data from the extension storage.
+	 * Append multiple children to a DOMElement.
+	 * @param  {DOMElement} parent
+	 * @param  {Array}      children List of children to append.
+	 * @return {DOMElement} parent
 	 */
-	function loadStorage() {
-		postMessage( { task: BG_TASK.LOAD } );
+	function appendChildren( parent, children ) {
+		for( var i = 0; i < children.length; i++ ) {
+			parent.appendChild( children[i] );
+		}
+		return parent;
 	};
 
 
 	/**
-	 * Send a message to the background process.
+	 * Callback function for the DOMNodeInserted event.
 	 */
-	function postMessage( msg ) {
-		// Opera
-		if( typeof opera != "undefined" ) {
-			opera.extension.postMessage( msg );
+	function buttonObserverDOMEvent( e ) {
+		// "usertext cloneable" is the whole reply-to-comment section
+		if( e.target.className == "usertext cloneable" ) {
+			var buttonMLE = e.target.querySelector( ".mle-open-btn" );
+
+			buttonMLE.addEventListener( "click", mainContainerShow, false );
 		}
-		// Chrome
-		else if( typeof chrome != "undefined" ) {
-			chrome.extension.sendMessage( msg, handleBackgroundMessages );
+	};
+
+
+	/**
+	 * Callback function for the MutationObserver.
+	 * @param {MutationRecord} mutations
+	 */
+	function buttonObserverMutation( mutations ) {
+		var mutation, node, buttonMLE, i, j;
+
+		for( i = 0; i < mutations.length; i++ ) {
+			mutation = mutations[i];
+
+			for( j = 0; j < mutation.addedNodes.length; j++ ) {
+				node = mutation.addedNodes[j];
+
+				if( node.className == "usertext cloneable" ) {
+					buttonMLE = node.querySelector( ".mle-open-btn" );
+
+					if( buttonMLE ) {
+						buttonMLE.addEventListener( "click", mainContainerShow, false );
+						return;
+					}
+				}
+			}
 		}
-		// probably Firefox
+	};
+
+
+	/**
+	 * Observe document for dynamically inserted reply areas.
+	 * If this happens, add the "click" event listener to the inserted MLE button.
+	 */
+	function buttonObserverSetup() {
+		var MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
+
+		// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
+		if( MutationObserver ) {
+			var observer = new MutationObserver( buttonObserverMutation ),
+			    observerConfig = {
+			    	attributes: false,
+			    	childList: true,
+			    	characterData: false
+			    };
+			var targets = document.querySelectorAll( ".child" );
+
+			for( var i = 0; i < targets.length; i++ ) {
+				observer.observe( targets[i], observerConfig );
+			}
+		}
+		// ... but not in Opera, so we have to do this the deprecated way
 		else {
-			self.postMessage( msg );
+			document.addEventListener( "DOMNodeInserted", buttonObserverDOMEvent, false );
 		}
+	};
+
+
+	/**
+	 * Delete an emote from a list.
+	 * @param {String} emote
+	 * @param {String} list
+	 */
+	function deleteEmote( emote, list ) {
+		var g = GLOBAL;
+		var idx, children, emoteSlash, i;
+
+		// Emotes don't have a leading slash
+		if( emote.indexOf( '/' ) == 0 ) {
+			emote = emote.substring( 1 );
+		}
+
+		// Remove from locale storage
+		idx = g.emotes[list].indexOf( emote );
+		if( idx == -1 ) {
+			return;
+		}
+		g.emotes[list].splice( idx, 1 );
+		saveEmotesToStorage( g.emotes );
+
+		// Remove from DOM
+		children = g.REF.emoteBlocks[list].childNodes;
+		emoteSlash = "/" + emote;
+
+		for( i = 0; i < children.length; i++ ) {
+			if( children[i].pathname == emoteSlash ) {
+				g.REF.emoteBlocks[list].removeChild( children[i] );
+				break;
+			}
+		}
+	};
+
+
+	/**
+	 * Delete an emote list.
+	 * This will delete all the emotes in this list as well.
+	 */
+	function deleteList( e ) {
+		var g = GLOBAL;
+		var listName = getOptionValue( g.REF.selectListDelete ),
+		    listToDel = document.getElementById( strToValidID( listName ) + g.noise ),
+		    selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
+		var confirmDel = false, children, i, j;
+
+		// Major decision. Better ask first.
+		confirmDel = window.confirm(
+			"My Little Emotebox:\n\n"
+			+ "If you delete the list, you will also DELETE ALL EMOTES in this list!\n\n"
+			+ "Proceed?"
+		);
+		if( !confirmDel ) { return; }
+
+		// Delete from emote lists
+		delete g.emotes[listName];
+		saveEmotesToStorage( g.emotes );
+
+		// Remove from DOM.
+		g.REF.lists.removeChild( listToDel );
+		delete g.REF.emoteBlocks[listName];
+
+		for( i = 0; i < selectLists.length; i++ ) {
+			children = selectLists[i].childNodes;
+
+			for( j = 0; j < children.length; j++ ) {
+				if( children[j].value == listName ) {
+					selectLists[i].removeChild( children[j] );
+					break;
+				}
+			}
+		}
+
+		// Remove context menus.
+		// Will be rebuild when needed.
+		ContextMenu.destroyMenus();
 	};
 
 
@@ -70,6 +198,91 @@
 	 */
 	function getOptionValue( select ) {
 		return select.options[select.selectedIndex].value;
+	};
+
+
+	/**
+	 * Handle messages from the background process.
+	 */
+	function handleBackgroundMessages( e ) {
+		var g = GLOBAL;
+		var data = e.data ? e.data : e;
+
+		if( !data.task ) {
+			console.warn( "MyLittleEmotebox: Message from background process didn't contain the handled task." );
+			return;
+		}
+
+		switch( data.task ) {
+			case BG_TASK.LOAD:
+				g.config = data.config;
+				g.emotes = data.emotes;
+				Init.initStep2();
+				Init = null;
+				break;
+
+			case BG_TASK.SAVE_EMOTES:
+				if( !data.success ) {
+					showMsg( "I'm sorry, but the changes could not be saved." );
+					console.error( "MyLittleEmotebox: Could not save emotes." );
+				}
+				break;
+		}
+	};
+
+
+	/**
+	 * Insert a selected emote.
+	 */
+	function insertEmote( e ) {
+		e.preventDefault(); // Don't follow emote link
+		var ta = GLOBAL.REF.focusedInput;
+
+		mainContainerHide( e );
+		if( !ta ) { return; }
+
+		var emoteLink = e.target.href.split( '/' );
+		var selStart = ta.selectionStart,
+		    selEnd = ta.selectionEnd,
+		    taLen = ta.value.length,
+		    altText,
+		    inputEvent;
+
+		// Emote name
+		emoteLink = emoteLink[emoteLink.length - 1];
+		// Insert reversed emote version
+		emoteLink = e.ctrlKey ? emoteLink + "-r" : emoteLink;
+
+		// Nothing selected, just insert at position
+		if( selStart == selEnd ) {
+			emoteLink = "[](/" + emoteLink + ")";
+		}
+		// Text marked, use for alt text
+		else {
+			altText = ta.value.substring( selStart, selEnd );
+			emoteLink = "[](/" + emoteLink + " \"" + altText + "\")";
+		}
+
+		// Add a blank after the emote
+		if( GLOBAL.config.addBlankAfterInsert ) {
+			emoteLink += ' ';
+		}
+
+		ta.value = ta.value.substring( 0, selStart )
+				+ emoteLink
+				+ ta.value.substring( selEnd, taLen );
+
+		// Focus to the textarea
+		ta.focus();
+		ta.setSelectionRange(
+			selStart + emoteLink.length,
+			selStart + emoteLink.length
+		);
+
+		// Fire input event, so that RedditEnhancementSuite updates the preview
+		inputEvent = document.createEvent( "Events" );
+		inputEvent.initEvent( "input", true, true );
+		ta.dispatchEvent( inputEvent );
 	};
 
 
@@ -117,10 +330,330 @@
 
 
 	/**
+	 * Minimize main container.
+	 */
+	function mainContainerHide( e ) {
+		var g = GLOBAL;
+
+		e.preventDefault();
+
+		// While box closes, remove mouse event for opening.
+		// Afterwards add it again.
+		// Prevents the box from opening again, if mouse cursor hovers
+		// over the closing (CSS3 transition) box.
+		g.REF.mainCont.removeEventListener( "mouseover", mainContainerShow, false );
+		g.REF.mainCont.className = "";
+
+		setTimeout( function() {
+			GLOBAL.REF.mainCont.addEventListener( "mouseover", mainContainerShow, false );
+		}, g.config.boxAnimationSpeed + 100 );
+	};
+
+
+	/**
+	 * Fully display main container.
+	 */
+	function mainContainerShow( e ) {
+		GLOBAL.REF.mainCont.className = "show";
+	};
+
+
+	/**
+	 * Send a message to the background process.
+	 */
+	function postMessage( msg ) {
+		// Opera
+		if( typeof opera != "undefined" ) {
+			opera.extension.postMessage( msg );
+		}
+		// Chrome
+		else if( typeof chrome != "undefined" ) {
+			chrome.extension.sendMessage( msg, handleBackgroundMessages );
+		}
+		// probably Firefox
+		else {
+			self.postMessage( msg );
+		}
+	};
+
+
+	/**
+	 * Reorder emote list. (Not the emotes, but the lists itself.)
+	 * @param  {String} moving    Name of list to insert before "inFrontOf".
+	 * @param  {String} inFrontOf Name of list, that "moving" will be inserted in front of.
+	 * @return {Object} Reordered list.
+	 */
+	function reorderList( moving, inFrontOf ) {
+		var g = GLOBAL;
+		var reordered = {},
+		    block;
+
+		if( moving == inFrontOf ) {
+			return g.emotes;
+		}
+
+		for( block in g.emotes ) {
+			if( block == moving ) {
+				continue;
+			}
+			if( block == inFrontOf ) {
+				reordered[moving] = g.emotes[moving];
+			}
+			reordered[block] = g.emotes[block];
+		}
+
+		return reordered;
+	};
+
+
+	/**
+	 * Remember the currently focused/active textarea
+	 * (if there is one) as input for the emotes.
+	 */
+	function rememberActiveTextarea( e ) {
+		var ae = document.activeElement;
+
+		if( ae && ae.tagName && ae.tagName.toLowerCase() == "textarea" ) {
+			GLOBAL.REF.focusedInput = ae;
+		}
+	};
+
+
+	/**
+	 * Save the given emote to the given list.
+	 * @param {String} emote
+	 * @param {String} list
+	 */
+	function saveEmote( emote, list ) {
+		var g = GLOBAL;
+
+		// Ignore empty
+		if( emote.length == 0 ) {
+			showMsg( "That ain't no emote, sugarcube." );
+			return;
+		}
+
+		// Emotes are saved without leading slash
+		if( emote.indexOf( '/' ) == 0 ) {
+			emote = emote.substring( 1 );
+		}
+
+		// Only save if not already in list
+		if( g.emotes[list].indexOf( emote ) > -1 ) {
+			showMsg( "This emote is already in the list." );
+			return;
+		}
+
+		g.emotes[list].push( emote );
+		saveEmotesToStorage( g.emotes );
+
+		// Add to DOM
+		g.REF.emoteBlocks[list].appendChild( Builder.createEmote( '/' + emote ) );
+	};
+
+
+	/**
+	 * Saves the emotes to the storage.
+	 * @param {Object} emotes Lists/emotes to save.
+	 */
+	function saveEmotesToStorage( emotes ) {
+		postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
+	};
+
+
+	/**
+	 * From the manage page: Save new emote.
+	 */
+	function saveNewEmote( e ) {
+		var d = document,
+		    g = GLOBAL;
+		var inputEmote = g.REF.inputAddEmote,
+		    selectHTML = g.REF.selectListAddEmote,
+		    list = getOptionValue( selectHTML );
+		var emote = inputEmote.value.trim();
+
+		saveEmote( emote, list );
+		inputEmote.value = "";
+		inputEmote.focus();
+	};
+
+
+	/**
+	 * From the manage page: Save new list.
+	 */
+	function saveNewList( e ) {
+		var d = document,
+		    g = GLOBAL;
+		var inputField = g.REF.inputAddList,
+		    navLink = d.createElement( "li" ),
+		    newBlock = d.createElement( "div" ),
+		    selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote],
+		    selOption;
+		var listName = inputField.value.trim(),
+		    i;
+
+		// Ignore empty
+		if( listName.length == 0 ) {
+			showMsg( "That ain't no valid name for a list." );
+			return;
+		}
+
+		// Only create list if it doesn't exist already
+		if( listName in g.emotes ) {
+			showMsg( "This list already exists." );
+			return;
+		}
+
+		g.emotes[listName] = [];
+		saveEmotesToStorage( g.emotes );
+		inputField.value = "";
+
+		// Add to emote block selection
+		navLink = Builder.createListLink( listName, 0 );
+		g.REF.lists.appendChild( navLink );
+		g.REF.navList.push( navLink );
+
+		// Add (empty) emote block to main container
+		newBlock.className = "mle-block" + g.noise;
+		g.REF.emoteBlocks[listName] = newBlock;
+
+		// Add <option>s to <select>s
+		for( i = 0; i < selectLists.length; i++ ) {
+			selOption = d.createElement( "option" );
+			selOption.value = listName;
+			selOption.textContent = listName;
+			selectLists[i].appendChild( selOption );
+		}
+
+		// Destroy context menus.
+		// Will be rebuild when needed.
+		ContextMenu.destroyMenus();
+	};
+
+
+	/**
+	 * Create and show manage page.
+	 * Only create manage elements when needed. Because
+	 * it won't be needed that often, probably.
+	 */
+	function showManagePage( e ) {
+		var form = GLOBAL.REF.mngForm;
+
+		// Hide emote blocks
+		toggleEmoteBlock( false );
+
+		// Create manage elements if first time opening manage page
+		if( form.childNodes.length < 1 ) {
+			Builder.createManagePage( form );
+		}
+
+		form.className = "show-manage";
+	};
+
+
+	/**
+	 * Display a little popup message, that disappears again after a few seconds.
+	 */
+	function showMsg( text ) {
+		var g = GLOBAL;
+
+		if( !g.REF.msg || g.REF.msg == null ) { return; }
+
+		clearTimeout( g.msgTimeout );
+		g.REF.msg.className += " show";
+		g.REF.msg.textContent = text;
+
+		g.msgTimeout = setTimeout( function() {
+			GLOBAL.REF.msg.className = "mle-msg" + GLOBAL.noise;
+		}, g.config.msgTimeout );
+	};
+
+
+	/**
+	 * Prevent the default action of an event.
+	 * @param {Event} e The event.
+	 */
+	function stopEvent( e ) {
+		e.preventDefault();
+	};
+
+
+	/**
 	 * Change a string to a valid ID (HTML attribute) value.
 	 */
 	function strToValidID( name ) {
 		return name.replace( / /g, '_' );
+	};
+
+
+	/**
+	 * Show/hide emote blocks when selected in the navigation.
+	 */
+	function toggleEmoteBlock( e ) {
+		var g = GLOBAL,
+		    geb = g.REF.emoteBlocks,
+		    gnl = g.REF.navList,
+		    e_target = e.target;
+		var form, listName, i;
+
+		// In case a child element was clicked instead of the (parent) list element container
+		if( e_target != this ) {
+			e_target = e_target.parentNode;
+		}
+
+		// Set chosen list to active
+		for( i = 0; i < gnl.length; i++ ) {
+			gnl[i].className = "";
+		}
+		if( e ) {
+			e_target.className = "activelist";
+		}
+
+		// Show "Manage" page
+		if( !e ) {
+			g.REF.mainCont.removeChild( geb[g.shownBlock] );
+			g.shownBlock = null;
+		}
+
+		// Show emotes of chosen block
+		else {
+			form = g.REF.mngForm;
+			form.className = "";
+
+			for( listName in geb ) {
+				if( e && strToValidID( listName ) + g.noise == e_target.id ) {
+					if( !g.shownBlock ) {
+						g.REF.mainCont.appendChild( geb[listName] );
+					}
+					else {
+						g.REF.mainCont.replaceChild( geb[listName], geb[g.shownBlock] );
+					}
+					g.shownBlock = listName;
+					break;
+				}
+			}
+		}
+	};
+
+
+	/**
+	 * Show a preview of the emote that is about to be added.
+	 */
+	function updatePreview( e ) {
+		var previewId = "preview" + e.target.id,
+		    preview = document.getElementById( previewId ),
+		    emoteLink = e.target.value;
+
+		if( emoteLink.indexOf( '/' ) != 0 ) {
+			emoteLink = '/' + emoteLink;
+		}
+		if( emoteLink == preview.href ) {
+			return;
+		}
+
+		preview.href = emoteLink;
+		preview.className = ""; // reset old classes
+		preview = Builder.addClassesForEmote( preview );
 	};
 
 
@@ -401,7 +934,7 @@
 				}
 			}
 
-			observeReplyChangesForMLEButtons();
+			buttonObserverSetup();
 		},
 
 
@@ -450,7 +983,7 @@
 				countBlocks++;
 			}
 
-			g.REF.listNav = listNav;
+			g.REF.lists = listNav;
 
 			return fragmentNode;
 		},
@@ -597,16 +1130,17 @@
 			    g = GLOBAL;
 			var inputEmote = d.createElement( "input" ),
 			    preview = d.createElement( "a" ),
-			    selList,
 			    submitEmote = d.createElement( "input" );
 
 			inputEmote.type = "text";
-			inputEmote.id = g.ID.inputAddEmote + g.noise;
+			inputEmote.id = "addemote" + g.noise;
 			inputEmote.addEventListener( "keyup", updatePreview, false );
+			g.REF.inputAddEmote = inputEmote;
+
 			preview.id = "previewaddemote" + g.noise;
 
 			// Select a list to add the emote to.
-			selList = this.createListSelect( "addtolist" + g.noise );
+			g.REF.selectListAddEmote = this.createListSelect( "addtolist" + g.noise );
 
 			submitEmote.type = "submit";
 			submitEmote.value = "save emote";
@@ -618,7 +1152,7 @@
 					this.createLabel( "Add emote" ),
 					inputEmote,
 					d.createTextNode( " to " ),
-					selList,
+					g.REF.selectListAddEmote,
 					submitEmote,
 					d.createElement( "br" ),
 					preview
@@ -637,7 +1171,8 @@
 			    submitList = d.createElement( "input" );
 
 			inputList.type = "text";
-			inputList.id = g.ID.inputAddList + g.noise;
+			inputList.id = "addlist" + g.noise;
+			g.REF.inputAddList = inputList;
 
 			submitList.type = "submit";
 			submitList.value = "create new list";
@@ -662,15 +1197,17 @@
 			    g = GLOBAL;
 			var submitDel = d.createElement( "input" );
 
+			g.REF.selectListDelete = this.createListSelect( "dellist" + g.noise );
+
 			submitDel.type = "submit";
 			submitDel.value = "delete list";
-			submitDel.addEventListener( "click", delList, false );
+			submitDel.addEventListener( "click", deleteList, false );
 
 			return appendChildren(
 				d.createElement( "div" ),
 				[
 					this.createLabel( "Delete list" ),
-					this.createListSelect( g.ID.inputDelList + g.noise ),
+					g.REF.selectListDelete,
 					submitDel
 				]
 			);
@@ -734,337 +1271,6 @@
 		}
 
 
-	};
-
-
-	/**
-	 * Observe document for dynamically inserted reply areas.
-	 * If this happens, add the "click" event listener to the inserted MLE button.
-	 * (Sometimes you just don't know what to call a function.)
-	 */
-	function observeReplyChangesForMLEButtons() {
-		// Add the click event to comment replies, too.
-		var MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
-
-		// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
-		if( MutationObserver ) {
-			var observer = new MutationObserver( mutationHandler );
-			var targets = document.querySelectorAll( ".child" ),
-			    observerConfig = { attributes: false, childList: true, characterData: false };
-
-			for( var i = 0; i < targets.length; i++ ) {
-				observer.observe( targets[i], observerConfig );
-			}
-		}
-
-		// ... but not in Opera, so we have to do this the deprecated way
-		else {
-			document.addEventListener( "DOMNodeInserted", function( e ) {
-				// "usertext cloneable" is the whole reply-to-comment section
-				if( e.target.className == "usertext cloneable" ) {
-					var buttonMLE = e.target.querySelector( ".mle-open-btn" );
-					buttonMLE.addEventListener( "click", mainContainerShow, false );
-				}
-			}, false );
-		}
-	};
-
-
-	/**
-	 * Callback function for the MutationObserver.
-	 * @param {MutationRecord} mutations
-	 */
-	function mutationHandler( mutations ) {
-		var mutation, node, buttonMLE;
-		var i, j;
-
-		for( i = 0; i < mutations.length; i++ ) {
-			mutation = mutations[i];
-
-			for( j = 0; j < mutation.addedNodes.length; j++ ) {
-				node = mutation.addedNodes[j];
-
-				if( node.className == "usertext cloneable" ) {
-					buttonMLE = node.querySelector( ".mle-open-btn" );
-
-					if( buttonMLE ) {
-						buttonMLE.addEventListener( "click", mainContainerShow, false );
-						return;
-					}
-				}
-			}
-		}
-	};
-
-
-	/**
-	 * Append multiple children to a DOMElement.
-	 * @param  {DOMElement} parent
-	 * @param  {Array} children List of children to append.
-	 * @return {DOMElement} parent
-	 */
-	function appendChildren( parent, children ) {
-		for( var i = 0; i < children.length; i++ ) {
-			parent.appendChild( children[i] );
-		}
-		return parent;
-	};
-
-
-	/**
-	 * Delete an emote from a list.
-	 * @param {String} emote
-	 * @param {String} list
-	 */
-	function deleteEmote( emote, list ) {
-		var g = GLOBAL;
-		var idx, children, emoteSlash, i;
-
-		// Emotes don't have a leading slash
-		if( emote.indexOf( '/' ) == 0 ) {
-			emote = emote.substring( 1 );
-		}
-
-		// Remove from locale storage
-		idx = g.emotes[list].indexOf( emote );
-		if( idx == -1 ) { return; }
-		g.emotes[list].splice( idx, 1 );
-		saveEmotesToStorage( g.emotes );
-
-		// Remove from DOM
-		children = g.REF.emoteBlocks[list].childNodes;
-		emoteSlash = "/" + emote;
-		for( i = 0; i < children.length; i++ ) {
-			if( children[i].pathname == emoteSlash ) {
-				g.REF.emoteBlocks[list].removeChild( children[i] );
-				break;
-			}
-		}
-	};
-
-
-	/**
-	 * Save the given emote to the given list.
-	 * @param {String} emote
-	 * @param {String} list
-	 */
-	function saveEmote( emote, list ) {
-		var g = GLOBAL;
-
-		// Ignore empty
-		if( emote.length == 0 ) {
-			showMsg( "That ain't no emote, sugarcube." );
-			return;
-		}
-
-		// Emotes are saved without leading slash
-		if( emote.indexOf( '/' ) == 0 ) {
-			emote = emote.substring( 1 );
-		}
-
-		// Only save if not already in list
-		if( g.emotes[list].indexOf( emote ) > -1 ) {
-			showMsg( "This emote is already in the list." );
-			return;
-		}
-
-		g.emotes[list].push( emote );
-		saveEmotesToStorage( g.emotes );
-
-		// Add to DOM
-		g.REF.emoteBlocks[list].appendChild( Builder.createEmote( '/' + emote ) );
-	};
-
-
-	/**
-	 * Saves the emotes to the storage.
-	 * @param {Object} emotes Lists/emotes to save.
-	 */
-	function saveEmotesToStorage( emotes ) {
-		postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
-	};
-
-
-	/**
-	 * Display a little popup message, that disappears again after a few seconds.
-	 */
-	function showMsg( text ) {
-		var g = GLOBAL;
-
-		if( !g.REF.msg || g.REF.msg == null ) { return; }
-
-		clearTimeout( g.msgTimeout );
-		g.REF.msg.className += " show";
-		g.REF.msg.textContent = text;
-
-		g.msgTimeout = setTimeout( function() {
-			GLOBAL.REF.msg.className = "mle-msg" + GLOBAL.noise;
-		}, g.config.msgTimeout );
-	};
-
-
-	/**
-	 * Delete an emote list/block.
-	 * This will delete all the emotes in this list as well.
-	 */
-	function delList( e ) {
-		var d = document,
-		    g = GLOBAL;
-		var selectDelHTML = d.getElementById( g.ID.inputDelList + g.noise ),
-		    selectAddHTML = d.getElementById( g.ID.inputAddToList + g.noise ),
-		    listName = getOptionValue( selectDelHTML ),
-		    listToDel = d.getElementById( strToValidID( listName ) + g.noise );
-		var confirmDel = false,
-		    children,
-		    i;
-
-		// Major decision. Better ask first.
-		confirmDel = window.confirm(
-			"My Little Emotebox:\n\n"
-			+ "If you delete the list, you will also DELETE ALL EMOTES in this list!\n\n"
-			+ "Proceed?"
-		);
-		if( !confirmDel ) { return; }
-
-		// Delete from emote lists
-		delete g.emotes[listName];
-		saveEmotesToStorage( g.emotes );
-
-		// Remove from DOM.
-		g.REF.lists.removeChild( listToDel );
-		delete g.REF.emoteBlocks[listName];
-
-		children = selectDelHTML.childNodes;
-		for( i = 0; i < children.length; i++ ) {
-			if( children[i].value == listName ) {
-				selectDelHTML.removeChild( children[i] );
-				break;
-			}
-		}
-
-		children = selectAddHTML.childNodes;
-		for( i = 0; i < children.length; i++ ) {
-			if( children[i].value == listName ) {
-				selectAddHTML.removeChild( children[i] );
-				break;
-			}
-		}
-
-		// Remove context menus.
-		// Will be rebuild when needed.
-		ContextMenu.destroyMenus();
-	};
-
-
-	/**
-	 * Handle messages from the background process.
-	 */
-	function handleBackgroundMessages( e ) {
-		var g = GLOBAL;
-		var data = e.data ? e.data : e;
-
-		if( !data.task ) {
-			console.warn( "MyLittleEmotebox: Message from background process didn't contain the handled task." );
-			return;
-		}
-
-		switch( data.task ) {
-			case BG_TASK.LOAD:
-				g.config = data.config;
-				g.emotes = data.emotes;
-				Init.initStep2();
-				Init = null;
-				break;
-
-			case BG_TASK.SAVE_EMOTES:
-				if( !data.success ) {
-					showMsg( "I'm sorry, but the changes could not be saved." );
-					console.error( "MyLittleEmotebox: Could not save emotes." );
-				}
-				break;
-		}
-	};
-
-
-	/**
-	 * Insert a selected emote.
-	 */
-	function insertEmote( e ) {
-		e.preventDefault(); // Don't follow emote link
-		var ta = GLOBAL.REF.focusedInput;
-
-		mainContainerHide( e );
-		if( !ta ) { return; }
-
-		var emoteLink = e.target.href.split( '/' );
-		var selStart = ta.selectionStart,
-		    selEnd = ta.selectionEnd,
-		    taLen = ta.value.length,
-		    altText;
-
-		// Emote name
-		emoteLink = emoteLink[emoteLink.length - 1];
-		// Insert reversed emote version
-		emoteLink = e.ctrlKey ? emoteLink + "-r" : emoteLink;
-
-		// Nothing selected, just insert at position
-		if( selStart == selEnd ) {
-			emoteLink = "[](/" + emoteLink + ")";
-		}
-		// Text marked, use for alt text
-		else {
-			altText = ta.value.substring( selStart, selEnd );
-			emoteLink = "[](/" + emoteLink + " \"" + altText + "\")";
-		}
-
-		// Add a blank after the emote
-		if( GLOBAL.config.addBlankAfterInsert ) {
-			emoteLink += ' ';
-		}
-
-		ta.value = ta.value.substring( 0, selStart )
-				+ emoteLink
-				+ ta.value.substring( selEnd, taLen );
-
-		// Focus to the textarea
-		ta.focus();
-		ta.setSelectionRange(
-			selStart + emoteLink.length,
-			selStart + emoteLink.length
-		);
-
-		// Fire input event, so that RedditEnhancementSuite updates the preview
-		var inputEvent = document.createEvent( "Events" );
-		inputEvent.initEvent( "input", true, true );
-		ta.dispatchEvent( inputEvent );
-	};
-
-
-	/**
-	 * Minimize main container.
-	 */
-	function mainContainerHide( e ) {
-		var g = GLOBAL;
-
-		e.preventDefault();
-
-		// While box closes, remove mouse event for opening.
-		// Afterwards add it again.
-		// Prevents the box from opening again, if mouse cursor hovers
-		// over the closing (CSS3 transition) box.
-		g.REF.mainCont.removeEventListener( "mouseover", mainContainerShow, false );
-		g.REF.mainCont.className = "";
-		setTimeout( function() {
-			GLOBAL.REF.mainCont.addEventListener( "mouseover", mainContainerShow, false );
-		}, g.config.boxAnimationSpeed + 100 );
-	};
-
-
-	/**
-	 * Fully display main container.
-	 */
-	function mainContainerShow( e ) {
-		GLOBAL.REF.mainCont.className = "show";
 	};
 
 
@@ -1217,223 +1423,6 @@
 		}
 
 
-	};
-
-
-
-	/**
-	 * Reorder emote list. (Not the emotes, but the lists itself.)
-	 * @param  {String} moving    Name of list to insert before "inFrontOf".
-	 * @param  {String} inFrontOf Name of list, that "moving" will be inserted in front of.
-	 * @return {Object} Reordered list.
-	 */
-	function reorderList( moving, inFrontOf ) {
-		var g = GLOBAL;
-		var reordered = {},
-		    block;
-
-		if( moving == inFrontOf ) {
-			return g.emotes;
-		}
-
-		for( block in g.emotes ) {
-			if( block == moving ) {
-				continue;
-			}
-			if( block == inFrontOf ) {
-				reordered[moving] = g.emotes[moving];
-			}
-			reordered[block] = g.emotes[block];
-		}
-
-		return reordered;
-	};
-
-
-	/**
-	 * Remember the currently focused/active textarea
-	 * (if there is one) as input for the emotes.
-	 */
-	function rememberActiveTextarea( e ) {
-		var ae = document.activeElement;
-
-		if( ae && ae.tagName && ae.tagName.toLowerCase() == "textarea" ) {
-			GLOBAL.REF.focusedInput = ae;
-		}
-	};
-
-
-	/**
-	 * From the manage page: Save new emote.
-	 */
-	function saveNewEmote( e ) {
-		var d = document,
-		    g = GLOBAL;
-		var emoteInput = d.getElementById( g.ID.inputAddEmote + g.noise ),
-		    selectHTML = d.getElementById( g.ID.inputAddToList + g.noise ),
-		    list = getOptionValue( selectHTML );
-		var emote = emoteInput.value.trim();
-
-		saveEmote( emote, list );
-		emoteInput.value = "";
-		emoteInput.focus();
-	};
-
-
-	/**
-	 * From the manage page: Save new list.
-	 */
-	function saveNewList( e ) {
-		var d = document,
-		    g = GLOBAL;
-		var inputField = d.getElementById( g.ID.inputAddList + g.noise ),
-		    navLink = d.createElement( "li" ),
-		    newBlock = d.createElement( "div" ),
-		    selAddHTML = d.getElementById( g.ID.inputAddToList + g.noise ),
-		    selDelHTML = d.getElementById( g.ID.inputDelList + g.noise ),
-		    selOption;
-		var listName = inputField.value.trim();
-
-		// Ignore empty
-		if( listName.length == 0 ) {
-			showMsg( "That ain't no valid name for a list." );
-			return;
-		}
-
-		// Only create list if it doesn't exist already
-		if( listName in g.emotes ) {
-			showMsg( "This list already exists." );
-			return;
-		}
-
-		g.emotes[listName] = [];
-		saveEmotesToStorage( g.emotes );
-		inputField.value = "";
-
-		// Add to emote block selection
-		navLink = createListLink( listName, 0 );
-		g.REF.lists.appendChild( navLink );
-		g.REF.navList.push( navLink );
-
-		// Add (empty) emote block to main container
-		newBlock.className = "mle-block" + g.noise;
-		g.REF.emoteBlocks[listName] = newBlock;
-
-		// Add <option>s to <select>s
-		selOption = d.createElement( "option" );
-		selOption.value = listName;
-		selOption.textContent = listName;
-		selAddHTML.appendChild( selOption );
-
-		selOption = d.createElement( "option" );
-		selOption.value = listName;
-		selOption.textContent = listName;
-		selDelHTML.appendChild( selOption );
-
-		// Destroy context menus.
-		// Will be rebuild when needed.
-		ContextMenu.destroyMenus();
-	};
-
-
-	/**
-	 * Create and show manage page.
-	 * Only create manage elements when needed. Because
-	 * it won't be needed that often, probably.
-	 */
-	function showManagePage( e ) {
-		var form = GLOBAL.REF.mngForm;
-
-		// Hide emote blocks
-		toggleEmoteBlock( false );
-
-		// Create manage elements if first time opening manage page
-		if( form.childNodes.length < 1 ) {
-			Builder.createManagePage( form );
-		}
-
-		form.className = "show-manage";
-	};
-
-
-	/**
-	 * Prevent the default action of an event.
-	 * @param {Event} e The event.
-	 */
-	function stopEvent( e ) {
-		e.preventDefault();
-	};
-
-
-	/**
-	 * Show/hide emote blocks when selected in the navigation.
-	 */
-	function toggleEmoteBlock( e ) {
-		var g = GLOBAL,
-		    geb = g.REF.emoteBlocks,
-		    gnl = g.REF.navList,
-		    e_target = e.target;
-		var form, listName, i;
-
-		// In case a child element was clicked instead of the (parent) list element container
-		if( e_target != this ) {
-			e_target = e_target.parentNode;
-		}
-
-		// Set chosen list to active
-		for( i = 0; i < gnl.length; i++ ) {
-			gnl[i].className = "";
-		}
-		if( e ) {
-			e_target.className = "activelist";
-		}
-
-		// Show "Manage" page
-		if( !e ) {
-			g.REF.mainCont.removeChild( geb[g.shownBlock] );
-			g.shownBlock = null;
-		}
-
-		// Show emotes of chosen block
-		else {
-			form = g.REF.mngForm;
-			form.className = "";
-
-			for( listName in geb ) {
-				if( e && strToValidID( listName ) + g.noise == e_target.id ) {
-					if( !g.shownBlock ) {
-						g.REF.mainCont.appendChild( geb[listName] );
-					}
-					else {
-						g.REF.mainCont.replaceChild( geb[listName], geb[g.shownBlock] );
-					}
-					g.shownBlock = listName;
-					break;
-				}
-			}
-		}
-	};
-
-
-	/**
-	 * Show a preview of the emote that is about to be added.
-	 */
-	function updatePreview( e ) {
-		var d = document;
-		var previewId = "preview" + e.target.id,
-		    preview = d.getElementById( previewId ),
-		    emoteLink = e.target.value;
-
-		if( emoteLink.indexOf( '/' ) != 0 ) {
-			emoteLink = '/' + emoteLink;
-		}
-		if( emoteLink == preview.href ) {
-			return;
-		}
-
-		preview.href = emoteLink;
-		preview.className = ""; // reset old classes
-		preview = Builder.addClassesForEmote( preview );
 	};
 
 
@@ -1835,12 +1824,17 @@
 	var Init = {
 
 
+		// Hostnames where this extension should be active.
+		ALLOWED_HOSTNAMES: ["reddit.com"],
+
+
 		/**
 		 * Starting point.
 		 */
 		initStep1: function() {
 			if( !this.isRedditDown() ) {
-				loadStorage();
+				// Load storage (config and emotes)
+				postMessage( { task: BG_TASK.LOAD } );
 			}
 		},
 
@@ -1866,7 +1860,7 @@
 			sliceLen = ( hn.substr( hn.length - 6 ) == ".co.uk" ) ? -3 : -2;
 			hn = hn.split( "." ).slice( sliceLen ).join( "." );
 
-			return ALLOWED_HOSTNAMES.indexOf( hn ) > -1 ? true : false;
+			return this.ALLOWED_HOSTNAMES.indexOf( hn ) > -1 ? true : false;
 		},
 
 
