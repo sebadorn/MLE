@@ -378,6 +378,46 @@
 
 
 	/**
+	 * Rename a list.
+	 * @param {Object} list The list element that triggered the name change.
+	 */
+	function renameList( list, e ) {
+		if( e.keyCode == "13" ) { // 13 == Enter
+			var g = GLOBAL;
+			var name = document.createElement( "strong" ),
+			    listNameOld = list.id.replace( g.noise, '' ),
+			    listNameNew = e.target.value;
+
+			// Length: at least 1 char
+			if( listNameNew.length > 0 && listNameOld != listNameNew ) {
+				// Change emotes object (memory, not storage)
+				g.emotes[listNameNew] = g.emotes[listNameOld];
+				g.emotes = reorderList( listNameNew, listNameOld );
+				delete g.emotes[listNameOld];
+
+				// Change attribute name in emoteBlocks object
+				g.REF.emoteBlocks[listNameNew] = g.REF.emoteBlocks[listNameOld];
+				delete g.REF.emoteBlocks[listNameOld];
+
+				// Change name of the currently shown block if necessary
+				if( g.shownBlock == listNameOld ) {
+					g.shownBlock = listNameNew;
+				}
+
+				// Change ID in list
+				list.id = strToValidID( listNameNew ) + g.noise;
+
+				// Save changes to storage
+				saveEmotesToStorage( g.emotes );
+			}
+
+			name.textContent = listNameNew;
+			list.replaceChild( name, e.target );
+		}
+	};
+
+
+	/**
 	 * Reorder emote list. (Not the emotes, but the lists itself.)
 	 * @param  {String} moving    Name of list to insert before "inFrontOf".
 	 * @param  {String} inFrontOf Name of list, that "moving" will be inserted in front of.
@@ -939,6 +979,24 @@
 
 
 		/**
+		 * Switch the name of the list with an input field to change the name.
+		 */
+		addRenameListField: function( e ) {
+			var name = e.target.textContent,
+			    parent = e.target.parentNode,
+			    input = document.createElement( "input" );
+
+			input.type = "text";
+			input.value = name;
+			input.addEventListener( "keydown", function( e2 ) {
+				renameList( parent, e2 );
+			}, false );
+
+			parent.replaceChild( input, e.target );
+		},
+
+
+		/**
 		 * Create emote blocks filled with emotes and the navigation.
 		 */
 		createEmoteBlocksAndNav: function() {
@@ -1048,6 +1106,7 @@
 
 			name.textContent = listName;
 			name.addEventListener( "click", toggleEmoteBlock, false );
+			name.addEventListener( "dblclick", this.addRenameListField, false );
 			DragAndDrop.makeDropZone( name, DragAndDrop.dropMoveList );
 
 			count.textContent = elementCount + " emotes";
@@ -1112,9 +1171,22 @@
 					this.mngAreaForNewEmote(),
 					this.mngAreaForNewList(),
 					this.mngAreaForDelList(),
-					this.mngAreaForMovEmote(),
-					this.mngAreaForDelEmote(),
-					this.mngAreaForMovList()
+					this.mngAreaForNote(
+						"Move emotes",
+						"Use Drag&amp;Drop to move emotes.<br />To move it to another list, right-click on it and select “Move to List”."
+					),
+					this.mngAreaForNote(
+						"Delete emotes",
+						"Right-click on the emote and select “Delete Emote”."
+					),
+					this.mngAreaForNote(
+						"Move list",
+						"Use Drag&amp;Drop to move lists. A dragged object will be inserted before the one it was dropped on."
+					),
+					this.mngAreaForNote(
+						"Rename list",
+						"Double-click on the list name. Confirm the new name with [Enter]."
+					)
 				];
 			var frag = appendChildren( document.createDocumentFragment(), areas );
 
@@ -1215,58 +1287,20 @@
 
 
 		/**
-		 * Create manage area for moving emotes.
+		 * Create manage area with contains just a hint.
+		 * @param  {String} title
+		 * @param  {String} text
+		 * @return {DOMElement}
 		 */
-		mngAreaForMovEmote: function() {
+		mngAreaForNote: function( title, text ) {
 			var d = document;
 			var note = d.createElement( "em" );
 
-			note.innerHTML = "Use Drag&amp;Drop to move emotes.<br />To move it to another list, right-click on it and select “Move to List”.";
+			note.innerHTML = text;
 
 			return appendChildren(
 				d.createElement( "div" ),
-				[
-					this.createLabel( "Move emotes" ),
-					note
-				]
-			);
-		},
-
-
-		/**
-		 * Create manage area for deleting emotes.
-		 */
-		mngAreaForDelEmote: function() {
-			var d = document;
-			var note = d.createElement( "em" );
-
-			note.textContent = "Right-click on the emote and select “Delete Emote”.";
-
-			return appendChildren(
-				d.createElement( "div" ),
-				[
-					this.createLabel( "Delete emotes" ),
-					note
-				]
-			);
-		},
-
-
-		/**
-		 * Create manage area for moving lists.
-		 */
-		mngAreaForMovList: function() {
-			var d = document;
-			var note = d.createElement( "em" );
-
-			note.textContent = "Use Drag&Drop to move lists. A dragged object will be inserted before the one it was dropped on.";
-
-			return appendChildren(
-				d.createElement( "div" ),
-				[
-					this.createLabel( "Move list" ),
-					note
-				]
+				[this.createLabel( title ), note]
 			);
 		}
 
@@ -1469,11 +1503,6 @@
 						className: "in",
 						text: "Move to List",
 						onclick: this.itemActionMoveEmote
-					},
-					{
-						className: "list",
-						text: "Rename List",
-						onclick: this.itemActionRenameList
 					}
 				];
 
@@ -1527,28 +1556,6 @@
 			this.REF.dialogMoveEmote.className = "diag show";
 			this.REF.dialogMoveEmote.style.left = x + "px";
 			this.REF.dialogMoveEmote.style.top = y + "px";
-		},
-
-
-		/**
-		 * Create dialog for the option "Rename List".
-		 * @param {int} x X coordinate from the left.
-		 * @param {int} y Y coordinate from the top.
-		 */
-		createDialogRenameList: function( x, y ) {
-			var list = this.REF.trigger,
-			    name = list.children[0],
-			    input = document.createElement( "input" );
-
-			input.type = "text";
-			input.value = name.textContent;
-			input.addEventListener( "keydown", function( e ) {
-				this.renameList( list, e );
-			}.bind( this ), false );
-
-			list.replaceChild( input, name );
-
-			this.hide();
 		},
 
 
@@ -1659,17 +1666,6 @@
 
 
 		/**
-		 * Rename a list.
-		 */
-		itemActionRenameList: function( e ) {
-			var pos = this.getPosForMenu( e.target.parentNode );
-
-			this.createDialogRenameList( pos.x, pos.y );
-			e.stopPropagation(); // Keep the context menu open.
-		},
-
-
-		/**
 		 * Show available lists for the emote.
 		 */
 		itemActionSaveEmote: function( e ) {
@@ -1701,46 +1697,6 @@
 
 
 		/**
-		 * Rename a list.
-		 * @param {Object} list The list element that triggered the name change.
-		 */
-		renameList: function( list, e ) {
-			if( e.keyCode == "13" ) { // 13 == Enter
-				var g = GLOBAL;
-				var name = document.createElement( "strong" ),
-				    listNameOld = list.id.replace( g.noise, '' ),
-				    listNameNew = e.target.value;
-
-				// Length: at least 1 char
-				if( listNameNew.length > 0 && listNameOld != listNameNew ) {
-					// Change emotes object (memory, not storage)
-					g.emotes[listNameNew] = g.emotes[listNameOld];
-					g.emotes = reorderList( listNameNew, listNameOld );
-					delete g.emotes[listNameOld];
-
-					// Change attribute name in emoteBlocks object
-					g.REF.emoteBlocks[listNameNew] = g.REF.emoteBlocks[listNameOld];
-					delete g.REF.emoteBlocks[listNameOld];
-
-					// Change name of the currently shown block if necessary
-					if( g.shownBlock == listNameOld ) {
-						g.shownBlock = listNameNew;
-					}
-
-					// Change ID in list
-					list.id = strToValidID( listNameNew ) + g.noise;
-
-					// Save changes to storage
-					saveEmotesToStorage( g.emotes );
-				}
-
-				name.textContent = listNameNew;
-				list.replaceChild( name, e.target );
-			}
-		},
-
-
-		/**
 		 * Save an emote to the chosen list.
 		 */
 		saveEmoteToList: function( e ) {
@@ -1759,10 +1715,9 @@
 		 * Show the context menu for either an emote or list element.
 		 */
 		show: function( e ) {
-			var bIsEmote = isEmote( e.target ),
-			    bIsList = isList( e.target );
+			var bIsEmote = isEmote( e.target );
 
-			if( !bIsEmote && !bIsList ) {
+			if( !bIsEmote ) {
 				this.hide();
 				return;
 			}
@@ -1776,9 +1731,6 @@
 
 			if( bIsEmote ) {
 				this.showDialogEmote( e );
-			}
-			else if( bIsList ) {
-				this.showDialogList( e );
 			}
 
 			this.REF.menu.style.left = ( e.clientX + 2 ) + "px";
@@ -1800,14 +1752,6 @@
 			else {
 				this.REF.menu.className += " out-of-box";
 			}
-		},
-
-
-		/**
-		 * Show the context menu for a list element.
-		 */
-		showDialogList: function( e ) {
-			this.REF.menu.className += " list-trigger";
 		}
 
 
