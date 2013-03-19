@@ -412,6 +412,9 @@
 			}
 
 			name.textContent = listNameNew;
+			name.addEventListener( "click", toggleEmoteBlock, false );
+			name.addEventListener( "dblclick", Builder.addRenameListField, false );
+			DragAndDrop.makeDropZone( name, DragAndDrop.dropMoveList );
 			list.replaceChild( name, e.target );
 		}
 	};
@@ -787,9 +790,9 @@
 						"right: 10px; z-index: 20; padding-left: 12px; padding-right: 12px;",
 				// Selection list
 				"#mle% ul":
-						"box-sizing: border-box; -moz-box-sizing: border-box; direction: " + listDirection + "; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 250px; padding: 0;",
+						"direction: " + listDirection + "; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;",
 				"#mle% li":
-						"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; position: relative;"
+						"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px;"
 						+ "-moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
 				"#mle% li:first-child":
 						"border-top-width: 0;",
@@ -802,9 +805,11 @@
 				"#mle% li.activelist strong":
 						"font-weight: bold;",
 				"#mle% li strong":
-						"font-weight: normal; white-space: nowrap;",
+						"font-weight: normal; padding-right: 16px; white-space: nowrap;",
 				"#mle% li span":
 						"color: #909090; display: block; font-size: 9px; font-weight: normal !important; white-space: nowrap;",
+				"#mle% li input":
+						"box-sizing: border-box; width: 100%;",
 				// Emote blocks
 				".mle-block%, #mle-manage%":
 						"box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;",
@@ -1011,7 +1016,6 @@
 			    countBlocks = 0;
 
 			// Add navigation
-			listNav.id = "mle-blocklist" + g.noise;
 			fragmentNode.appendChild( listNav );
 
 			for( listName in g.emotes ) {
