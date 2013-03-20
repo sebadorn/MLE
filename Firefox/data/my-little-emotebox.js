@@ -8,6 +8,8 @@
 			config: null,
 			// Loaded emotes
 			emotes: null,
+			// A message type from the background to ignore one time
+			msgIgnoreOnce: 0,
 			// Reference to the timeout object for the notifier
 			msgTimeout: null,
 			// Noise for CSS classes and IDs, to minimise the probability
@@ -139,6 +141,7 @@
 		g.emotes[list].splice( idx, 1 );
 
 		update[list] = g.emotes[list];
+		g.msgIgnoreOnce = BG_TASK.UPDATE_EMOTES;
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Remove from DOM
@@ -175,6 +178,7 @@
 
 		// Delete from emote lists
 		delete g.emotes[listName];
+		g.msgIgnoreOnce = BG_TASK.SAVE_EMOTES;
 		saveChangesToStorage( BG_TASK.SAVE_EMOTES, g.emotes );
 
 		// Remove from DOM.
@@ -215,6 +219,13 @@
 
 		if( !data.task ) {
 			console.warn( "MLE: Message from background process didn't contain the handled task." );
+			return;
+		}
+
+		// Ignore message if flag for this task has been set.
+		// May be the case, if it is an update task that has been sent by this tab.
+		if( data.task == g.msgIgnoreOnce ) {
+			g.msgIgnoreOnce = 0;
 			return;
 		}
 
@@ -443,6 +454,7 @@
 				list.id = strToValidID( listNameNew ) + g.noise;
 
 				// Save changes to storage
+				g.msgIgnoreOnce = BG_TASK.UPDATE_LIST_NAME;
 				saveChangesToStorage(
 					BG_TASK.UPDATE_LIST_NAME,
 					{ oldName: listNameOld, newName: listNameNew }
@@ -526,6 +538,7 @@
 
 		g.emotes[list].push( emote );
 		update[list] = g.emotes[list];
+		g.msgIgnoreOnce = BG_TASK.UPDATE_EMOTES;
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Add to DOM
@@ -564,15 +577,10 @@
 	 * From the manage page: Save new list.
 	 */
 	function saveNewList( e ) {
-		var d = document,
-		    g = GLOBAL;
+		var g = GLOBAL;
 		var inputField = g.REF.inputAddList,
-		    navLink = d.createElement( "li" ),
-		    newBlock = d.createElement( "div" ),
-		    selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote],
-		    selOption;
-		var listName = inputField.value.trim(),
-		    i;
+		    listName = inputField.value.trim(),
+		    update = {};
 
 		// Ignore empty
 		if( listName.length == 0 ) {
@@ -586,30 +594,12 @@
 			return;
 		}
 
-		g.emotes[listName] = [];
-		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, g.emotes );
+		update[listName] = [];
+		g.msgIgnoreOnce = BG_TASK.UPDATE_EMOTES;
+		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
+
 		inputField.value = "";
-
-		// Add to emote block selection
-		navLink = Builder.createListLink( listName, 0 );
-		g.REF.lists.appendChild( navLink );
-		g.REF.navList.push( navLink );
-
-		// Add (empty) emote block to main container
-		newBlock.className = "mle-block" + g.noise;
-		g.REF.emoteBlocks[listName] = newBlock;
-
-		// Add <option>s to <select>s
-		for( i = 0; i < selectLists.length; i++ ) {
-			selOption = d.createElement( "option" );
-			selOption.value = listName;
-			selOption.textContent = listName;
-			selectLists[i].appendChild( selOption );
-		}
-
-		// Destroy context menus.
-		// Will be rebuild when needed.
-		ContextMenu.destroyMenus();
+		Builder.updateListsAddNew( listName );
 	};
 
 
@@ -1067,14 +1057,13 @@
 			    listNav = d.createElement( "ul" ),
 			    listLink,
 			    emoteBlock;
-			var listName,
-			    emoteList,
+			var emoteList,
 			    countBlocks = 0;
 
 			// Add navigation
 			fragmentNode.appendChild( listNav );
 
-			for( listName in g.emotes ) {
+			for( var listName in g.emotes ) {
 				emoteList = g.emotes[listName];
 
 				// Create list navigation
@@ -1392,7 +1381,7 @@
 		updateListOrder: function( lists ) {
 			var g = GLOBAL;
 			var listLink,
-			    ul = g.REF.navList[0].parentNode;
+			    ul = g.REF.lists;
 			var countBlocks = 0;
 
 			while( ul.firstChild ) {
@@ -1410,23 +1399,69 @@
 
 
 		/**
-		 * Rebuild the emote boxes that changed.
+		 * Rebuild the lists that changed or add new ones.
 		 * @param {Object} lists Lists and their emotes, that changed.
 		 */
 		updateLists: function( lists ) {
+			var emoteBlocks = GLOBAL.REF.emoteBlocks;
 			var block;
 
 			for( var key in lists ) {
-				block = GLOBAL.REF.emoteBlocks[key];
+				// Only the content of an existing list changed
+				if( emoteBlocks.hasOwnProperty( key ) ) {
+					block = emoteBlocks[key];
 
-				// Remove all emotes of the list to update
-				while( block.firstChild ) {
-					block.removeChild( block.firstChild );
+					// Remove all emotes of the list to update
+					while( block.firstChild ) {
+						block.removeChild( block.firstChild );
+					}
+
+					// Add all emotes of the updated list
+					block.appendChild( this.createEmotesOfList( lists[key] ) );
 				}
-
-				// Add all emotes of the updated list
-				block.appendChild( this.createEmotesOfList( lists[key] ) );
+				// This update adds a new list
+				else {
+					this.updateListsAddNew( key );
+				}
 			}
+		},
+
+
+		/**
+		 * Add a new list.
+		 * @param {String} listName Name of the new (empty) list.
+		 */
+		updateListsAddNew: function( listName ) {
+			var d = document,
+			    g = GLOBAL;
+			var block = d.createElement( "div" ),
+			    listLink = this.createListLink( listName, 0 ),
+			    selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote],
+			    selOption;
+
+			g.emotes[listName] = [];
+
+			// Add new block
+			block.className = "mle-block" + g.noise;
+			g.REF.emoteBlocks[listName] = block;
+
+			// Add new list
+			g.REF.lists.appendChild( listLink );
+			g.REF.navList.push( listLink );
+
+			// Add <option>s to <select>s
+			for( var i = 0; i < selectLists.length; i++ ) {
+				if( !selectLists[i] ) {
+					continue;
+				}
+				selOption = d.createElement( "option" );
+				selOption.value = listName;
+				selOption.textContent = listName;
+				selectLists[i].appendChild( selOption );
+			}
+
+			// Destroy context menus. Will be rebuild when needed.
+			ContextMenu.destroyMenus();
 		}
 
 
@@ -1514,6 +1549,7 @@
 			}
 
 			update[g.shownBlock] = list;
+			g.msgIgnoreOnce = BG_TASK.UPDATE_EMOTES;
 			saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 			this.REF.draggedEmote = null;
@@ -1566,6 +1602,7 @@
 			reordered = reorderList( nameSource, nameTarget );
 
 			g.emotes = reordered;
+			g.msgIgnoreOnce = BG_TASK.UPDATE_LIST_ORDER;
 			saveChangesToStorage( BG_TASK.UPDATE_LIST_ORDER, g.emotes );
 
 			this.REF.draggedList = null;
