@@ -25,7 +25,7 @@
 				mainCont: null,
 				mngForm: null,
 				msg: null,
-				navList: [],
+				navList: {},
 				selectListAddEmote: null,
 				selectListDelete: null
 			},
@@ -164,7 +164,7 @@
 	function deleteList( e ) {
 		var g = GLOBAL;
 		var listName = getOptionValue( g.REF.selectListDelete ),
-		    listToDel = document.getElementById( strToValidID( listName ) + g.noise ),
+		    listToDel = g.REF.navList[listName],
 		    selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
 		var confirmDel = false, children;
 
@@ -454,8 +454,9 @@
 					g.shownBlock = listNameNew;
 				}
 
-				// Change ID in list
-				list.id = strToValidID( listNameNew ) + g.noise;
+				// Change name in the object of all lists
+				g.REF.navList[listNameNew] = g.REF.navList[listNameOld];
+				delete g.REF.navList[listNameOld];
 
 				// Save changes to storage
 				g.msgIgnoreOnce = BG_TASK.UPDATE_LIST_NAME;
@@ -598,6 +599,7 @@
 			return;
 		}
 
+		g.emotes[listName] = [];
 		update[listName] = [];
 		g.msgIgnoreOnce = BG_TASK.UPDATE_EMOTES;
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
@@ -655,14 +657,6 @@
 
 
 	/**
-	 * Change a string to a valid ID (HTML attribute) value.
-	 */
-	function strToValidID( name ) {
-		return name.replace( / /g, '_' );
-	};
-
-
-	/**
 	 * Show/hide emote blocks when selected in the navigation.
 	 */
 	function toggleEmoteBlock( e ) {
@@ -670,7 +664,7 @@
 		    geb = g.REF.emoteBlocks,
 		    gnl = g.REF.navList,
 		    e_target = e.target;
-		var form, listName, i;
+		var form;
 
 		// In case a child element was clicked instead of the (parent) list element container
 		if( e_target != this ) {
@@ -678,8 +672,8 @@
 		}
 
 		// Set chosen list to active
-		for( i = 0; i < gnl.length; i++ ) {
-			gnl[i].className = "";
+		for( var key in gnl ) {
+			gnl[key].className = "";
 		}
 		if( e ) {
 			e_target.className = "activelist";
@@ -690,14 +684,15 @@
 			g.REF.mainCont.removeChild( geb[g.shownBlock] );
 			g.shownBlock = null;
 		}
-
 		// Show emotes of chosen block
 		else {
 			form = g.REF.mngForm;
 			form.className = "";
 
-			for( listName in geb ) {
-				if( e && strToValidID( listName ) + g.noise == e_target.id ) {
+			for( var listName in geb ) {
+				var name = e_target.querySelector( "strong" );
+
+				if( e && name && name.textContent == listName ) {
 					if( !g.shownBlock ) {
 						g.REF.mainCont.appendChild( geb[listName] );
 					}
@@ -1088,7 +1083,7 @@
 					fragmentNode.appendChild( emoteBlock );
 				}
 
-				g.REF.navList[countBlocks] = listLink;
+				g.REF.navList[listName] = listLink;
 				g.REF.emoteBlocks[listName] = emoteBlock;
 
 				countBlocks++;
@@ -1166,7 +1161,6 @@
 			count.addEventListener( "click", toggleEmoteBlock, false );
 			DragAndDrop.makeDropZone( count, DragAndDrop.dropMoveList );
 
-			listLink.id = strToValidID( listName ) + GLOBAL.noise;
 			listLink.setAttribute( "draggable", "true" );
 			listLink.addEventListener( "click", toggleEmoteBlock, false );
 			listLink.addEventListener( "dragstart", DragAndDrop.dragstartMoveList.bind( DragAndDrop ), false );
@@ -1363,25 +1357,30 @@
 		 * @param {String} listName Name of the list.
 		 */
 		removeList: function( listName ) {
-			var gr = GLOBAL.REF;
+			var g = GLOBAL,
+			    gr = g.REF;
 			var li,
 			    selectLists = [gr.selectListDelete, gr.selectListAddEmote];
 
 			// Remove list from DOM
-			for( var i = 0; i < gr.navList.length; i++ ) {
-				li = gr.navList[i].querySelector( "strong" );
+			for( var key in gr.navList ) {
+				li = gr.navList[key].querySelector( "strong" );
+
 				if( li.textContent == listName ) {
-					gr.lists.removeChild( gr.navList[i] );
-					gr.navList.splice( i, 1 );
+					gr.lists.removeChild( gr.navList[key] );
+					delete gr.navList[key];
 					break;
 				}
 			}
 
-			delete gr.emoteBlocks[listName];
-
-			if( GLOBAL.shownBlock == listName ) {
-				GLOBAL.shownBlock = null;
+			// Remove child if currently shown
+			if( g.shownBlock == listName ) {
+				gr.mainCont.removeChild( gr.emoteBlocks[listName] );
+				g.shownBlock = null;
 			}
+
+			// Remove block from memory
+			delete gr.emoteBlocks[listName];
 
 			// Remove list name from <select>s
 			for( var i = 0; i < selectLists.length; i++ ) {
@@ -1431,18 +1430,17 @@
 			var g = GLOBAL;
 			var listLink,
 			    ul = g.REF.lists;
-			var countBlocks = 0;
 
 			while( ul.firstChild ) {
 				ul.removeChild( ul.firstChild );
 			}
 
-			g.REF.navList = [];
+			g.REF.navList = {};
 
 			for( var listName in lists ) {
 				listLink = this.createListLink( listName, lists[listName].length );
 				ul.appendChild( listLink );
-				g.REF.navList[countBlocks++] = listLink;
+				g.REF.navList[listName] = listLink;
 			}
 		},
 
@@ -1485,7 +1483,7 @@
 
 			// Add new list
 			g.REF.lists.appendChild( listLink );
-			g.REF.navList.push( listLink );
+			g.REF.navList[listName] = listLink;
 
 			// Add <option>s to <select>s
 			for( var i = 0; i < selectLists.length; i++ ) {
