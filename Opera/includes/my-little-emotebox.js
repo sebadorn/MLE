@@ -55,6 +55,7 @@
 		if( e.target.className == "usertext cloneable" ) {
 			var buttonMLE = e.target.querySelector( ".mle-open-btn" );
 
+			buttonMLE.addEventListener( "mouseover", rememberActiveTextarea, false );
 			buttonMLE.addEventListener( "click", mainContainerShow, false );
 		}
 	};
@@ -77,6 +78,7 @@
 					buttonMLE = node.querySelector( ".mle-open-btn" );
 
 					if( buttonMLE ) {
+						buttonMLE.addEventListener( "mouseover", rememberActiveTextarea, false );
 						buttonMLE.addEventListener( "click", mainContainerShow, false );
 						return;
 					}
@@ -121,7 +123,8 @@
 	 */
 	function deleteEmote( emote, list ) {
 		var g = GLOBAL;
-		var idx, children, emoteSlash, i;
+		var idx, children, emoteSlash;
+		var update = {};
 
 		// Emotes don't have a leading slash
 		if( emote.indexOf( '/' ) == 0 ) {
@@ -134,13 +137,15 @@
 			return;
 		}
 		g.emotes[list].splice( idx, 1 );
-		saveEmotesToStorage( g.emotes );
+
+		update[list] = g.emotes[list];
+		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Remove from DOM
 		children = g.REF.emoteBlocks[list].childNodes;
 		emoteSlash = "/" + emote;
 
-		for( i = 0; i < children.length; i++ ) {
+		for( var i = 0; i < children.length; i++ ) {
 			if( children[i].pathname == emoteSlash ) {
 				g.REF.emoteBlocks[list].removeChild( children[i] );
 				break;
@@ -158,7 +163,7 @@
 		var listName = getOptionValue( g.REF.selectListDelete ),
 		    listToDel = document.getElementById( strToValidID( listName ) + g.noise ),
 		    selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
-		var confirmDel = false, children, i, j;
+		var confirmDel = false, children;
 
 		// Major decision. Better ask first.
 		confirmDel = window.confirm(
@@ -170,16 +175,16 @@
 
 		// Delete from emote lists
 		delete g.emotes[listName];
-		saveEmotesToStorage( g.emotes );
+		saveChangesToStorage( BG_TASK.SAVE_EMOTES, g.emotes );
 
 		// Remove from DOM.
 		g.REF.lists.removeChild( listToDel );
 		delete g.REF.emoteBlocks[listName];
 
-		for( i = 0; i < selectLists.length; i++ ) {
+		for( var i = 0; i < selectLists.length; i++ ) {
 			children = selectLists[i].childNodes;
 
-			for( j = 0; j < children.length; j++ ) {
+			for( var j = 0; j < children.length; j++ ) {
 				if( children[j].value == listName ) {
 					selectLists[i].removeChild( children[j] );
 					break;
@@ -209,7 +214,7 @@
 		var data = e.data ? e.data : e;
 
 		if( !data.task ) {
-			console.warn( "MyLittleEmotebox: Message from background process didn't contain the handled task." );
+			console.warn( "MLE: Message from background process didn't contain the handled task." );
 			return;
 		}
 
@@ -224,8 +229,25 @@
 			case BG_TASK.SAVE_EMOTES:
 				if( !data.success ) {
 					showMsg( "I'm sorry, but the changes could not be saved." );
-					console.error( "MyLittleEmotebox: Could not save emotes." );
+					console.error( "MLE: Could not save emotes." );
 				}
+				break;
+
+			case BG_TASK.UPDATE_EMOTES:
+				mergeEmotesWithUpdate( data.update );
+				Builder.updateLists( data.update );
+				break;
+
+			case BG_TASK.UPDATE_LIST_ORDER:
+				g.emotes = data.update;
+				Builder.updateListOrder( data.update );
+				break;
+
+			case BG_TASK.UPDATE_LIST_NAME:
+				var u = data.update;
+				g.emotes[u.newName] = g.emotes[u.oldName];
+				delete g.emotes[u.oldName];
+				Builder.updateListName( u.oldName, u.newName );
 				break;
 		}
 	};
@@ -302,10 +324,12 @@
 		var nodeHTML = node.outerHTML;
 
 		if( nodeHTML.indexOf( "href=\"/" ) < 0
+				|| nodeHTML.indexOf( "href=\"//" ) > -1
 				|| nodeHTML.indexOf( "href=\"/http://" ) > -1
 				|| nodeHTML.indexOf( "href=\"/r/" ) > -1
 				|| nodeHTML.indexOf( "href=\"/user/" ) > -1
-				|| nodeHTML.indexOf( "href=\"/message/" ) > -1 ) {
+				|| nodeHTML.indexOf( "href=\"/message/" ) > -1
+				|| node.pathname == "/account-activity" ) {
 			return false;
 		}
 		return true;
@@ -359,6 +383,17 @@
 
 
 	/**
+	 * Merge the currently loaded emotes with the update.
+	 * @param {Object} emotes Changed lists with their emotes.
+	 */
+	function mergeEmotesWithUpdate( emotes ) {
+		for( var key in emotes ) {
+			GLOBAL.emotes[key] = emotes[key];
+		}
+	};
+
+
+	/**
 	 * Send a message to the background process.
 	 */
 	function postMessage( msg ) {
@@ -384,8 +419,8 @@
 	function renameList( list, e ) {
 		if( e.keyCode == "13" ) { // 13 == Enter
 			var g = GLOBAL;
-			var name = document.createElement( "strong" ),
-			    listNameOld = list.id.replace( g.noise, '' ),
+			var name = list.querySelector( "strong" ),
+			    listNameOld = name.textContent,
 			    listNameNew = e.target.value;
 
 			// Length: at least 1 char
@@ -408,14 +443,15 @@
 				list.id = strToValidID( listNameNew ) + g.noise;
 
 				// Save changes to storage
-				saveEmotesToStorage( g.emotes );
+				saveChangesToStorage(
+					BG_TASK.UPDATE_LIST_NAME,
+					{ oldName: listNameOld, newName: listNameNew }
+				);
 			}
 
 			name.textContent = listNameNew;
-			name.addEventListener( "click", toggleEmoteBlock, false );
-			name.addEventListener( "dblclick", Builder.addRenameListField, false );
-			DragAndDrop.makeDropZone( name, DragAndDrop.dropMoveList );
-			list.replaceChild( name, e.target );
+			name.removeAttribute( "hidden" );
+			list.removeChild( e.target );
 		}
 	};
 
@@ -469,6 +505,7 @@
 	 */
 	function saveEmote( emote, list ) {
 		var g = GLOBAL;
+		var update = {};
 
 		// Ignore empty
 		if( emote.length == 0 ) {
@@ -488,7 +525,8 @@
 		}
 
 		g.emotes[list].push( emote );
-		saveEmotesToStorage( g.emotes );
+		update[list] = g.emotes[list];
+		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Add to DOM
 		g.REF.emoteBlocks[list].appendChild( Builder.createEmote( '/' + emote ) );
@@ -496,11 +534,12 @@
 
 
 	/**
-	 * Saves the emotes to the storage.
-	 * @param {Object} emotes Lists/emotes to save.
+	 * Saves emotes/lists to the storage.
+	 * @param {int}    task   BG_TASK.
+	 * @param {Object} update Change to update.
 	 */
-	function saveEmotesToStorage( emotes ) {
-		postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
+	function saveChangesToStorage( task, update ) {
+		postMessage( { task: task, update: update } );
 	};
 
 
@@ -548,7 +587,7 @@
 		}
 
 		g.emotes[listName] = [];
-		saveEmotesToStorage( g.emotes );
+		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, g.emotes );
 		inputField.value = "";
 
 		// Add to emote block selection
@@ -757,9 +796,16 @@
 			// '%' will be replaced with noise
 			var css = {
 				// Collection of same CSS
-				"#mle%.show, #mle%.show ul, #mle%.show .mle-block%, #mle%.show .mle-btn, #mle%.show #mle-manage%.show-manage, #mle-ctxmenu%.show, .diag.show":
+				"#mle%.show,\
+				 #mle%.show ul,\
+				 #mle%.show .mle-block%,\
+				 #mle%.show .mle-btn,\
+				 #mle%.show #mle-manage%.show-manage,\
+				 #mle-ctxmenu%.show,\
+				 .diag.show":
 						"display: block;",
-				"#mle%, #mle-ctxmenu%":
+				"#mle%,\
+				 #mle-ctxmenu%":
 						"font: 12px Verdana, Arial, Helvetica, \"DejaVu Sans\", sans-serif; line-height: 14px; text-align: left;",
 				"#mle% .mle-btn":
 						"background-color: #808080; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; display: none; font-weight: bold; padding: 5px 0 6px; position: absolute; text-align: center; top: -1px;",
@@ -767,8 +813,7 @@
 						"background-color: #404040;",
 				// Inactive state
 				"#mle%":
-						"background-color: " + cfg.boxBgColor + "; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; " + boxPos + " top: " + cfg.boxPosTop + "px; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px;"
-						+ "-moz-transition: width " + cfg.boxAnimationSpeed + "ms; -webkit-transition: width " + cfg.boxAnimationSpeed + "ms; -o-transition: width " + cfg.boxAnimationSpeed + "ms; transition: width " + cfg.boxAnimationSpeed + "ms;",
+						"background-color: " + cfg.boxBgColor + "; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; " + boxPos + " top: " + cfg.boxPosTop + "px; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px; -moz-transition: width " + cfg.boxAnimationSpeed + "ms; -webkit-transition: width " + cfg.boxAnimationSpeed + "ms; -o-transition: width " + cfg.boxAnimationSpeed + "ms; transition: width " + cfg.boxAnimationSpeed + "ms;",
 				// Active state
 				"#mle%.show":
 						"width: " + cfg.boxWidth + "px; height: " + cfg.boxHeight + "px; padding: 36px 10px 10px; z-index: 10000;",
@@ -778,12 +823,12 @@
 				"#mle%.show .mle-header":
 						"display: none;",
 				// Manage button
-				"#mle% .mng-link":
+				"#mle% .mle-mng-link":
 						"width: 72px; z-index: 10;",
 				// Options button
-				"#mle% .opt-link":
+				"#mle% .mle-opt-link":
 						"background-color: #f4f4f4 !important; border-top-color: #b0b0b0; color: #a0a0a0; font-weight: normal !important; left: 98px; padding-left: 8px; padding-right: 8px; z-index: 14;",
-				"#mle% .opt-link:hover":
+				"#mle% .mle-opt-link:hover":
 						"border-top-color: #606060; color: #000000;",
 				// Close button
 				"#mle% .mle-close":
@@ -792,8 +837,7 @@
 				"#mle% ul":
 						"direction: " + listDirection + "; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;",
 				"#mle% li":
-						"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px;"
-						+ "-moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
+						"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
 				"#mle% li:first-child":
 						"border-top-width: 0;",
 				"#mle% li:last-child":
@@ -811,7 +855,8 @@
 				"#mle% li input":
 						"box-sizing: border-box; width: 100%;",
 				// Emote blocks
-				".mle-block%, #mle-manage%":
+				".mle-block%,\
+				 #mle-manage%":
 						"box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;",
 				".mle-block% a":
 						"display: inline-block; float: none; border: 1px solid " + cfg.boxEmoteBorder + "; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;",
@@ -819,8 +864,7 @@
 						"border-color: #96BFE9;",
 				// Notifier
 				".mle-msg%":
-						"background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; " + cfg.msgPosition + ": -200px; padding: 19px 0; text-align: center; width: 100%; z-index: 10100;"
-						+ "-moz-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -webkit-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -o-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms;",
+						"background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; " + cfg.msgPosition + ": -200px; padding: 19px 0; text-align: center; width: 100%; z-index: 10100; -moz-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -webkit-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -o-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms;",
 				".mle-msg%.show":
 						cfg.msgPosition + ": 0;",
 				// Manage page
@@ -849,12 +893,22 @@
 				css[".mle-open-btn"] = "margin: 0 0 0 4px !important;";
 			}
 			if( cfg.ctxMenu ) {
-				css["#mle-ctxmenu%, .diag"] = "cursor: default; display: none; position: fixed; z-index: 10010; white-space: nowrap; background-color: #ffffff; border: 1px solid #d0d0d0; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;";
-				css["#mle-ctxmenu% li"] = "display: none;";
-				css["#mle-ctxmenu% li, .diag li"] = "margin: 2px 0; padding: 5px 14px;";
-				css["#mle-ctxmenu% li:hover, .diag li:hover"] = "background-color: #cee3f8;";
-				css["#mle-ctxmenu%.in-box .in, #mle-ctxmenu%.out-of-box .out, #mle-ctxmenu%.list-trigger .list"] = "display: block;";
-				css[".diag"] = "max-height: 200px; max-width: 180px; overflow: auto; z-index: 10020;";
+				css["#mle-ctxmenu%,\
+				     .diag"] =
+						"cursor: default; display: none; position: fixed; z-index: 10010; white-space: nowrap; background-color: #ffffff; border: 1px solid #d0d0d0; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;";
+				css["#mle-ctxmenu% li"] =
+						"display: none;";
+				css["#mle-ctxmenu% li,\
+				     .diag li"] =
+						"margin: 2px 0; padding: 5px 14px;";
+				css["#mle-ctxmenu% li:hover,\
+				     .diag li:hover"] =
+						"background-color: #cee3f8;";
+				css["#mle-ctxmenu%.in-box .in,\
+				     #mle-ctxmenu%.out-of-box .out"] =
+						"display: block;";
+				css[".diag"] =
+						"max-height: 200px; max-width: 180px; overflow: auto; z-index: 10020;";
 			}
 
 			styleNode.type = "text/css";
@@ -862,7 +916,7 @@
 
 			for( rule in css ) {
 				rules += rule.replace( /%/g, g.noise );
-				rules += " { " + css[rule] + "}\n";
+				rules += "{" + css[rule] + "}";
 			}
 
 			styleNode.textContent = rules;
@@ -900,12 +954,12 @@
 			close.addEventListener( "click", mainContainerHide, false );
 
 			// Add manage link
-			mngTrigger.className = "mng-link mle-btn";
+			mngTrigger.className = "mle-mng-link mle-btn";
 			mngTrigger.textContent = "Manage";
 			mngTrigger.addEventListener( "click", showManagePage, false );
 
 			// Add options link
-			optTrigger.className = "opt-link mle-btn";
+			optTrigger.className = "mle-opt-link mle-btn";
 			optTrigger.textContent = "Options";
 			optTrigger.title = "Opens the options page";
 			optTrigger.addEventListener( "click", function( e ) {
@@ -966,6 +1020,7 @@
 				button.className = "mle-open-btn";
 				button.type = "button";
 				button.textContent = "open MLE";
+				button.addEventListener( "mouseover", rememberActiveTextarea, false );
 				button.addEventListener( "click", mainContainerShow, false );
 
 				refEle = textareas[i].querySelector( ".bpm-search-toggle" );
@@ -997,7 +1052,8 @@
 				renameList( parent, e2 );
 			}, false );
 
-			parent.replaceChild( input, e.target );
+			e.target.setAttribute( "hidden", "hidden" );
+			parent.insertBefore( input, parent.firstChild );
 		},
 
 
@@ -1306,6 +1362,71 @@
 				d.createElement( "div" ),
 				[this.createLabel( title ), note]
 			);
+		},
+
+
+		/**
+		 * Change name of a list.
+		 * @param {String} oldName Old name of the list.
+		 * @param {String} newName New name for the list.
+		 */
+		updateListName: function( oldName, newName ) {
+			var gr = GLOBAL.REF;
+			var strong;
+
+			for( var i = 0; i < gr.navList.length; i++ ) {
+				strong = gr.navList[i].querySelector( "strong" );
+
+				if( strong && strong.textContent == oldName ) {
+					strong.textContent = newName;
+					break;
+				}
+			}
+		},
+
+
+		/**
+		 * Rebuild list navigation.
+		 * @param {Object} lists All lists with all their emotes.
+		 */
+		updateListOrder: function( lists ) {
+			var g = GLOBAL;
+			var listLink,
+			    ul = g.REF.navList[0].parentNode;
+			var countBlocks = 0;
+
+			while( ul.firstChild ) {
+				ul.removeChild( ul.firstChild );
+			}
+
+			g.REF.navList = [];
+
+			for( var listName in lists ) {
+				listLink = this.createListLink( listName, lists[listName].length );
+				ul.appendChild( listLink );
+				g.REF.navList[countBlocks++] = listLink;
+			}
+		},
+
+
+		/**
+		 * Rebuild the emote boxes that changed.
+		 * @param {Object} lists Lists and their emotes, that changed.
+		 */
+		updateLists: function( lists ) {
+			var block;
+
+			for( var key in lists ) {
+				block = GLOBAL.REF.emoteBlocks[key];
+
+				// Remove all emotes of the list to update
+				while( block.firstChild ) {
+					block.removeChild( block.firstChild );
+				}
+
+				// Add all emotes of the updated list
+				block.appendChild( this.createEmotesOfList( lists[key] ) );
+			}
 		}
 
 
@@ -1354,6 +1475,7 @@
 			var g = GLOBAL;
 			var emoteNameSource, emoteNameTarget;
 			var list, emoteIdxSource, emoteIdxTarget;
+			var update = {};
 
 			e.preventDefault();
 
@@ -1391,7 +1513,8 @@
 				list.splice( emoteIdxTarget, 0, emoteNameSource );
 			}
 
-			saveEmotesToStorage( g.emotes );
+			update[g.shownBlock] = list;
+			saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 			this.REF.draggedEmote = null;
 		},
@@ -1443,7 +1566,7 @@
 			reordered = reorderList( nameSource, nameTarget );
 
 			g.emotes = reordered;
-			saveEmotesToStorage( g.emotes );
+			saveChangesToStorage( BG_TASK.UPDATE_LIST_ORDER, g.emotes );
 
 			this.REF.draggedList = null;
 		},
@@ -1451,8 +1574,8 @@
 
 		/**
 		 * Adds a function to the drop event and stops interfering drag events.
-		 * @param  {DOMElement}   node     The DOMElement to listen to drop events.
-		 * @param  {Function}     callback Function to call in case of drop.
+		 * @param {DOMElement}   node     The DOMElement to listen to drop events.
+		 * @param {Function}     callback Function to call in case of drop.
 		 */
 		makeDropZone: function( node, callback ) {
 			node.addEventListener( "dragenter", stopEvent, false );

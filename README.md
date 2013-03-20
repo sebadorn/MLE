@@ -16,7 +16,6 @@
 * `[Bug]` Context sub menu taking its time on first opening
 * `[Bug]` Emote count of a list doesn't update when adding an emote (only after a page reload)
 * `[Bug]` In some cases it seems the normal Chrome context menu isn't prevented from opening and covers the MLE ctx menu
-* `[Bug]` Renaming a list per right-click doesn't work on the whole area.
 
 
 ## Done
@@ -25,3 +24,4 @@
 * `[Bug]` Clicking the mail symbol opens the MLE ctx menu, which it shouldn't
 * `[Bug]` Moving a list doesn't work (duplicates list, for example "Pinkie Pie" -> "Pinkie_Pie", but doesn't even persist)
 * `[Bug]` Config changes not saved every time (use "save" button instead?)
+* `[Bug]` Renaming a list per right-click doesn't work on the whole area.

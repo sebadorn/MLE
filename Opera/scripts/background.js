@@ -84,7 +84,10 @@ if( I_AM == BROWSER.FIREFOX ) {
 		SAVE_EMOTES: 3,
 		RESET_CONFIG: 4,
 		RESET_EMOTES: 5,
-		OPEN_OPTIONS: 6
+		OPEN_OPTIONS: 6,
+		UPDATE_EMOTES: 7,
+		UPDATE_LIST_ORDER: 8,
+		UPDATE_LIST_NAME: 9
 	};
 
 }
@@ -110,7 +113,7 @@ var DEFAULT_CONFIG = {
 	boxLabelMinimized: "Emotes",
 	boxPosTop: 60, // [px]
 	boxScrollbar: "left", // "left" or "right"
-	boxTrigger: "float", // "float" or "button"
+	boxTrigger: "button", // "float" or "button"
 	boxWidth: 650, // [px]
 	boxWidthMinimized: 70, // [px]
 	boxUnderHeader: true,
@@ -162,7 +165,8 @@ var DEFAULT_EMOTES = {
 	]
 };
 
-var CURRENT_CONFIG = null;
+var CURRENT_CONFIG = null,
+    CURRENT_EMOTES = null;
 
 
 /**
@@ -187,14 +191,14 @@ var BrowserOpera = {
 	 */
 	loadConfigAndEmotes: function( response, sender ) {
 		var wpref = widget.preferences;
-		var load_config = wpref[PREF.CONFIG] ? JSON.parse( wpref[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-		var load_emotes = wpref[PREF.EMOTES] ? JSON.parse( wpref[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
-		updateConfig( load_config );
+		CURRENT_CONFIG = wpref[PREF.CONFIG] ? JSON.parse( wpref[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+		CURRENT_EMOTES = wpref[PREF.EMOTES] ? JSON.parse( wpref[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
-		CURRENT_CONFIG = load_config;
-		response.config = load_config;
-		response.emotes = load_emotes;
+		updateConfig( CURRENT_CONFIG );
+
+		response.config = CURRENT_CONFIG;
+		response.emotes = CURRENT_EMOTES;
 
 		return response;
 	},
@@ -207,6 +211,14 @@ var BrowserOpera = {
 			url: "options.html",
 			focused: true
 		} );
+	},
+
+	/**
+	 * Broadcast a message to everything extension related.
+	 * @param {Object} msg
+	 */
+	broadcast: function( msg ) {
+		opera.extension.broadcastMessage( msg );
 	},
 
 	/**
@@ -297,20 +309,17 @@ var BrowserChrome = {
 	 */
 	loadConfigAndEmotes: function( response, sender ) {
 		chrome.storage.local.get( [PREF.CONFIG, PREF.EMOTES], function( items ) {
-			var lc = !items[PREF.CONFIG] ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) : JSON.parse( items[PREF.CONFIG] );
-			var le = !items[PREF.EMOTES] ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) : JSON.parse( items[PREF.EMOTES] );
+			CURRENT_CONFIG = !items[PREF.CONFIG] ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) : JSON.parse( items[PREF.CONFIG] );
+			CURRENT_EMOTES = !items[PREF.EMOTES] ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) : JSON.parse( items[PREF.EMOTES] );
 
-			updateConfig( lc );
+			updateConfig( CURRENT_CONFIG );
 
-			CURRENT_CONFIG = lc;
-			response.config = lc;
-			response.emotes = le;
+			response.config = CURRENT_CONFIG;
+			response.emotes = CURRENT_EMOTES;
 
 			// Send loaded items to the tab that sent the request.
 			if( sender ) {
-				chrome.tabs.getSelected( null, function( tab ) {
-					chrome.tabs.sendMessage( sender.tab.id, response, handleMessage );
-				} );
+				chrome.tabs.sendMessage( sender.tab.id, response, handleMessage );
 			}
 		} );
 
@@ -324,6 +333,18 @@ var BrowserChrome = {
 		chrome.tabs.create( {
 			url: chrome.extension.getURL( "options.html" ),
 			active: true
+		} );
+	},
+
+	/**
+	 * Broadcast a message to everything extension related.
+	 * @param {Object} msg
+	 */
+	broadcast: function( msg ) {
+		chrome.tabs.query( null, function( allTabs ) {
+			for( var i = 0; i < allTabs.length; i++ ) {
+				chrome.tabs.sendMessage( allTabs[i].id, msg, handleMessage );
+			}
 		} );
 	},
 
@@ -378,14 +399,13 @@ var BrowserFirefox = {
 	 * @return {Object} response
 	 */
 	loadConfigAndEmotes: function( response, sender ) {
-		var lc = ss.storage[PREF.CONFIG] ? JSON.parse( ss.storage[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-		var le = ss.storage[PREF.EMOTES] ? JSON.parse( ss.storage[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+		CURRENT_CONFIG = ss.storage[PREF.CONFIG] ? JSON.parse( ss.storage[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+		CURRENT_EMOTES = ss.storage[PREF.EMOTES] ? JSON.parse( ss.storage[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
-		updateConfig( lc );
+		updateConfig( CURRENT_CONFIG );
 
-		CURRENT_CONFIG = lc;
-		response.config = lc;
-		response.emotes = le;
+		response.config = CURRENT_CONFIG;
+		response.emotes = CURRENT_EMOTES;
 
 		return response;
 	},
@@ -397,6 +417,19 @@ var BrowserFirefox = {
 		tabs.open( {
 			url: self.data.url( "options.html" )
 		} );
+	},
+
+	/**
+	 * Broadcast a message to everything extension related.
+	 * @param {Object} msg
+	 */
+	broadcast: function( msg ) {
+		var worker, i;
+
+		for( i = 0; i < tabs.length; i++ ) {
+			worker = tabs[i].attach( {} );
+			worker.postMessage( msg );
+		}
 	},
 
 	/**
@@ -435,20 +468,20 @@ var MyBrowser = null;
 switch( I_AM ) {
 	case BROWSER.OPERA:
 		MyBrowser = BrowserOpera;
-		delete BrowserChrome;
-		delete BrowserFirefox;
+		BrowserChrome = null;
+		BrowserFirefox = null;
 		break;
 
 	case BROWSER.CHROME:
 		MyBrowser = BrowserChrome;
-		delete BrowserOpera;
-		delete BrowserFirefox;
+		BrowserOpera = null;
+		BrowserFirefox = null;
 		break;
 
 	case BROWSER.FIREFOX:
 		MyBrowser = BrowserFirefox;
-		delete BrowserOpera;
-		delete BrowserChrome;
+		BrowserOpera = null;
+		BrowserChrome = null;
 		break;
 }
 
@@ -463,7 +496,8 @@ switch( I_AM ) {
 function handleMessage( e, sender, sendResponse ) {
 	var response = {},
 	    data = e.data ? e.data : e,
-	    source = sender ? sender : e.source;
+	    source = sender ? sender : e.source,
+	    broadcast = false;
 
 	// Only handle messages which come with a set task.
 	if( !data.task ) {
@@ -472,6 +506,29 @@ function handleMessage( e, sender, sendResponse ) {
 	}
 
 	switch( data.task ) {
+		case BG_TASK.UPDATE_EMOTES:
+			mergeEmotesWithUpdate( data.update );
+			response = saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
+			response.update = data.update;
+			broadcast = true;
+			break;
+
+		case BG_TASK.UPDATE_LIST_ORDER:
+			CURRENT_EMOTES = data.update;
+			saveToStorage( PREF.EMOTES, data.update );
+			response.update = data.update;
+			broadcast = true;
+			break;
+
+		case BG_TASK.UPDATE_LIST_NAME:
+			var u = data.update;
+			CURRENT_EMOTES[u.newName] = CURRENT_EMOTES[u.oldName];
+			delete CURRENT_EMOTES[u.oldName];
+			saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
+			response.update = u;
+			broadcast = true;
+			break;
+
 		case BG_TASK.LOAD:
 			response = loadConfigAndEmotes( { task: data.task }, source );
 			break;
@@ -504,7 +561,25 @@ function handleMessage( e, sender, sendResponse ) {
 	}
 
 	response.task = data.task;
-	MyBrowser.respond( source, response );
+
+	if( broadcast ) {
+		MyBrowser.broadcast( response );
+	}
+	else {
+		MyBrowser.respond( source, response );
+	}
+};
+
+
+/**
+ * Merge the currently loaded emotes with the update.
+ * @param  {Object} emotes  Changed lists with their emotes.
+ * @return {Object} Updated emote lists.
+ */
+function mergeEmotesWithUpdate( emotes ) {
+	for( var key in emotes ) {
+		CURRENT_EMOTES[key] = emotes[key];
+	}
 };
 
 
