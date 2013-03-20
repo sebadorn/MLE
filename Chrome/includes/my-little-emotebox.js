@@ -10,7 +10,6 @@
 			emotes: null,
 			// Keep track of mouse stats
 			MOUSE: {
-				isMouseDown: false,
 				lastX: null,
 				lastY: null
 			},
@@ -419,30 +418,15 @@
 	 * @param {MouseEvent} e MouseEvent from a "mousemove".
 	 */
 	function moveMLE( e ) {
-		if( !GLOBAL.MOUSE.isMouseDown ) {
-			return;
-		}
-
 		e.preventDefault();
 
-		var m = GLOBAL.MOUSE;
-
-		// Skip the first move since we have
-		// nothing to compare the position to
-		if( m.lastX === null ) {
-			m.lastX = e.clientX;
-			m.lastY = e.clientY;
-			return;
-		}
-
-		var mainCont = GLOBAL.REF.mainCont;
-		var moveX = e.clientX - m.lastX,
+		var m = GLOBAL.MOUSE,
+		    mainCont = GLOBAL.REF.mainCont,
+		    moveX = e.clientX - m.lastX,
 		    moveY = e.clientY - m.lastY;
-		var currentX = mainCont.offsetLeft,
-		    currentY = mainCont.offsetTop;
 
-		mainCont.style.left = ( currentX + moveX ) + "px";
-		mainCont.style.top = ( currentY + moveY ) + "px";
+		mainCont.style.left = ( mainCont.offsetLeft + moveX ) + "px";
+		mainCont.style.top = ( mainCont.offsetTop + moveY ) + "px";
 
 		m.lastX = e.clientX;
 		m.lastY = e.clientY;
@@ -749,6 +733,27 @@
 
 
 	/**
+	 * Keep track if the left mouse button is pressed.
+	 */
+	function trackMouseDown( e ) {
+		e.preventDefault();
+
+		var m = GLOBAL.MOUSE;
+
+		if( e.which == 1 && e.type == "mousedown" ) {
+			m.lastX = e.clientX;
+			m.lastY = e.clientY;
+			document.addEventListener( "mousemove", moveMLE, false );
+		}
+		else {
+			m.lastX = null;
+			m.lastY = null;
+			document.removeEventListener( "mousemove", moveMLE, false );
+		}
+	};
+
+
+	/**
 	 * Show a preview of the emote that is about to be added.
 	 */
 	function updatePreview( e ) {
@@ -987,8 +992,6 @@
 			    optTrigger = d.createElement( "span" ),
 			    dragbar;
 
-			this.trackMouseDown();
-
 			// Add headline
 			labelMain.className = "mle-header";
 			labelMain.textContent = g.config.boxLabelMinimized;
@@ -1022,7 +1025,8 @@
 			for( var i = 0; i < 4; i++ ) {
 				dragbar = d.createElement( "div" );
 				dragbar.className = "mle-dragbar mle-dragbar" + i;
-				dragbar.addEventListener( "mousemove", moveMLE, false );
+				dragbar.addEventListener( "mousedown", trackMouseDown, false );
+				dragbar.addEventListener( "mouseup", trackMouseDown, false );
 
 				fragmentNode.appendChild( dragbar );
 			}
@@ -1463,27 +1467,6 @@
 
 			// Remove context menus. Will be rebuild when needed.
 			ContextMenu.destroyMenus();
-		},
-
-
-		/**
-		 * Kepp track if the left mouse button is pressed.
-		 */
-		trackMouseDown: function() {
-			document.addEventListener( "mousedown", function( e ) {
-				if( e.which == 1 ) {
-					GLOBAL.MOUSE.isMouseDown = true;
-				}
-			}, false );
-
-			document.addEventListener( "mouseup", function( e ) {
-				if( e.which == 1 ) {
-					var m = GLOBAL.MOUSE;
-					m.isMouseDown = false;
-					m.lastX = null;
-					m.lastY = null;
-				}
-			}, false );
 		},
 
 
