@@ -170,20 +170,20 @@
 
 		// Major decision. Better ask first.
 		confirmDel = window.confirm(
-			"My Little Emotebox:\n\n"
-			+ "If you delete the list, you will also DELETE ALL EMOTES in this list!\n\n"
-			+ "Proceed?"
+			"My Little Emotebox:\n\nIf you delete the list, you will also DELETE ALL EMOTES in this list!\n\nProceed?"
 		);
 		if( !confirmDel ) { return; }
 
+		listName = listName.replace( /\\"/g, '"' );
+
 		// Delete from emote lists
 		delete g.emotes[listName];
-		g.msgIgnoreOnce = BG_TASK.SAVE_EMOTES;
-		saveChangesToStorage( BG_TASK.SAVE_EMOTES, g.emotes );
+		g.msgIgnoreOnce = BG_TASK.UPDATE_LIST_DELETE;
+		saveChangesToStorage( BG_TASK.UPDATE_LIST_DELETE, { deleteList: listName } );
 
 		// Remove from DOM.
-		g.REF.lists.removeChild( listToDel );
 		delete g.REF.emoteBlocks[listName];
+		g.REF.lists.removeChild( listToDel );
 
 		for( var i = 0; i < selectLists.length; i++ ) {
 			children = selectLists[i].childNodes;
@@ -196,8 +196,7 @@
 			}
 		}
 
-		// Remove context menus.
-		// Will be rebuild when needed.
+		// Remove context menus. Will be rebuild when needed.
 		ContextMenu.destroyMenus();
 	};
 
@@ -251,7 +250,7 @@
 
 			case BG_TASK.UPDATE_LIST_ORDER:
 				g.emotes = data.update;
-				Builder.updateListOrder( data.update );
+				Builder.updateListOrder( g.emotes );
 				break;
 
 			case BG_TASK.UPDATE_LIST_NAME:
@@ -259,6 +258,11 @@
 				g.emotes[u.newName] = g.emotes[u.oldName];
 				delete g.emotes[u.oldName];
 				Builder.updateListName( u.oldName, u.newName );
+				break;
+
+			case BG_TASK.UPDATE_LIST_DELETE:
+				delete g.emotes[data.deleteList];
+				Builder.removeList( data.deleteList );
 				break;
 		}
 	};
@@ -1200,7 +1204,7 @@
 
 			for( listName in g.emotes ) {
 				optList = d.createElement( "option" );
-				optList.value = listName;
+				optList.value = listName.replace( /"/g, '\\"' );
 				optList.textContent = listName;
 
 				selList.appendChild( optList );
@@ -1355,6 +1359,51 @@
 
 
 		/**
+		 * Remove a list.
+		 * @param {String} listName Name of the list.
+		 */
+		removeList: function( listName ) {
+			var gr = GLOBAL.REF;
+			var li,
+			    selectLists = [gr.selectListDelete, gr.selectListAddEmote];
+
+			// Remove list from DOM
+			for( var i = 0; i < gr.navList.length; i++ ) {
+				li = gr.navList[i].querySelector( "strong" );
+				if( li.textContent == listName ) {
+					gr.lists.removeChild( gr.navList[i] );
+					gr.navList.splice( i, 1 );
+					break;
+				}
+			}
+
+			delete gr.emoteBlocks[listName];
+
+			if( GLOBAL.shownBlock == listName ) {
+				GLOBAL.shownBlock = null;
+			}
+
+			// Remove list name from <select>s
+			for( var i = 0; i < selectLists.length; i++ ) {
+				if( !selectLists[i] ) {
+					continue;
+				}
+				children = selectLists[i].childNodes;
+
+				for( var j = 0; j < children.length; j++ ) {
+					if( children[j].value == listName ) {
+						selectLists[i].removeChild( children[j] );
+						break;
+					}
+				}
+			}
+
+			// Remove context menus. Will be rebuild when needed.
+			ContextMenu.destroyMenus();
+		},
+
+
+		/**
 		 * Change name of a list.
 		 * @param {String} oldName Old name of the list.
 		 * @param {String} newName New name for the list.
@@ -1404,20 +1453,11 @@
 		 */
 		updateLists: function( lists ) {
 			var emoteBlocks = GLOBAL.REF.emoteBlocks;
-			var block;
 
 			for( var key in lists ) {
 				// Only the content of an existing list changed
 				if( emoteBlocks.hasOwnProperty( key ) ) {
-					block = emoteBlocks[key];
-
-					// Remove all emotes of the list to update
-					while( block.firstChild ) {
-						block.removeChild( block.firstChild );
-					}
-
-					// Add all emotes of the updated list
-					block.appendChild( this.createEmotesOfList( lists[key] ) );
+					this.updateListsChangeExisting( emoteBlocks[key], lists[key] );
 				}
 				// This update adds a new list
 				else {
@@ -1439,8 +1479,6 @@
 			    selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote],
 			    selOption;
 
-			g.emotes[listName] = [];
-
 			// Add new block
 			block.className = "mle-block" + g.noise;
 			g.REF.emoteBlocks[listName] = block;
@@ -1455,13 +1493,29 @@
 					continue;
 				}
 				selOption = d.createElement( "option" );
-				selOption.value = listName;
+				selOption.value = listName.replace( /"/g, '\\"' );
 				selOption.textContent = listName;
 				selectLists[i].appendChild( selOption );
 			}
 
 			// Destroy context menus. Will be rebuild when needed.
 			ContextMenu.destroyMenus();
+		},
+
+
+		/**
+		 * Update an existing list.
+		 * @param {DOMElement} block  The emote block.
+		 * @param {Array}      emotes Emotes of the list.
+		 */
+		updateListsChangeExisting: function( block, emotes ) {
+			// Remove all emotes of the list to update
+			while( block.firstChild ) {
+				block.removeChild( block.firstChild );
+			}
+
+			// Add all emotes of the updated list
+			block.appendChild( this.createEmotesOfList( emotes ) );
 		}
 
 

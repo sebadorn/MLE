@@ -87,7 +87,8 @@ if( I_AM == BROWSER.FIREFOX ) {
 		OPEN_OPTIONS: 6,
 		UPDATE_EMOTES: 7,
 		UPDATE_LIST_ORDER: 8,
-		UPDATE_LIST_NAME: 9
+		UPDATE_LIST_NAME: 9,
+		UPDATE_LIST_DELETE: 10
 	};
 
 }
@@ -529,6 +530,14 @@ function handleMessage( e, sender, sendResponse ) {
 			saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
 
 			response.update = u;
+			broadcast = true;
+			break;
+
+		case BG_TASK.UPDATE_LIST_DELETE:
+			delete CURRENT_EMOTES[data.update.deleteList];
+			saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
+
+			response.deleteList = data.update.deleteList;
 			broadcast = true;
 			break;
 
