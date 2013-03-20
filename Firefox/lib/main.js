@@ -509,6 +509,7 @@ function handleMessage( e, sender, sendResponse ) {
 		case BG_TASK.UPDATE_EMOTES:
 			mergeEmotesWithUpdate( data.update );
 			response = saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
+
 			response.update = data.update;
 			broadcast = true;
 			break;
@@ -516,15 +517,17 @@ function handleMessage( e, sender, sendResponse ) {
 		case BG_TASK.UPDATE_LIST_ORDER:
 			CURRENT_EMOTES = data.update;
 			saveToStorage( PREF.EMOTES, data.update );
+
 			response.update = data.update;
 			broadcast = true;
 			break;
 
 		case BG_TASK.UPDATE_LIST_NAME:
 			var u = data.update;
-			CURRENT_EMOTES[u.newName] = CURRENT_EMOTES[u.oldName];
-			delete CURRENT_EMOTES[u.oldName];
+
+			changeListName( u.oldName, u.newName );
 			saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
+
 			response.update = u;
 			broadcast = true;
 			break;
@@ -540,6 +543,7 @@ function handleMessage( e, sender, sendResponse ) {
 		case BG_TASK.SAVE_CONFIG:
 			CURRENT_CONFIG = mergeWithConfig( data.config );
 			response = saveToStorage( PREF.CONFIG, CURRENT_CONFIG );
+
 			response.config = CURRENT_CONFIG;
 			break;
 
@@ -568,6 +572,27 @@ function handleMessage( e, sender, sendResponse ) {
 	else {
 		MyBrowser.respond( source, response );
 	}
+};
+
+
+/**
+ * Change the name of a list while keeping the order.
+ * @param {String} oldName Current name of the list.
+ * @param {String} newName New name for the list.
+ */
+function changeListName( oldName, newName ) {
+	var emotesNew = {};
+
+	for( var key in CURRENT_EMOTES ) {
+		if( key == oldName ) {
+			emotesNew[newName] = CURRENT_EMOTES[key];
+		}
+		else {
+			emotesNew[key] = CURRENT_EMOTES[key];
+		}
+	}
+
+	CURRENT_EMOTES = emotesNew;
 };
 
 
