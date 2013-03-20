@@ -425,9 +425,9 @@ var BrowserFirefox = {
 	 * @param {Object} msg
 	 */
 	broadcast: function( msg ) {
-		var worker, i;
+		var worker;
 
-		for( i = 0; i < tabs.length; i++ ) {
+		for( var i = 0; i < tabs.length; i++ ) {
 			worker = tabs[i].attach( {} );
 			worker.postMessage( msg );
 		}

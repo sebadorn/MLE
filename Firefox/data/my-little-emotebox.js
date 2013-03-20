@@ -8,6 +8,12 @@
 			config: null,
 			// Loaded emotes
 			emotes: null,
+			// Keep track of mouse stats
+			MOUSE: {
+				isMouseDown: false,
+				lastX: null,
+				lastY: null
+			},
 			// A message type from the background to ignore one time
 			msgIgnoreOnce: 0,
 			// Reference to the timeout object for the notifier
@@ -68,12 +74,12 @@
 	 * @param {MutationRecord} mutations
 	 */
 	function buttonObserverMutation( mutations ) {
-		var mutation, node, buttonMLE, i, j;
+		var mutation, node, buttonMLE;
 
-		for( i = 0; i < mutations.length; i++ ) {
+		for( var i = 0; i < mutations.length; i++ ) {
 			mutation = mutations[i];
 
-			for( j = 0; j < mutation.addedNodes.length; j++ ) {
+			for( var j = 0; j < mutation.addedNodes.length; j++ ) {
 				node = mutation.addedNodes[j];
 
 				if( node.className == "usertext cloneable" ) {
@@ -405,6 +411,41 @@
 		for( var key in emotes ) {
 			GLOBAL.emotes[key] = emotes[key];
 		}
+	};
+
+
+	/**
+	 * Move the MLE window.
+	 * @param {MouseEvent} e MouseEvent from a "mousemove".
+	 */
+	function moveMLE( e ) {
+		if( !GLOBAL.MOUSE.isMouseDown ) {
+			return;
+		}
+
+		e.preventDefault();
+
+		var m = GLOBAL.MOUSE;
+
+		// Skip the first move since we have
+		// nothing to compare the position to
+		if( m.lastX === null ) {
+			m.lastX = e.clientX;
+			m.lastY = e.clientY;
+			return;
+		}
+
+		var mainCont = GLOBAL.REF.mainCont;
+		var moveX = e.clientX - m.lastX,
+		    moveY = e.clientY - m.lastY;
+		var currentX = mainCont.offsetLeft,
+		    currentY = mainCont.offsetTop;
+
+		mainCont.style.left = ( currentX + moveX ) + "px";
+		mainCont.style.top = ( currentY + moveY ) + "px";
+
+		m.lastX = e.clientX;
+		m.lastY = e.clientY;
 	};
 
 
@@ -787,6 +828,7 @@
 				// Collection of same CSS
 				"#mle%.show,\
 				 #mle%.show ul,\
+				 #mle%.show .mle-dragbar,\
 				 #mle%.show .mle-block%,\
 				 #mle%.show .mle-btn,\
 				 #mle%.show #mle-manage%.show-manage,\
@@ -806,6 +848,17 @@
 				// Active state
 				"#mle%.show":
 						"width: " + cfg.boxWidth + "px; height: " + cfg.boxHeight + "px; padding: 36px 10px 10px; z-index: 10000;",
+				// Dragging bars
+				".mle-dragbar":
+						"display: none; position: absolute;",
+				".mle-dragbar0": // left
+						"height: 100%; left: 0; top: 0; width: 10px;",
+				".mle-dragbar1": // right
+						"height: 100%; right: 0; top: 0; width: 10px;",
+				".mle-dragbar2": // bottom
+						"bottom: 0; height: 10px; left: 0; width: 100%;",
+				".mle-dragbar3": // top
+						"height: 32px; left: 0; top: 0; width: 100%;",
 				// Header
 				"#mle% .mle-header":
 						"display: block; color: #303030; font-weight: bold; padding: 6px 0; text-align: center;",
@@ -931,7 +984,10 @@
 			    mngForm = d.createElement( "div" ),
 			    mngTrigger = d.createElement( "span" ),
 			    msg = d.createElement( "p" ),
-			    optTrigger = d.createElement( "span" );
+			    optTrigger = d.createElement( "span" ),
+			    dragbar;
+
+			this.trackMouseDown();
 
 			// Add headline
 			labelMain.className = "mle-header";
@@ -961,6 +1017,15 @@
 			// Add most-of-the-time-hidden message block
 			// (NOT a part of the main container)
 			msg.className = "mle-msg" + g.noise;
+
+			// Add invisible dragging bars
+			for( var i = 0; i < 4; i++ ) {
+				dragbar = d.createElement( "div" );
+				dragbar.className = "mle-dragbar mle-dragbar" + i;
+				dragbar.addEventListener( "mousemove", moveMLE, false );
+
+				fragmentNode.appendChild( dragbar );
+			}
 
 			// Append all the above to the DOM fragment
 			fragmentNode = appendChildren(
@@ -1101,9 +1166,8 @@
 		createEmotesOfList: function( emoteList ) {
 			var fragment = document.createDocumentFragment(),
 			    emoteLink;
-			var i;
 
-			for( i = 0; i < emoteList.length; i++ ) {
+			for( var i = 0; i < emoteList.length; i++ ) {
 				emoteLink = '/' + emoteList[i];
 				fragment.appendChild( this.createEmote( emoteLink ) );
 			}
@@ -1399,6 +1463,27 @@
 
 			// Remove context menus. Will be rebuild when needed.
 			ContextMenu.destroyMenus();
+		},
+
+
+		/**
+		 * Kepp track if the left mouse button is pressed.
+		 */
+		trackMouseDown: function() {
+			document.addEventListener( "mousedown", function( e ) {
+				if( e.which == 1 ) {
+					GLOBAL.MOUSE.isMouseDown = true;
+				}
+			}, false );
+
+			document.addEventListener( "mouseup", function( e ) {
+				if( e.which == 1 ) {
+					var m = GLOBAL.MOUSE;
+					m.isMouseDown = false;
+					m.lastX = null;
+					m.lastY = null;
+				}
+			}, false );
 		},
 
 
