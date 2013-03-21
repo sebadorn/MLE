@@ -23,14 +23,29 @@ if( I_AM == BROWSER.FIREFOX ) {
 	var ss = require( "simple-storage" );
 	var tabs = require( "tabs" );
 
+	var workers = [];
+
 	var csfWebpage = [
-			self.data.url( "mle-codes.js" ),
-			self.data.url( "my-little-emotebox.js" )
-		],
-		csfOptionsPage = [
-			self.data.url( "mle-codes.js" ),
-			self.data.url( "options.js" )
-		];
+	    	self.data.url( "mle-codes.js" ),
+	    	self.data.url( "my-little-emotebox.js" )
+	    ],
+	    csfOptionsPage = [
+	    	self.data.url( "mle-codes.js" ),
+	    	self.data.url( "options.js" )
+	    ];
+
+
+	/**
+	 * Forget a worker that has been detached.
+	 * @param {Object} worker Detached worker.
+	 */
+	function forgetWorker( worker ) {
+		var idx = workers.indexOf( worker );
+
+		if( idx >= 0 ) {
+			workers.splice( idx, 1 );
+		}
+	};
 
 
 	/**
@@ -39,10 +54,14 @@ if( I_AM == BROWSER.FIREFOX ) {
 	 * @param {Object} worker
 	 */
 	function handleOnAttach( worker ) {
+		workers.push( worker );
 		worker.on( "message", function( msg ) {
 			handleMessage( msg, worker );
 		} );
-	}
+		worker.on( "detach", function() {
+			forgetWorker( this );
+		} );
+	};
 
 
 	// Add content scripts to web pages
@@ -426,11 +445,8 @@ var BrowserFirefox = {
 	 * @param {Object} msg
 	 */
 	broadcast: function( msg ) {
-		var worker;
-
-		for( var i = 0; i < tabs.length; i++ ) {
-			worker = tabs[i].attach( {} );
-			worker.postMessage( msg );
+		for( var i = 0; i < workers.length; i++ ) {
+			workers[i].postMessage( msg );
 		}
 	},
 
