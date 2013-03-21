@@ -124,6 +124,36 @@
 
 
 	/**
+	 * Convert the fixed position from a value for "left"
+	 * to a value for "right" of the main container.
+	 * @param  {int}     left  Pixel position from the left.
+	 * @param  {boolean} isMax If the main container is maximized.
+	 * @return {int}     Pixel position from the right.
+	 */
+	function convertMainContLTR( left, isMax ) {
+		var cfg = GLOBAL.config;
+		var w = isMax ? cfg.boxWidth : cfg.boxWidthMinimized;
+
+		return document.body.offsetWidth - left - w;
+	};
+
+
+	/**
+	 * Convert the fixed position from a value for "right"
+	 * to a value for "left" of the main container.
+	 * @param  {int} right Pixel position from the right.
+	 * @param  {boolean} isMax If the main container is maximized.
+	 * @return {int}       Pixel position from the left.
+	 */
+	function convertMainContRTL( right, isMax ) {
+		var cfg = GLOBAL.config;
+		var w = isMax ? cfg.boxWidth : cfg.boxWidthMinimized;
+
+		return document.body.offsetWidth - right - w;
+	};
+
+
+	/**
 	 * Delete an emote from a list.
 	 * @param {String} emote
 	 * @param {String} list
@@ -738,18 +768,60 @@
 	function trackMouseDown( e ) {
 		e.preventDefault();
 
-		var m = GLOBAL.MOUSE;
-
 		if( e.which == 1 && e.type == "mousedown" ) {
-			m.lastX = e.clientX;
-			m.lastY = e.clientY;
-			document.addEventListener( "mousemove", moveMLE, false );
+			trackMouseDownStart( e );
 		}
 		else {
-			m.lastX = null;
-			m.lastY = null;
-			document.removeEventListener( "mousemove", moveMLE, false );
+			trackMouseDownEnd( e );
 		}
+	};
+
+
+	/**
+	 * Start tracking the mouse movement.
+	 */
+	function trackMouseDownEnd( e ) {
+		var g = GLOBAL,
+		    m = g.MOUSE;
+		var posX = convertMainContLTR( g.REF.mainCont.offsetLeft, true ),
+		    update = {};
+
+		m.lastX = null;
+		m.lastY = null;
+		document.removeEventListener( "mousemove", moveMLE, false );
+
+		if( g.config.boxAlign == "right" ) {
+			g.REF.mainCont.style.right = posX + "px";
+			g.REF.mainCont.style.left = "";
+		}
+
+		update = {
+			boxPosTop: g.REF.mainCont.offsetTop,
+			boxPosX: posX
+		};
+		g.msgIgnoreOnce = BG_TASK.SAVE_CONFIG;
+		saveChangesToStorage( BG_TASK.SAVE_CONFIG, update );
+	};
+
+
+	/**
+	 * Stop tracking the mouse movement and
+	 * save the window position.
+	 */
+	function trackMouseDownStart( e ) {
+		var g = GLOBAL,
+		    m = g.MOUSE;
+
+		if( g.config.boxAlign == "right" ) {
+			var posX = g.REF.mainCont.style.right.replace( "px", "" );
+
+			g.REF.mainCont.style.right = "";
+			g.REF.mainCont.style.left = convertMainContRTL( posX, true ) + "px";
+		}
+
+		m.lastX = e.clientX;
+		m.lastY = e.clientY;
+		document.addEventListener( "mousemove", moveMLE, false );
 	};
 
 
@@ -821,12 +893,13 @@
 			var g = GLOBAL,
 			    cfg = g.config,
 			    d = document;
-			var styleNode = d.createElement( "style" );
-			var rule,
+			var styleNode = d.createElement( "style" ),
 			    rules = '\n';
-			var zIndex = cfg.boxUnderHeader ? 10 : 10000,
-			    boxPos = ( cfg.boxAlign == "left" ) ? "left: 5px;" : "right: 5px;",
-			    listDirection = ( cfg.boxScrollbar == "right" ) ? "ltr" : "rtl";
+			var zIndex, listDir;
+
+			zIndex = cfg.boxUnderHeader ? 10 : 10000;
+			listDir = ( cfg.boxScrollbar == "right" ) ? "ltr" : "rtl";
+
 
 			// '%' will be replaced with noise
 			var css = {
@@ -849,7 +922,7 @@
 						"background-color: #404040;",
 				// Inactive state
 				"#mle%":
-						"background-color: " + cfg.boxBgColor + "; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; " + boxPos + " top: " + cfg.boxPosTop + "px; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px; -moz-transition: width " + cfg.boxAnimationSpeed + "ms; -webkit-transition: width " + cfg.boxAnimationSpeed + "ms; -o-transition: width " + cfg.boxAnimationSpeed + "ms; transition: width " + cfg.boxAnimationSpeed + "ms;",
+						"background-color: " + cfg.boxBgColor + "; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px; -moz-transition: width " + cfg.boxAnimationSpeed + "ms; -webkit-transition: width " + cfg.boxAnimationSpeed + "ms; -o-transition: width " + cfg.boxAnimationSpeed + "ms; transition: width " + cfg.boxAnimationSpeed + "ms;",
 				// Active state
 				"#mle%.show":
 						"width: " + cfg.boxWidth + "px; height: " + cfg.boxHeight + "px; padding: 36px 10px 10px; z-index: 10000;",
@@ -882,7 +955,7 @@
 						"right: 10px; z-index: 20; padding-left: 12px; padding-right: 12px;",
 				// Selection list
 				"#mle% ul":
-						"direction: " + listDirection + "; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;",
+						"direction: " + listDir + "; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;",
 				"#mle% li":
 						"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
 				"#mle% li:first-child":
@@ -961,7 +1034,7 @@
 			styleNode.type = "text/css";
 			styleNode.id = "MyLittleEmotebox" + g.noise;
 
-			for( rule in css ) {
+			for( var rule in css ) {
 				rules += rule.replace( /%/g, g.noise );
 				rules += "{" + css[rule] + "}";
 			}
@@ -989,8 +1062,8 @@
 			    mngForm = d.createElement( "div" ),
 			    mngTrigger = d.createElement( "span" ),
 			    msg = d.createElement( "p" ),
-			    optTrigger = d.createElement( "span" ),
-			    dragbar;
+			    optTrigger = d.createElement( "span" );
+			var dragbar;
 
 			// Add headline
 			labelMain.className = "mle-header";
@@ -1046,6 +1119,15 @@
 			mainContainer.appendChild( fragmentNode );
 			mainContainer.addEventListener( "mouseover", rememberActiveTextarea, false );
 			mainContainer.addEventListener( "mouseover", mainContainerShow, false );
+
+			// Add style for position of main container
+			if( g.config.boxAlign == "right" ) {
+				mainContainer.style.right = g.config.boxPosX + "px";
+			}
+			else {
+				mainContainer.style.left = g.config.boxPosX + "px";
+			}
+			mainContainer.style.top = g.config.boxPosTop + "px";
 
 			g.REF.msg = msg;
 			g.REF.mngForm = mngForm;
@@ -1221,13 +1303,9 @@
 			    count = d.createElement( "span" );
 
 			name.textContent = listName;
-			name.addEventListener( "click", toggleEmoteBlock, false );
 			name.addEventListener( "dblclick", this.addRenameListField, false );
-			DragAndDrop.makeDropZone( name, DragAndDrop.dropMoveList );
 
 			count.textContent = elementCount + " emotes";
-			count.addEventListener( "click", toggleEmoteBlock, false );
-			DragAndDrop.makeDropZone( count, DragAndDrop.dropMoveList );
 
 			listLink.setAttribute( "draggable", "true" );
 			listLink.addEventListener( "click", toggleEmoteBlock, false );

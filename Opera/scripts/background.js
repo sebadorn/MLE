@@ -113,6 +113,7 @@ var DEFAULT_CONFIG = {
 	boxHeight: 330, // [px]
 	boxLabelMinimized: "Emotes",
 	boxPosTop: 60, // [px]
+	boxPosX: 5, // [px]
 	boxScrollbar: "left", // "left" or "right"
 	boxTrigger: "button", // "float" or "button"
 	boxWidth: 650, // [px]
@@ -550,7 +551,9 @@ function handleMessage( e, sender, sendResponse ) {
 			break;
 
 		case BG_TASK.SAVE_CONFIG:
-			CURRENT_CONFIG = mergeWithConfig( data.config );
+			var config = data.config || data.update;
+
+			CURRENT_CONFIG = mergeWithConfig( config );
 			response = saveToStorage( PREF.CONFIG, CURRENT_CONFIG );
 
 			response.config = CURRENT_CONFIG;

@@ -73,7 +73,22 @@
 					<option value="left">left</option>
 					<option value="right">right</option>
 				</select>
-				<label>Box position on page</label>
+				<label>X axis orientation on page</label>
+				<p class="explain">
+					<strong>left</strong> – Origin of X ordinates is on the left.<br />
+					<strong>right</strong> – Origin of X ordinates is on the right.
+				</p>
+			</li>
+			<li>
+				<input type="number" id="boxPosX" value="" />
+				<span class="unit">px</span>
+				<label>Box margin from the side</label>
+				<p class="explain">If the left or right side is specified with the <em>X axis orientation</em> setting.</p>
+			</li>
+			<li>
+				<input type="number" id="boxPosTop" value="" />
+				<span class="unit">px</span>
+				<label>Box margin from top</label>
 			</li>
 			<li>
 				<select id="boxScrollbar">
@@ -81,11 +96,6 @@
 					<option value="right">right</option>
 				</select>
 				<label>Side the list scrollbar is on</label>
-			</li>
-			<li>
-				<input type="number" id="boxPosTop" value="" />
-				<span class="unit">px</span>
-				<label>Box margin from top</label>
 			</li>
 			<li>
 				<input type="text" id="boxLabelMinimized" value="" />
