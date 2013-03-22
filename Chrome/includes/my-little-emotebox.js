@@ -783,7 +783,7 @@
 	function trackMouseDownEnd( e ) {
 		var g = GLOBAL,
 		    m = g.MOUSE;
-		var posX = convertMainContLTR( g.REF.mainCont.offsetLeft, true ),
+		var posX = g.REF.mainCont.offsetLeft,
 		    update = {};
 
 		m.lastX = null;
@@ -791,6 +791,7 @@
 		document.removeEventListener( "mousemove", moveMLE, false );
 
 		if( g.config.boxAlign == "right" ) {
+			posX = convertMainContLTR( posX, true );
 			g.REF.mainCont.style.right = posX + "px";
 			g.REF.mainCont.style.left = "";
 		}

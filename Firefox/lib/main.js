@@ -311,6 +311,8 @@ var BrowserOpera = {
  */
 var BrowserChrome = {
 
+	tabs: [],
+
 	/**
 	 * Save to extension storage.
 	 * @param {String} key
@@ -323,12 +325,29 @@ var BrowserChrome = {
 	},
 
 	/**
+	 * Called when a tab is closed.
+	 * A CHROME ONLY FUNCTION.
+	 * @param {int}    tabId ID of the removed tab.
+	 * @param {Object} info
+	 */
+	onTabRemove: function( tabId, info ) {
+		var idx = this.tabs.indexOf( tabId );
+
+		if( idx >= 0 ) {
+			this.tabs.splice( idx, 1 );
+		}
+	},
+
+	/**
 	 * Load config and emotes in Chrome.
 	 * @param  {Object} response Response object that will get send to the content script.
 	 * @param  {Object} sender Sender of message. Used to send response. (Chrome only)
 	 * @return {Object} response
 	 */
 	loadConfigAndEmotes: function( response, sender ) {
+		this.tabs.push( sender.tab.id );
+		chrome.tabs.onRemoved.addListener( this.onTabRemove.bind( this ) );
+
 		chrome.storage.local.get( [PREF.CONFIG, PREF.EMOTES], function( items ) {
 			CURRENT_CONFIG = !items[PREF.CONFIG] ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) : JSON.parse( items[PREF.CONFIG] );
 			CURRENT_EMOTES = !items[PREF.EMOTES] ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) : JSON.parse( items[PREF.EMOTES] );
@@ -362,11 +381,9 @@ var BrowserChrome = {
 	 * @param {Object} msg
 	 */
 	broadcast: function( msg ) {
-		chrome.tabs.query( null, function( allTabs ) {
-			for( var i = 0; i < allTabs.length; i++ ) {
-				chrome.tabs.sendMessage( allTabs[i].id, msg, handleMessage );
-			}
-		} );
+		for( var i = 0; i < this.tabs.length; i++ ) {
+			chrome.tabs.sendMessage( this.tabs[i], msg, handleMessage );
+		}
 	},
 
 	/**
