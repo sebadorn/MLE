@@ -141,9 +141,9 @@
 	/**
 	 * Convert the fixed position from a value for "right"
 	 * to a value for "left" of the main container.
-	 * @param  {int} right Pixel position from the right.
+	 * @param  {int}     right Pixel position from the right.
 	 * @param  {boolean} isMax If the main container is maximized.
-	 * @return {int}       Pixel position from the left.
+	 * @return {int}     Pixel position from the left.
 	 */
 	function convertMainContRTL( right, isMax ) {
 		var cfg = GLOBAL.config;
@@ -823,6 +823,7 @@
 
 		if( g.config.boxAlign == "right" ) {
 			var posX = g.REF.mainCont.style.right.replace( "px", "" );
+			posX = parseInt( posX, 10 );
 
 			g.REF.mainCont.style.right = "";
 			g.REF.mainCont.style.left = convertMainContRTL( posX, true ) + "px";
