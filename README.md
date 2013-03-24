@@ -13,7 +13,6 @@
 * `[Feature]` MLE ctx menu active inside the BPM emote search
 * `[Bug]` Context menu being positioned partly out of view
 * `[Bug]` Context sub menu taking its time on first opening
-* `[Bug]` Emote count of a list doesn't update when adding an emote (only after a page reload)
 * `[Bug]` In some cases it seems the normal Chrome context menu isn't prevented from opening and covers the MLE ctx menu
 * `[Bug]` Quotation marks for list names are bad and break things. There is a reeeaaally weird bug, where a variable suddenly becomes unusable and I have no idea what's going on. Seriously. Do yourself a favor and don't use quotation marks for the time being.
 
@@ -25,3 +24,4 @@
 * `[Bug]` Moving a list doesn't work (duplicates list, for example "Pinkie Pie" -> "Pinkie_Pie", but doesn't even persist)
 * `[Bug]` Config changes not saved every time (use "save" button instead?)
 * `[Bug]` Renaming a list per right-click doesn't work on the whole area.
+* `[Bug]` Emote count of a list doesn't update when adding an emote (only after a page reload)

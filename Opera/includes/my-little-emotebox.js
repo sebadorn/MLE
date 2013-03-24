@@ -26,11 +26,11 @@
 				focusedInput: null,
 				inputAddEmote: null,
 				inputAddList: null,
-				lists: null,
+				lists: {},
+				listsCont: null,
 				mainCont: null,
 				mngForm: null,
 				msg: null,
-				navList: {},
 				selectListAddEmote: null,
 				selectListDelete: null
 			},
@@ -164,7 +164,7 @@
 		var update = {};
 
 		// Emotes don't have a leading slash
-		if( emote.indexOf( '/' ) == 0 ) {
+		if( emote.indexOf( "/" ) == 0 ) {
 			emote = emote.substring( 1 );
 		}
 
@@ -189,6 +189,9 @@
 				break;
 			}
 		}
+
+		// Update list counter
+		Builder.updateEmoteCount( list, g.emotes[list].length );
 	};
 
 
@@ -199,7 +202,7 @@
 	function deleteList( e ) {
 		var g = GLOBAL;
 		var listName = getOptionValue( g.REF.selectListDelete ),
-		    listToDel = g.REF.navList[listName],
+		    listToDel = g.REF.lists[listName],
 		    selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
 		var confirmDel = false, children;
 
@@ -218,7 +221,7 @@
 
 		// Remove from DOM.
 		delete g.REF.emoteBlocks[listName];
-		g.REF.lists.removeChild( listToDel );
+		g.REF.listsCont.removeChild( listToDel );
 
 		for( var i = 0; i < selectLists.length; i++ ) {
 			children = selectLists[i].childNodes;
@@ -313,7 +316,7 @@
 		mainContainerHide( e );
 		if( !ta ) { return; }
 
-		var emoteLink = e.target.href.split( '/' );
+		var emoteLink = e.target.href.split( "/" );
 		var selStart = ta.selectionStart,
 		    selEnd = ta.selectionEnd,
 		    taLen = ta.value.length,
@@ -332,12 +335,12 @@
 		// Text marked, use for alt text
 		else {
 			altText = ta.value.substring( selStart, selEnd );
-			emoteLink = "[](/" + emoteLink + " \"" + altText + "\")";
+			emoteLink = '[](/' + emoteLink + ' "' + altText + '")';
 		}
 
 		// Add a blank after the emote
 		if( GLOBAL.config.addBlankAfterInsert ) {
-			emoteLink += ' ';
+			emoteLink += " ";
 		}
 
 		ta.value = ta.value.substring( 0, selStart )
@@ -510,8 +513,8 @@
 				}
 
 				// Change name in the object of all lists
-				g.REF.navList[listNameNew] = g.REF.navList[listNameOld];
-				delete g.REF.navList[listNameOld];
+				g.REF.lists[listNameNew] = g.REF.lists[listNameOld];
+				delete g.REF.lists[listNameOld];
 
 				// Save changes to storage
 				g.msgIgnoreOnce = BG_TASK.UPDATE_LIST_NAME;
@@ -586,7 +589,7 @@
 		}
 
 		// Emotes are saved without leading slash
-		if( emote.indexOf( '/' ) == 0 ) {
+		if( emote.indexOf( "/" ) == 0 ) {
 			emote = emote.substring( 1 );
 		}
 
@@ -602,7 +605,10 @@
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Add to DOM
-		g.REF.emoteBlocks[list].appendChild( Builder.createEmote( '/' + emote ) );
+		g.REF.emoteBlocks[list].appendChild( Builder.createEmote( "/" + emote ) );
+
+		// Update emote count of list
+		Builder.updateEmoteCount( list, g.emotes[list].length );
 	};
 
 
@@ -717,7 +723,7 @@
 	function toggleEmoteBlock( e ) {
 		var g = GLOBAL,
 		    geb = g.REF.emoteBlocks,
-		    gnl = g.REF.navList,
+		    gnl = g.REF.lists,
 		    e_target = e.target;
 		var form;
 
@@ -741,11 +747,13 @@
 		}
 		// Show emotes of chosen block
 		else {
+			var name;
+
 			form = g.REF.mngForm;
 			form.className = "";
 
 			for( var listName in geb ) {
-				var name = e_target.querySelector( "strong" );
+				name = e_target.querySelector( "strong" );
 
 				if( e && name && name.textContent == listName ) {
 					if( !g.shownBlock ) {
@@ -834,8 +842,8 @@
 		    preview = document.getElementById( previewId ),
 		    emoteLink = e.target.value;
 
-		if( emoteLink.indexOf( '/' ) != 0 ) {
-			emoteLink = '/' + emoteLink;
+		if( emoteLink.indexOf( "/" ) != 0 ) {
+			emoteLink = "/" + emoteLink;
 		}
 		if( emoteLink == preview.href ) {
 			return;
@@ -895,7 +903,7 @@
 			    cfg = g.config,
 			    d = document;
 			var styleNode = d.createElement( "style" ),
-			    rules = '\n';
+			    rules = "\n";
 			var zIndex, listDir;
 
 			zIndex = cfg.boxUnderHeader ? 10 : 10000;
@@ -1029,7 +1037,7 @@
 				     #mle-ctxmenu%.out-of-box .out"] =
 						"display: block;";
 				css[".diag"] =
-						"max-height: 200px; max-width: 180px; overflow: auto; z-index: 10020;";
+						"max-height: " + ContextMenu.CONFIG.menuMaxHeight + "px; overflow: auto; width: " + ContextMenu.CONFIG.menuWidth + "px; z-index: 10020;";
 			}
 
 			styleNode.type = "text/css";
@@ -1116,25 +1124,13 @@
 			);
 
 			// Add list and emote blocks to main container
-			mainContainer.id = "mle" + g.noise;
-			mainContainer.appendChild( fragmentNode );
-			mainContainer.addEventListener( "mouseover", rememberActiveTextarea, false );
-			mainContainer.addEventListener( "mouseover", mainContainerShow, false );
-
-			// Add style for position of main container
-			if( g.config.boxAlign == "right" ) {
-				mainContainer.style.right = g.config.boxPosX + "px";
-			}
-			else {
-				mainContainer.style.left = g.config.boxPosX + "px";
-			}
-			mainContainer.style.top = g.config.boxPosTop + "px";
+			g.REF.mainCont = this.createMainContainer();
+			g.REF.mainCont.appendChild( fragmentNode );
 
 			g.REF.msg = msg;
 			g.REF.mngForm = mngForm;
-			g.REF.mainCont = mainContainer;
 
-			d.body.appendChild( mainContainer );
+			d.body.appendChild( g.REF.mainCont );
 			d.body.appendChild( msg );
 
 			if( g.config.ctxMenu ) {
@@ -1235,13 +1231,13 @@
 					fragmentNode.appendChild( emoteBlock );
 				}
 
-				g.REF.navList[listName] = listLink;
+				g.REF.lists[listName] = listLink;
 				g.REF.emoteBlocks[listName] = emoteBlock;
 
 				countBlocks++;
 			}
 
-			g.REF.lists = listNav;
+			g.REF.listsCont = listNav;
 
 			return fragmentNode;
 		},
@@ -1353,6 +1349,33 @@
 			selList.id = selId;
 
 			return selList;
+		},
+
+
+		/**
+		 * Create the main container without its later children,
+		 * but set up with event listeners and style.
+		 * @return {DOMElement} Main container.
+		 */
+		createMainContainer: function() {
+			var d = document,
+			    cfg = GLOBAL.config;
+			var main = d.createElement( "div" );
+
+			main.id = "mle" + GLOBAL.noise;
+			main.addEventListener( "mouseover", rememberActiveTextarea, false );
+			main.addEventListener( "mouseover", mainContainerShow, false );
+
+			// Add style for position of main container
+			if( cfg.boxAlign == "right" ) {
+				main.style.right = cfg.boxPosX + "px";
+			}
+			else {
+				main.style.left = cfg.boxPosX + "px";
+			}
+			main.style.top = cfg.boxPosTop + "px";
+
+			return main;
 		},
 
 
@@ -1510,12 +1533,12 @@
 			    selectLists = [gr.selectListDelete, gr.selectListAddEmote];
 
 			// Remove list from DOM
-			for( var key in gr.navList ) {
-				li = gr.navList[key].querySelector( "strong" );
+			for( var key in gr.lists ) {
+				li = gr.lists[key].querySelector( "strong" );
 
 				if( li.textContent == listName ) {
-					gr.lists.removeChild( gr.navList[key] );
-					delete gr.navList[key];
+					gr.listsCont.removeChild( gr.lists[key] );
+					delete gr.lists[key];
 					break;
 				}
 			}
@@ -1550,6 +1573,18 @@
 
 
 		/**
+		 * Update the emote counter of the list.
+		 * @param {String} listName Name of the list to update the counter of.
+		 * @param {int}    count    New number of emotes.
+		 */
+		updateEmoteCount: function( listName, count ) {
+			var counterDisplay = GLOBAL.REF.lists[listName].querySelector( "span" );
+
+			counterDisplay.textContent = count + " emotes";
+		},
+
+
+		/**
 		 * Change name of a list.
 		 * @param {String} oldName Old name of the list.
 		 * @param {String} newName New name for the list.
@@ -1558,8 +1593,8 @@
 			var gr = GLOBAL.REF;
 			var strong;
 
-			for( var i = 0; i < gr.navList.length; i++ ) {
-				strong = gr.navList[i].querySelector( "strong" );
+			for( var i = 0; i < gr.lists.length; i++ ) {
+				strong = gr.lists[i].querySelector( "strong" );
 
 				if( strong && strong.textContent == oldName ) {
 					strong.textContent = newName;
@@ -1576,18 +1611,18 @@
 		updateListOrder: function( lists ) {
 			var g = GLOBAL;
 			var listLink,
-			    ul = g.REF.lists;
+			    ul = g.REF.listsCont;
 
 			while( ul.firstChild ) {
 				ul.removeChild( ul.firstChild );
 			}
 
-			g.REF.navList = {};
+			g.REF.lists = {};
 
 			for( var listName in lists ) {
 				listLink = this.createListLink( listName, lists[listName].length );
 				ul.appendChild( listLink );
-				g.REF.navList[listName] = listLink;
+				g.REF.lists[listName] = listLink;
 			}
 		},
 
@@ -1603,6 +1638,7 @@
 				// Only the content of an existing list changed
 				if( emoteBlocks.hasOwnProperty( key ) ) {
 					this.updateListsChangeExisting( emoteBlocks[key], lists[key] );
+					this.updateEmoteCount( key, lists[key].length );
 				}
 				// This update adds a new list
 				else {
@@ -1629,8 +1665,8 @@
 			g.REF.emoteBlocks[listName] = block;
 
 			// Add new list
-			g.REF.lists.appendChild( listLink );
-			g.REF.navList[listName] = listLink;
+			g.REF.listsCont.appendChild( listLink );
+			g.REF.lists[listName] = listLink;
 
 			// Add <option>s to <select>s
 			for( var i = 0; i < selectLists.length; i++ ) {
@@ -1831,6 +1867,12 @@
 	var ContextMenu = {
 
 
+		CONFIG: {
+			menuMargin: 10, // [px] Margin between menu and sub-menu
+			menuMaxHeight: 200, // [px]
+			menuWidth: 126 // [px]
+		},
+
 		// References to DOMElements associated with the HTML context menu
 		REF: {
 			menu: null,
@@ -1976,12 +2018,23 @@
 		 * @return {Object} Object with the attributes "x" and "y".
 		 */
 		getPosForMenu: function( menu ) {
-			var x = menu.style.left.replace( "px", "" ),
-			    y = menu.style.top.replace( "px", "" );
+			var x = menu.offsetLeft,
+			    y = menu.offsetTop,
+			    diffY;
 
-			x = parseInt( x, 10 );
-			y = parseInt( y, 10 );
-			x += menu.offsetWidth + 10;
+			x += menu.offsetWidth + this.CONFIG.menuMargin;
+
+			// Correct x
+			if( x + this.CONFIG.menuWidth > document.body.offsetWidth ) {
+				x = this.REF.menu.offsetLeft - this.CONFIG.menuWidth - this.CONFIG.menuMargin;
+			}
+
+			// Correct y
+			diffY = window.innerHeight - y - this.CONFIG.menuMaxHeight;
+
+			if( diffY < 0 ) {
+				y += diffY - this.CONFIG.menuMargin;
+			}
 
 			return { "x": x, "y": y };
 		},
