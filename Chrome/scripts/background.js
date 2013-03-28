@@ -117,6 +117,7 @@ if( I_AM == BROWSER.FIREFOX ) {
 // Keys
 var PREF = {
 	CONFIG: "mle.config",
+	CSS: "mle.subredditcss",
 	EMOTES: "mle.emotes"
 };
 
@@ -519,6 +520,231 @@ switch( I_AM ) {
 		BrowserChrome = null;
 		break;
 }
+
+
+
+/**
+ * Getting the sub-reddit CSS and extracting the emotes.
+ * @type {Object}
+ */
+var Updater = {
+
+
+	xhrMethod: "GET",
+	xhrTargets: ["r/mylittlepony", "r/MLPLounge"],
+	xhrAsyn: true,
+	xhrUserAgent: "My Little Emotebox v2.3-dev by /u/meinstuhlknarrt",
+	xhrProgress: 0,
+
+	tableCodeRegex: /^[abce][0-9]{2}$/i,
+
+	emoteCSS: null,
+	emotes: null,
+
+
+	/**
+	 * Get the sub-reddit stylesheet per XHR.
+	 */
+	getCSS: function() {
+		if( this.xhrProgress >= this.xhrTargets.length ) {
+			saveToStorage( PREF.CSS, this.emoteCSS );
+			this.xhrProgress = 0;
+			return;
+		}
+
+		var xhr = new XMLHttpRequest(),
+		    url = "http://www.reddit.com/" + this.xhrTargets[this.xhrProgress] + "/stylesheet";
+
+		this.xhrProgress++;
+
+		xhr.open( this.xhrMethod, url, this.xhrAsync );
+		xhr.setRequestHeader( "User-Agent", this.xhrUserAgent );
+		xhr.onreadystatechange = this.handleCSS.bind( xhr );
+		xhr.send();
+	},
+
+
+	/**
+	 * After receiving the stylesheet, start extracting the emotes.
+	 */
+	handleCSS: function() {
+		if( this.readyState == 4 ) {
+			console.log( this.responseText );
+			Updater.extractEmotesStep1( this.responseText );
+		}
+	},
+
+
+	/**
+	 * Extract the for emotes relevant parts from the stylesheet.
+	 * Then extract from those the emote names.
+	 * @param  {String} css Stylesheet.
+	 * @return {Object}     Emotes ordered by table.
+	 */
+	extractEmotesStep1: function( css ) {
+		var needle = "background-image",
+		    selectors = [],
+		    emoteCSS = [];
+		var idx, selector, eCSS, record;
+
+		while( true ) {
+			idx = css.indexOf( needle );
+
+			if( idx < 0 ) {
+				break;
+			}
+
+			selector = [];
+			eCSS = [];
+			record = false;
+
+			// Get the selectors
+			for( var i = idx; i > 0; i-- ) {
+				if( css[i] == "}" ) {
+					break;
+				}
+				if( record ) {
+					selector[selector.length] = css[i];
+				}
+				if( css[i] == "{" ) {
+					record = true;
+				}
+				eCSS[eCSS.length] = css[i];
+			}
+
+			// Get the whole CSS for this selectors
+			eCSS = eCSS.reverse();
+
+			for( var i = idx + 1; i < css.length; i++ ) {
+				eCSS[eCSS.length] = css[i];
+				if( css[i] == "}" ) {
+					break;
+				}
+			}
+
+			selectors[selectors.length] = selector.reverse().join( "" );
+			emoteCSS[emoteCSS.length] = eCSS.join( "" );
+			css = css.substr( idx + needle.length );
+		}
+
+		this.emotes = selectors;
+		this.emoteCSS = emoteCSS;
+
+		this.extractEmotesStep2();
+		this.removeReverseEmotes();
+		this.groupSameEmotes();
+
+		// Get next sub-reddit CSS
+		this.getCSS();
+	},
+
+
+	/**
+	 * Extract the emote names.
+	 */
+	extractEmotesStep2: function() {
+		var linkStart = 'a[href|="/',
+		    emotes = [],
+		    css = [],
+		    idx = -1;
+		var selector, emote, subEmoteList;
+
+		for( var i = 0; i < this.emotes.length; i++ ) {
+			selector = this.emotes[i].split( "," );
+			subEmoteList = [];
+
+			for( var j = 0; j < selector.length; j++ ) {
+				emote = selector[j].trim();
+				idx = emote.indexOf( linkStart );
+
+				if( idx == -1 ) {
+					continue;
+				}
+
+				emote = emote.substring( idx + linkStart.length, emote.length - 2 );
+
+				if( emotes.indexOf( emote ) == -1 ) {
+					subEmoteList[subEmoteList.length] = emote;
+				}
+			}
+
+			// Emotes were found
+			if( idx >= 0) {
+				css[css.length] = this.emoteCSS[i];
+				emotes[emotes.length] = subEmoteList;
+			}
+		}
+
+		this.emotes = emotes;
+		this.emoteCSS = css;
+	},
+
+
+	/**
+	 * Group emotes that show the same image but have different names.
+	 * This is kind of unstable since it depends on the CSS authors' style not to change.
+	 */
+	groupSameEmotes: function() {
+		var newEmoteList = [];
+		var group, isTableCode;
+
+		for( var i = 0; i < this.emotes.length; i++ ) {
+			newEmoteList[i] = [];
+			group = [];
+
+			for( var j = 0; j < this.emotes[i].length; j++ ) {
+				group.push( this.emotes[i][j] );
+				isTableCode = ( this.emotes[i][j].match( this.tableCodeRegex ) != null );
+
+				if( isTableCode || j == this.emotes[i].length - 1 ) {
+					newEmoteList[i].push( group );
+					group = [];
+				}
+			}
+		}
+
+		this.emotes = newEmoteList;
+	},
+
+
+	/**
+	 * Remove the emotes which are simply mirrored versions of others.
+	 */
+	removeReverseEmotes: function() {
+		var flatCopy = [],
+		    newEmoteList = [];
+		var emote, idx;
+
+		// Create a flat copy of the emotes for easier searching.
+		for( var i = 0; i < this.emotes.length; i++ ) {
+			flatCopy = flatCopy.concat( this.emotes[i] );
+		}
+
+		// Create a new (not flat) emote list with only non-reversed emotes.
+		for( var i = 0; i < this.emotes.length; i++ ) {
+			newEmoteList[i] = [];
+
+			for( var j = 0; j < this.emotes[i].length; j++ ) {
+				emote = this.emotes[i][j];
+
+				if( emote[0] != "r" || flatCopy.indexOf( emote.substr( 1 ) ) == -1 ) {
+					newEmoteList[i].push( emote );
+				}
+			}
+		}
+
+		// Save the new emote list and fitler out now empty sub-lists.
+		this.emotes = [];
+
+		for( var i = 0; i < newEmoteList.length; i++ ) {
+			if( newEmoteList[i].length > 0 ) {
+				this.emotes[this.emotes.length] = newEmoteList[i].slice( 0 );
+			}
+		}
+	}
+
+
+};
 
 
 

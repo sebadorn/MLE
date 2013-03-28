@@ -38,6 +38,9 @@
 	"options_page": "options.html",
 
 	"permissions": [
+		"http://reddit.com/",
+		"http://*.reddit.com/",
+		"http://www.redditstatic.com/",
 		"storage",
 		"contextMenus"
 	]
