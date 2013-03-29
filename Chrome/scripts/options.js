@@ -324,6 +324,14 @@ function resetConfig( e ) {
 
 
 /**
+ * Tell the background process to get and parse the sub-reddit stylesheets.
+ */
+function forceUpdate( e ) {
+	postMessage( { task: BG_TASK.UPDATE_CSS } );
+};
+
+
+/**
  * Register click event on nav elements.
  */
 function registerEventToggleNav() {
@@ -349,19 +357,20 @@ function registerEventSettingChanged() {
 	var exportEmotesBtn = d.getElementById( "export-emotes" ),
 	    importEmotesBtn = d.getElementById( "import-emotes" ),
 	    resetEmotesBtn = d.getElementById( "reset-emotes" ),
+	    forceUpdateBtn = d.getElementById( "force-update" ),
 	    exportCfg = d.getElementById( "export-config" ),
 	    importCfg = d.getElementById( "import-config" ),
 	    resetCfg = d.getElementById( "reset-config" );
-	var i, j, val, select, chkbox, nmbr, txt;
+	var val, select, chkbox, nmbr, txt;
 
 
 	// <select>s
-	for( i = 0; i < selects.length; i++ ) {
+	for( var i = 0; i < selects.length; i++ ) {
 		select = selects[i];
 		select.addEventListener( "change", saveSetting, false );
 
 		// Select currently set <option>
-		for( j = 0; j < select.options.length; j++ ) {
+		for( var j = 0; j < select.options.length; j++ ) {
 			if( select.options[j].value == String( CONFIG[select.id] ) ) {
 				select.selectedIndex = j;
 			}
@@ -369,25 +378,28 @@ function registerEventSettingChanged() {
 	}
 
 	// <input type="checkbox">s
-	for( i = 0; i < checkboxes.length; i++ ) {
+	for( var i = 0; i < checkboxes.length; i++ ) {
 		chkbox = checkboxes[i];
 		chkbox.addEventListener( "change", saveSetting, false );
 		chkbox.checked = CONFIG[chkbox.id];
 	}
 
 	// <input type="number">s
-	for( i = 0; i < numbers.length; i++ ) {
+	for( var i = 0; i < numbers.length; i++ ) {
 		nmbr = numbers[i];
 		nmbr.addEventListener( "change", saveSetting, false );
 		nmbr.value = CONFIG[nmbr.id];
 	}
 
 	// <input type="text">s
-	for( i = 0; i < texts.length; i++ ) {
+	for( var i = 0; i < texts.length; i++ ) {
 		txt = texts[i];
 		txt.addEventListener( "change", saveSetting, false );
 		txt.value = CONFIG[txt.id];
 	}
+
+	// Force stylesheet update
+	forceUpdateBtn.addEventListener( "click", forceUpdate, false );
 
 	// export/import/reset
 	// Emotes

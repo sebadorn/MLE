@@ -107,7 +107,8 @@ if( I_AM == BROWSER.FIREFOX ) {
 		UPDATE_EMOTES: 7,
 		UPDATE_LIST_ORDER: 8,
 		UPDATE_LIST_NAME: 9,
-		UPDATE_LIST_DELETE: 10
+		UPDATE_LIST_DELETE: 10,
+		UPDATE_CSS: 11
 	};
 
 }
@@ -117,8 +118,9 @@ if( I_AM == BROWSER.FIREFOX ) {
 // Keys
 var PREF = {
 	CONFIG: "mle.config",
-	CSS: "mle.subredditcss",
-	EMOTES: "mle.emotes"
+	EMOTES: "mle.emotes",
+	SUBREDDIT_CSS: "mle.subreddit.css",
+	SUBREDDIT_EMOTES: "mle.subreddit.emotes"
 };
 
 // Default config
@@ -530,16 +532,19 @@ switch( I_AM ) {
 var Updater = {
 
 
-	xhrMethod: "GET",
-	xhrTargets: ["r/mylittlepony", "r/MLPLounge"],
+	// Config
 	xhrAsyn: true,
+	xhrMethod: "GET",
+	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
 	xhrUserAgent: "My Little Emotebox v2.3-dev by /u/meinstuhlknarrt",
+
+	xhrCurrentTarget: null,
 	xhrProgress: 0,
 
 	tableCodeRegex: /^[abce][0-9]{2}$/i,
 
-	emoteCSS: null,
-	emotes: null,
+	emoteCSS: {},
+	emotes: {},
 
 
 	/**
@@ -547,15 +552,23 @@ var Updater = {
 	 */
 	getCSS: function() {
 		if( this.xhrProgress >= this.xhrTargets.length ) {
-			saveToStorage( PREF.CSS, this.emoteCSS );
+			saveToStorage( PREF.SUBREDDIT_CSS, this.emoteCSS );
+			saveToStorage( PREF.SUBREDDIT_EMOTES, this.emotes );
+
+			this.emoteCSS = {};
+			this.emotes = {};
 			this.xhrProgress = 0;
+
 			return;
 		}
 
-		var xhr = new XMLHttpRequest(),
-		    url = "http://www.reddit.com/" + this.xhrTargets[this.xhrProgress] + "/stylesheet";
-
+ 		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
+ 		this.emoteCSS[this.xhrCurrentTarget] = [];
+		this.emotes[this.xhrCurrentTarget] = [];
 		this.xhrProgress++;
+
+		var xhr = new XMLHttpRequest(),
+		    url = "http://www.reddit.com/" + this.xhrCurrentTarget + "/stylesheet";
 
 		xhr.open( this.xhrMethod, url, this.xhrAsync );
 		xhr.setRequestHeader( "User-Agent", this.xhrUserAgent );
@@ -569,8 +582,13 @@ var Updater = {
 	 */
 	handleCSS: function() {
 		if( this.readyState == 4 ) {
-			console.log( this.responseText );
 			Updater.extractEmotesStep1( this.responseText );
+			Updater.extractEmotesStep2();
+			Updater.removeReverseEmotes();
+			Updater.groupSameEmotes();
+
+			// Get next sub-reddit CSS
+			Updater.getCSS();
 		}
 	},
 
@@ -609,14 +627,16 @@ var Updater = {
 				if( css[i] == "{" ) {
 					record = true;
 				}
+
 				eCSS[eCSS.length] = css[i];
 			}
 
-			// Get the whole CSS for this selectors
+			// Get the whole CSS part
 			eCSS = eCSS.reverse();
 
 			for( var i = idx + 1; i < css.length; i++ ) {
 				eCSS[eCSS.length] = css[i];
+
 				if( css[i] == "}" ) {
 					break;
 				}
@@ -627,15 +647,8 @@ var Updater = {
 			css = css.substr( idx + needle.length );
 		}
 
-		this.emotes = selectors;
-		this.emoteCSS = emoteCSS;
-
-		this.extractEmotesStep2();
-		this.removeReverseEmotes();
-		this.groupSameEmotes();
-
-		// Get next sub-reddit CSS
-		this.getCSS();
+		this.emotes[this.xhrCurrentTarget] = selectors;
+		this.emoteCSS[this.xhrCurrentTarget] = emoteCSS;
 	},
 
 
@@ -643,14 +656,15 @@ var Updater = {
 	 * Extract the emote names.
 	 */
 	extractEmotesStep2: function() {
+		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
 		var linkStart = 'a[href|="/',
 		    emotes = [],
 		    css = [],
 		    idx = -1;
 		var selector, emote, subEmoteList;
 
-		for( var i = 0; i < this.emotes.length; i++ ) {
-			selector = this.emotes[i].split( "," );
+		for( var i = 0; i < emotesCurrent.length; i++ ) {
+			selector = emotesCurrent[i].split( "," );
 			subEmoteList = [];
 
 			for( var j = 0; j < selector.length; j++ ) {
@@ -662,6 +676,9 @@ var Updater = {
 				}
 
 				emote = emote.substring( idx + linkStart.length, emote.length - 2 );
+				// "dance" emotes from the Plounge
+				// ":hov", because we already removed the last two characters
+				emote = emote.replace( '"]:hov', '' );
 
 				if( emotes.indexOf( emote ) == -1 ) {
 					subEmoteList[subEmoteList.length] = emote;
@@ -670,13 +687,13 @@ var Updater = {
 
 			// Emotes were found
 			if( idx >= 0) {
-				css[css.length] = this.emoteCSS[i];
+				css[css.length] = this.emoteCSS[this.xhrCurrentTarget][i];
 				emotes[emotes.length] = subEmoteList;
 			}
 		}
 
-		this.emotes = emotes;
-		this.emoteCSS = css;
+		this.emotes[this.xhrCurrentTarget] = emotes;
+		this.emoteCSS[this.xhrCurrentTarget] = css;
 	},
 
 
@@ -685,25 +702,38 @@ var Updater = {
 	 * This is kind of unstable since it depends on the CSS authors' style not to change.
 	 */
 	groupSameEmotes: function() {
-		var newEmoteList = [];
-		var group, isTableCode;
+		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
+		var newEmoteList = [],
+		    nonTableEmotes = [];
+		var newEmoteSubList, group, isTableCode;
 
-		for( var i = 0; i < this.emotes.length; i++ ) {
-			newEmoteList[i] = [];
+		for( var i = 0; i < emotesCurrent.length; i++ ) {
+			newEmoteSubList = [];
 			group = [];
 
-			for( var j = 0; j < this.emotes[i].length; j++ ) {
-				group.push( this.emotes[i][j] );
-				isTableCode = ( this.emotes[i][j].match( this.tableCodeRegex ) != null );
+			for( var j = 0; j < emotesCurrent[i].length; j++ ) {
+				group.push( emotesCurrent[i][j] );
+				isTableCode = ( emotesCurrent[i][j].match( this.tableCodeRegex ) != null );
 
-				if( isTableCode || j == this.emotes[i].length - 1 ) {
-					newEmoteList[i].push( group );
+				// Start new group if table code has been reached.
+				if( isTableCode ) {
+					newEmoteSubList.push( group );
 					group = [];
 				}
 			}
+
+			if( group.length > 0 ) {
+				nonTableEmotes = nonTableEmotes.concat( group );
+			}
+			if( newEmoteSubList.length > 0 ) {
+				newEmoteList.push( newEmoteSubList );
+			}
 		}
 
-		this.emotes = newEmoteList;
+		if( nonTableEmotes.length > 0 ) {
+			newEmoteList.push( nonTableEmotes );
+		}
+		this.emotes[this.xhrCurrentTarget] = newEmoteList;
 	},
 
 
@@ -711,21 +741,22 @@ var Updater = {
 	 * Remove the emotes which are simply mirrored versions of others.
 	 */
 	removeReverseEmotes: function() {
+		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
 		var flatCopy = [],
 		    newEmoteList = [];
 		var emote, idx;
 
 		// Create a flat copy of the emotes for easier searching.
-		for( var i = 0; i < this.emotes.length; i++ ) {
-			flatCopy = flatCopy.concat( this.emotes[i] );
+		for( var i = 0; i < emotesCurrent.length; i++ ) {
+			flatCopy = flatCopy.concat( emotesCurrent[i] );
 		}
 
 		// Create a new (not flat) emote list with only non-reversed emotes.
-		for( var i = 0; i < this.emotes.length; i++ ) {
+		for( var i = 0; i < emotesCurrent.length; i++ ) {
 			newEmoteList[i] = [];
 
-			for( var j = 0; j < this.emotes[i].length; j++ ) {
-				emote = this.emotes[i][j];
+			for( var j = 0; j < emotesCurrent[i].length; j++ ) {
+				emote = emotesCurrent[i][j];
 
 				if( emote[0] != "r" || flatCopy.indexOf( emote.substr( 1 ) ) == -1 ) {
 					newEmoteList[i].push( emote );
@@ -734,11 +765,11 @@ var Updater = {
 		}
 
 		// Save the new emote list and fitler out now empty sub-lists.
-		this.emotes = [];
+		this.emotes[this.xhrCurrentTarget] = [];
 
 		for( var i = 0; i < newEmoteList.length; i++ ) {
 			if( newEmoteList[i].length > 0 ) {
-				this.emotes[this.emotes.length] = newEmoteList[i].slice( 0 );
+				this.emotes[this.xhrCurrentTarget].push( newEmoteList[i].slice( 0 ) );
 			}
 		}
 	}
@@ -828,6 +859,10 @@ function handleMessage( e, sender, sendResponse ) {
 
 		case BG_TASK.OPEN_OPTIONS:
 			MyBrowser.openOptions();
+			break;
+
+		case BG_TASK.UPDATE_CSS:
+			Updater.getCSS();
 			break;
 
 		default:
@@ -930,7 +965,7 @@ function updateConfig( current_config ) {
 
 /**
  * Save to the extension storage.
- * @param  {int} key Key to save the object under.
+ * @param  {int}    key Key to save the object under.
  * @param  {Object} obj Object to save.
  * @return {Object} Contains key "success" with a bool value.
  */

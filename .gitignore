@@ -1,6 +1,9 @@
 # Files whose hardlinks are used for the different browser extensions
 common resources/*
 
+# Some data, mostly JSON
+debug/*
+
 # Just some screenshots
 server/mle_*.png
 
