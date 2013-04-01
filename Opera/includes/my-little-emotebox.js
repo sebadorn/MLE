@@ -1533,11 +1533,13 @@
 		 * @param {DOMElement} node
 		 */
 		preventOverScrolling: function( node ) {
+			// Chrome, Opera
 			node.addEventListener(
 				"mousewheel", this.stopScrolling.bind( node ), false
 			);
+			// Firefox, the actual standard
 			node.addEventListener(
-				"DOMMouseScroll", this.stopScrolling.bind( node ), false
+				"wheel", this.stopScrolling.bind( node ), false
 			);
 		},
 
