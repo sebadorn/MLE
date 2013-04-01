@@ -1966,6 +1966,7 @@
 			d.body.addEventListener( "contextmenu", this.show.bind( this ), false );
 			d.body.addEventListener( "click", this.hide.bind( this ), false );
 
+			Builder.preventOverScrolling( menu );
 			this.REF.menu = menu;
 
 			return menu;
@@ -1993,6 +1994,7 @@
 					cont.appendChild( list );
 				}
 
+				Builder.preventOverScrolling( cont );
 				this.REF.dialogMoveEmote = cont;
 				d.body.appendChild( cont );
 			}
@@ -2024,6 +2026,7 @@
 					cont.appendChild( list );
 				}
 
+				Builder.preventOverScrolling( cont );
 				this.REF.dialogSaveEmote = cont;
 				d.body.appendChild( cont );
 			}
