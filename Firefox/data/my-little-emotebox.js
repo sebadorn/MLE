@@ -1209,6 +1209,7 @@
 			    countBlocks = 0;
 
 			// Add navigation
+			this.preventOverScrolling( listNav );
 			fragmentNode.appendChild( listNav );
 
 			for( var listName in g.emotes ) {
@@ -1221,6 +1222,7 @@
 				// Create emotes section
 				emoteBlock = d.createElement( "div" );
 				emoteBlock.className = "mle-block" + g.noise;
+				this.preventOverScrolling( emoteBlock );
 
 				// Add the emotes to the block
 				emoteBlock.appendChild( this.createEmotesOfList( emoteList ) );
@@ -1408,6 +1410,8 @@
 				];
 			var frag = appendChildren( document.createDocumentFragment(), areas );
 
+			this.preventOverScrolling( form );
+
 			form.appendChild( frag );
 		},
 
@@ -1524,6 +1528,21 @@
 
 
 		/**
+		 * When scrolled to the end of a node,
+		 * prevent the main window from scrolling.
+		 * @param {DOMElement} node
+		 */
+		preventOverScrolling: function( node ) {
+			node.addEventListener(
+				"mousewheel", this.stopScrolling.bind( node ), false
+			);
+			node.addEventListener(
+				"DOMMouseScroll", this.stopScrolling.bind( node ), false
+			);
+		},
+
+
+		/**
 		 * Remove a list.
 		 * @param {String} listName Name of the list.
 		 */
@@ -1570,6 +1589,23 @@
 
 			// Remove context menus. Will be rebuild when needed.
 			ContextMenu.destroyMenus();
+		},
+
+
+		/**
+		 * Stop scrolling if top or bottom of node has been reached.
+		 * this == node
+		 */
+		stopScrolling: function( e ) {
+			var scrolledToBottom = ( this.scrollHeight - this.scrollTop == this.clientHeight );
+			var scrolledToTop = ( this.scrollTop == 0 );
+
+			if( scrolledToBottom && e.wheelDeltaY < 0 ) {
+				e.preventDefault();
+			}
+			else if( scrolledToTop && e.wheelDeltaY > 0 ) {
+				e.preventDefault();
+			}
 		},
 
 

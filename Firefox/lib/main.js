@@ -466,7 +466,12 @@ var BrowserFirefox = {
 	 */
 	broadcast: function( msg ) {
 		for( var i = 0; i < workers.length; i++ ) {
-			workers[i].postMessage( msg );
+			try {
+				workers[i].postMessage( msg );
+			}
+			catch( err ) {
+				forgetWorker( workers[i] );
+			}
 		}
 	},
 
