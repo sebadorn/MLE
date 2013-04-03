@@ -123,6 +123,9 @@ var PREF = {
 	SUBREDDIT_EMOTES: "mle.subreddit.emotes"
 };
 
+var DEFAULT_SUB_CSS = {},
+    DEFAULT_SUB_EMOTES = {};
+
 // Default config
 var DEFAULT_CONFIG = {
 	addBlankAfterInsert: true,
@@ -142,6 +145,8 @@ var DEFAULT_CONFIG = {
 	boxWidthMinimized: 70, // [px]
 	boxUnderHeader: true,
 	ctxMenu: true,
+	displayEmotesOutOfSub: true,
+	injectEmoteCSS: true,
 	msgAnimationSpeed: 1000, // [ms]
 	msgPosition: "top", // "top" or "bottom"
 	msgTimeout: 7000 // [ms] // How long a popup message is displayed.
@@ -193,11 +198,13 @@ var CURRENT_CONFIG = null,
     CURRENT_EMOTES = null;
 
 
+
 /**
  * Browser "class" for Opera.
  * @type {Object}
  */
 var BrowserOpera = {
+
 
 	/**
 	 * Save to extension storage.
@@ -208,6 +215,7 @@ var BrowserOpera = {
 		widget.preferences[key] = val;
 	},
 
+
 	/**
 	 * Load config and emotes in Opera.
 	 * @param  {Object} response Response object that will get send to the content script later.
@@ -216,16 +224,30 @@ var BrowserOpera = {
 	loadConfigAndEmotes: function( response, sender ) {
 		var wpref = widget.preferences;
 
-		CURRENT_CONFIG = wpref[PREF.CONFIG] ? JSON.parse( wpref[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-		CURRENT_EMOTES = wpref[PREF.EMOTES] ? JSON.parse( wpref[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+		CURRENT_CONFIG = wpref[PREF.CONFIG]
+				? JSON.parse( wpref[PREF.CONFIG] )
+				: saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+
+		CURRENT_EMOTES = wpref[PREF.EMOTES]
+				? JSON.parse( wpref[PREF.EMOTES] )
+				: saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
 		updateConfig( CURRENT_CONFIG );
 
 		response.config = CURRENT_CONFIG;
 		response.emotes = CURRENT_EMOTES;
 
+		response.sub_css = wpref[PREF.SUBREDDIT_CSS]
+				? JSON.parse( wpref[PREF.SUBREDDIT_CSS] )
+				: saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
+
+		response.sub_emotes = wpref[PREF.SUBREDDIT_EMOTES]
+				? JSON.parse( wpref[PREF.SUBREDDIT_EMOTES] )
+				: saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
+
 		return response;
 	},
+
 
 	/**
 	 * Open the options page.
@@ -237,6 +259,7 @@ var BrowserOpera = {
 		} );
 	},
 
+
 	/**
 	 * Broadcast a message to everything extension related.
 	 * @param {Object} msg
@@ -244,6 +267,7 @@ var BrowserOpera = {
 	broadcast: function( msg ) {
 		opera.extension.broadcastMessage( msg );
 	},
+
 
 	/**
 	 * Send a response to a page that previously send a message.
@@ -254,6 +278,7 @@ var BrowserOpera = {
 		source.postMessage( msg );
 	},
 
+
 	/**
 	 * Post an error to the error console.
 	 * @param {String} msg
@@ -262,40 +287,6 @@ var BrowserOpera = {
 		opera.postError( msg );
 	},
 
-	/**
-	 * Extend the normal context menu with the context menu API.
-	 */
-	registerContextMenu: function() {
-		var menu = opera.contexts.menu;
-		var itemPropsLine = {
-				contexts: ["link"],
-				targetURLPatterns: [
-					"http://*.reddit.com/*",
-					"https://*.reddit.com/*",
-					"http://reddit.com/*",
-					"https://reddit.com/*"
-				],
-				type: "line"
-			},
-			itemPropsFolder = {
-				contexts: ["link"],
-				// Really limited, so the menu item will show up on a lot of links,
-				// that aren't emotes. RegExp would be nice, but '*' is the only wildcard.
-				targetURLPatterns: [
-					"http://*.reddit.com/*",
-					"https://*.reddit.com/*",
-					"http://reddit.com/*",
-					"https://reddit.com/*"
-				],
-				title: "My Little Emotebox",
-				type: "folder"
-			};
-		var itemLine = menu.createItem( itemPropsLine ),
-		    itemFolder = menu.createItem( itemPropsFolder );
-
-		menu.addItem( itemLine );
-		//menu.addItem( itemFolder );
-	},
 
 	/**
 	 * Register a function to handle messaging between pages.
@@ -305,7 +296,9 @@ var BrowserOpera = {
 		opera.extension.onmessage = handler;
 	}
 
+
 };
+
 
 
 /**
@@ -314,7 +307,9 @@ var BrowserOpera = {
  */
 var BrowserChrome = {
 
+
 	tabs: [],
+
 
 	/**
 	 * Save to extension storage.
@@ -326,6 +321,7 @@ var BrowserChrome = {
 		saveObj[key] = val;
 		chrome.storage.local.set( saveObj );
 	},
+
 
 	/**
 	 * Called when a tab is closed.
@@ -341,6 +337,7 @@ var BrowserChrome = {
 		}
 	},
 
+
 	/**
 	 * Load config and emotes in Chrome.
 	 * @param  {Object} response Response object that will get send to the content script.
@@ -352,13 +349,26 @@ var BrowserChrome = {
 		chrome.tabs.onRemoved.addListener( this.onTabRemove.bind( this ) );
 
 		chrome.storage.local.get( [PREF.CONFIG, PREF.EMOTES], function( items ) {
-			CURRENT_CONFIG = !items[PREF.CONFIG] ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) : JSON.parse( items[PREF.CONFIG] );
-			CURRENT_EMOTES = !items[PREF.EMOTES] ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) : JSON.parse( items[PREF.EMOTES] );
+			CURRENT_CONFIG = !items[PREF.CONFIG]
+					? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG )
+					: JSON.parse( items[PREF.CONFIG] );
+
+			CURRENT_EMOTES = !items[PREF.EMOTES]
+					? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES )
+					: JSON.parse( items[PREF.EMOTES] );
 
 			updateConfig( CURRENT_CONFIG );
 
 			response.config = CURRENT_CONFIG;
 			response.emotes = CURRENT_EMOTES;
+
+			response.sub_css = !items[PREF.SUBREDDIT_CSS]
+					? saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS )
+					: JSON.parse( items[PREF.SUBREDDIT_CSS] );
+
+			response.sub_emotes = !items[PREF.SUBREDDIT_EMOTES]
+					? saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES )
+					: JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
 
 			// Send loaded items to the tab that sent the request.
 			if( sender ) {
@@ -368,6 +378,7 @@ var BrowserChrome = {
 
 		return response;
 	},
+
 
 	/**
 	 * Open the options page.
@@ -379,6 +390,7 @@ var BrowserChrome = {
 		} );
 	},
 
+
 	/**
 	 * Broadcast a message to everything extension related.
 	 * @param {Object} msg
@@ -388,6 +400,7 @@ var BrowserChrome = {
 			chrome.tabs.sendMessage( this.tabs[i], msg, handleMessage );
 		}
 	},
+
 
 	/**
 	 * Send a response to a page that previously send a message.
@@ -400,6 +413,7 @@ var BrowserChrome = {
 		// pass
 	},
 
+
 	/**
 	 * Post an error to the error console.
 	 * @param {String} msg
@@ -407,6 +421,7 @@ var BrowserChrome = {
 	logError: function( msg ) {
 		console.error( msg );
 	},
+
 
 	/**
 	 * Register a function to handle messaging between pages.
@@ -416,7 +431,9 @@ var BrowserChrome = {
 		chrome.extension.onMessage.addListener( handler );
 	}
 
+
 };
+
 
 
 /**
@@ -424,6 +441,7 @@ var BrowserChrome = {
  * @type {Object}
  */
 var BrowserFirefox = {
+
 
 	/**
 	 * Save to extension storage.
@@ -434,22 +452,37 @@ var BrowserFirefox = {
 		ss.storage[key] = val;
 	},
 
+
 	/**
 	 * Load config and emotes in Firefox.
 	 * @param  {Object} response Response object that will get send to the content script later.
 	 * @return {Object} response
 	 */
 	loadConfigAndEmotes: function( response, sender ) {
-		CURRENT_CONFIG = ss.storage[PREF.CONFIG] ? JSON.parse( ss.storage[PREF.CONFIG] ) : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-		CURRENT_EMOTES = ss.storage[PREF.EMOTES] ? JSON.parse( ss.storage[PREF.EMOTES] ) : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+		CURRENT_CONFIG = ss.storage[PREF.CONFIG]
+				? JSON.parse( ss.storage[PREF.CONFIG] )
+				: saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+
+		CURRENT_EMOTES = ss.storage[PREF.EMOTES]
+				? JSON.parse( ss.storage[PREF.EMOTES] )
+				: saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
 		updateConfig( CURRENT_CONFIG );
 
 		response.config = CURRENT_CONFIG;
 		response.emotes = CURRENT_EMOTES;
 
+		response.sub_css = ss.storage[PREF.SUBREDDIT_CSS]
+				? JSON.parse( ss.storage[PREF.SUBREDDIT_CSS] )
+				: saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
+
+		response.sub_emotes = ss.storage[PREF.SUBREDDIT_EMOTES]
+				? JSON.parse( ss.storage[PREF.SUBREDDIT_EMOTES] )
+				: saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
+
 		return response;
 	},
+
 
 	/**
 	 * Open the options page.
@@ -459,6 +492,7 @@ var BrowserFirefox = {
 			url: self.data.url( "options.html" )
 		} );
 	},
+
 
 	/**
 	 * Broadcast a message to everything extension related.
@@ -475,6 +509,7 @@ var BrowserFirefox = {
 		}
 	},
 
+
 	/**
 	 * Send a response to a page that previously send a message.
 	 * @param {Object} source
@@ -484,6 +519,7 @@ var BrowserFirefox = {
 		source.postMessage( msg );
 	},
 
+
 	/**
 	 * Post an error to the error console.
 	 * @param  {String} msg
@@ -491,6 +527,7 @@ var BrowserFirefox = {
 	logError: function( msg ) {
 		console.error( msg );
 	},
+
 
 	/**
 	 * Register a function to handle messaging between pages.
@@ -502,7 +539,9 @@ var BrowserFirefox = {
 		// pass
 	}
 
+
 };
+
 
 
 // Assign correct browser "class".
@@ -556,7 +595,7 @@ var Updater = {
 	 * Get the sub-reddit stylesheet per XHR.
 	 */
 	getCSS: function() {
-		if( this.xhrProgress >= this.xhrTargets.length ) {
+		if( this.isProgressFinished() ) {
 			saveToStorage( PREF.SUBREDDIT_CSS, this.emoteCSS );
 			saveToStorage( PREF.SUBREDDIT_EMOTES, this.emotes );
 
@@ -592,9 +631,25 @@ var Updater = {
 			Updater.removeReverseEmotes();
 			Updater.groupSameEmotes();
 
-			// Get next sub-reddit CSS
-			Updater.getCSS();
+			// Get next subreddit CSS.
+			// The reddit API guidelines say:
+			// Not more than 1 request every 2 seconds.
+			if( !Updater.isProgressFinished() ) {
+				setTimeout( Updater.getCSS.bind( Updater ), 2000 );
+			}
+			else {
+				Updater.getCSS();
+			}
 		}
+	},
+
+
+	/**
+	 * Check if all XHR targets have been used.
+	 * @return {Boolean} True if no more XHR calls will be made, false otherwise.
+	 */
+	isProgressFinished: function() {
+		return this.xhrProgress >= this.xhrTargets.length;
 	},
 
 
@@ -605,51 +660,70 @@ var Updater = {
 	 * @return {Object}     Emotes ordered by table.
 	 */
 	extractEmotesStep1: function( css ) {
-		var needle = "background-image",
+		var needleImage = "background-image",
+		    needlePosition = "background-position",
 		    selectors = [],
-		    emoteCSS = [];
-		var idx, selector, eCSS, record;
+		    emoteCSS = [],
+		    cssCopy = css;
+		var idx, selector, eCSS, foundBgPosition, needleLength, record;
 
 		while( true ) {
-			idx = css.indexOf( needle );
+			idxImage = cssCopy.indexOf( needleImage );
+			idxPosition = cssCopy.indexOf( needlePosition );
+			foundBgPosition = false;
 
-			if( idx < 0 ) {
+			if( idxImage < 0 && idxPosition < 0 ) {
 				break;
+			}
+
+			if( idxPosition < 0
+					|| ( idxImage >= 0 && idxPosition >= 0 && idxImage < idxPosition ) ) {
+				idx = idxImage;
+				needleLength = needleImage.length;
+			}
+			else {
+				idx = idxPosition;
+				foundBgPosition = true;
+				needleLength = needlePosition.length;
 			}
 
 			selector = [];
 			eCSS = [];
 			record = false;
 
-			// Get the selectors
+			// Get the selectors and part of the CSS
 			for( var i = idx; i > 0; i-- ) {
-				if( css[i] == "}" ) {
+				if( cssCopy[i] == "}" ) {
 					break;
 				}
-				if( record ) {
-					selector[selector.length] = css[i];
+				// Ignore the selectors of a found background-position,
+				// because this will only result in doubled selectors.
+				if( !foundBgPosition && record ) {
+					selector[selector.length] = cssCopy[i];
 				}
-				if( css[i] == "{" ) {
+				if( cssCopy[i] == "{" ) {
 					record = true;
 				}
 
-				eCSS[eCSS.length] = css[i];
+				eCSS[eCSS.length] = cssCopy[i];
 			}
 
-			// Get the whole CSS part
+			// Get the rest of the relevant CSS part
 			eCSS = eCSS.reverse();
 
-			for( var i = idx + 1; i < css.length; i++ ) {
-				eCSS[eCSS.length] = css[i];
+			for( var i = idx + 1; i < cssCopy.length; i++ ) {
+				eCSS[eCSS.length] = cssCopy[i];
 
-				if( css[i] == "}" ) {
+				if( cssCopy[i] == "}" ) {
 					break;
 				}
 			}
 
-			selectors[selectors.length] = selector.reverse().join( "" );
+			if( !foundBgPosition ) {
+				selectors[selectors.length] = selector.reverse().join( "" );
+			}
 			emoteCSS[emoteCSS.length] = eCSS.join( "" );
-			css = css.substr( idx + needle.length );
+			cssCopy = cssCopy.substr( idx + needleLength );
 		}
 
 		this.emotes[this.xhrCurrentTarget] = selectors;
@@ -661,13 +735,15 @@ var Updater = {
 	 * Extract the emote names.
 	 */
 	extractEmotesStep2: function() {
-		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
+		var emotesCurrent = this.emotes[this.xhrCurrentTarget],
+		    cssCurrent = this.emoteCSS[this.xhrCurrentTarget];
 		var linkStart = 'a[href|="/',
 		    emotes = [],
-		    css = [],
+		    purgedCSS = [];
 		    idx = -1;
-		var selector, emote, subEmoteList;
+		var css, emote, selector, subEmoteList;
 
+		// Extract emote names
 		for( var i = 0; i < emotesCurrent.length; i++ ) {
 			selector = emotesCurrent[i].split( "," );
 			subEmoteList = [];
@@ -691,14 +767,38 @@ var Updater = {
 			}
 
 			// Emotes were found
-			if( idx >= 0) {
-				css[css.length] = this.emoteCSS[this.xhrCurrentTarget][i];
+			if( idx >= 0 ) {
 				emotes[emotes.length] = subEmoteList;
 			}
 		}
 
+		// Remove wrongly identified CSS
+		var cssParts, selectors, s;
+
+		for( var i = 0; i < cssCurrent.length; i++ ) {
+			css = cssCurrent[i];
+
+			if( css.indexOf( linkStart ) >= 0 ) {
+				// Remove non-emote selectors
+				cssParts = css.split( "{" );
+				selectors = cssParts[0].split( "," );
+				css = "";
+
+				for( var j = 0; j < selectors.length; j++ ) {
+					s = selectors[j];
+
+					if( s.indexOf( linkStart ) >= 0 ) {
+						css += "," + s;
+					}
+				}
+
+				purgedCSS[purgedCSS.length] = css.substring( 1 ) + "{" + cssParts[1];
+			}
+		}
+
+
 		this.emotes[this.xhrCurrentTarget] = emotes;
-		this.emoteCSS[this.xhrCurrentTarget] = css;
+		this.emoteCSS[this.xhrCurrentTarget] = purgedCSS.join( "\n" );
 	},
 
 
@@ -1037,4 +1137,3 @@ function saveDefaultToStorage( key, obj ) {
 
 
 MyBrowser.registerMessageHandler( handleMessage );
-// MyBrowser.registerContextMenu();

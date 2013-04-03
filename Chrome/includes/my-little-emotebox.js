@@ -35,7 +35,11 @@
 				selectListDelete: null
 			},
 			// String, key of block in REF.emoteBlocks
-			shownBlock: null
+			shownBlock: null,
+			// CSS for out-of-subreddit emote display
+			sub_css: null,
+			// Emotes found in the stylesheets
+			sub_emotes: null
 		};
 
 
@@ -270,6 +274,8 @@
 			case BG_TASK.LOAD:
 				g.config = data.config;
 				g.emotes = data.emotes;
+				g.sub_css = data.sub_css;
+				g.sub_emotes = data.sub_emotes;
 				Init.initStep2();
 				Init = null;
 				break;
@@ -1042,7 +1048,7 @@
 			}
 
 			styleNode.type = "text/css";
-			styleNode.id = "MyLittleEmotebox" + g.noise;
+			styleNode.id = "MLE" + g.noise;
 
 			for( var rule in css ) {
 				rules += rule.replace( /%/g, g.noise );
@@ -1052,6 +1058,8 @@
 			styleNode.textContent = rules;
 
 			d.getElementsByTagName( "head" )[0].appendChild( styleNode );
+
+			this.addOutOfSubCSS();
 
 			// The CSS variable is a little big and we won't need this function again, sooo...
 			// Leave this function for the Garbage Collector.
@@ -1192,6 +1200,42 @@
 
 			e.target.setAttribute( "hidden", "hidden" );
 			parent.insertBefore( input, parent.firstChild );
+		},
+
+
+		/**
+		 * Add a stylesheet to display out-of-sub emotes.
+		 */
+		addOutOfSubCSS: function() {
+			var g = GLOBAL;
+
+			if( !g.config.displayEmotesOutOfSub ) {
+				return;
+			}
+
+			var head = document.getElementsByTagName( "head" )[0],
+			    styleNode = document.createElement( "style" ),
+			    here = window.location.pathname.toLowerCase();
+
+			styleNode.type = "text/css";
+			styleNode.id = "MLE-emotes" + g.noise;
+
+			// Not very graceful, but at the moment this extension
+			// is build under the assumption that no more subreddits
+			// will be added in the future.
+
+			// Don't include CSS on the subreddit it originates from
+			if( !here.match( /^\/r\/mlplounge\// ) ) {
+				styleNode.textContent += g.sub_css["r/mlplounge"];
+			}
+			if( !here.match( /^\/r\/mylittlepony\// ) ) {
+				styleNode.textContent += g.sub_css["r/mylittlepony"];
+			}
+
+			// Not needed anymore, leave it for the Garbage Collector
+			g.sub_css = {};
+
+			head.insertBefore( styleNode, head.firstChild );
 		},
 
 

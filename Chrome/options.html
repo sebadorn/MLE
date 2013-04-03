@@ -52,11 +52,16 @@
 			<li>
 				<input type="checkbox" id="boxUnderHeader" value="true" />
 				<label for="boxUnderHeader">Box gets hidden by reddit header</label>
-				<p class="explain">May not work in every sub-reddit, due to custom CSS.</p>
+				<p class="explain">May not work in every subreddit, due to custom CSS.</p>
 			</li>
 			<li>
 				<input type="checkbox" id="addBlankAfterInsert" value="true" />
-				<label>Add a blank after inserted emotes.</label>
+				<label for="addBlankAfterInsert">Add a blank after inserted emotes</label>
+			</li>
+			<li>
+				<input type="checkbox" id="displayEmotesOutOfSub" value="true" />
+				<label for="displayEmotesOutOfSub">Display emotes outside of their subreddit</label>
+				<p class="explain">Show emotes outside of r/mylittlepony and r/MLPLounge.</p>
 			</li>
 		</ul>
 	</fieldset>
@@ -183,12 +188,12 @@
 		<ul class="form">
 			<li>
 				<input type="checkbox" id="adjustForBetterPonymotes" value="true" />
-				<label>Adjust for BetterPonymotes</label>
+				<label for="adjustForBetterPonymotes">Adjust for BetterPonymotes</label>
 				<p class="explain">If you use <a href="http://rainbow.mlas1.us/">BetterPonymotes</a> to display out-of-sub emotes, an extra CSS class has to be added to the emotes inside of the MLE box.</p>
 			</li>
 			<li>
 				<input type="checkbox" id="adjustForGrEmB" value="true" />
-				<label>Adjust for GrEmB</label>
+				<label for="adjustForGrEmB">Adjust for GrEmB</label>
 				<p class="explain"><em>(Please note that GrEmB is discontinued.)</em> If you use <a href="http://nallar.me/scripts/">GrEmB</a> to display out-of-sub emotes, an extra CSS class has to be added to the emotes inside of the MLE box.</p>
 			</li>
 			<li>
