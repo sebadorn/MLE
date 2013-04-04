@@ -327,6 +327,11 @@ function resetConfig( e ) {
  * Tell the background process to get and parse the sub-reddit stylesheets.
  */
 function forceUpdate( e ) {
+	// Disable button until page reload to avoid
+	// multiple updates in a short time interval.
+	e.target.removeEventListener( "click", forceUpdate, false );
+	e.target.setAttribute( "readonly", "readonly" );
+
 	postMessage( { task: BG_TASK.UPDATE_CSS } );
 };
 

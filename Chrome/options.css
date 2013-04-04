@@ -72,6 +72,11 @@ input.color {
 	width: 160px;
 }
 
+input[readonly] {
+	background-color: #e0e0e0 !important;
+	color: #a0a0a0 !important;
+}
+
 input[type="submit"] {
 	background-color: #9AB4D1;
 	border-width: 0;

@@ -1232,6 +1232,10 @@
 				styleNode.textContent += g.sub_css["r/mylittlepony"];
 			}
 
+			// Special modifiers from r/mylittlepony
+			// TODO: Get them from the stylesheet instead of this copy&paste!
+			styleNode.textContent += 'a[href|="/sp"]{display:inline-block;padding-right:100%;width:0px;height:0px}a[href|="/sp"]+.reddit_show_hidden_emotes_span{display:none}a[href^="/"][href*="-in-"],a[href^="/"][href$="-in"],a[href^="/"][href*="-inp-"],a[href^="/"][href$="-inp"]{float:none!important;display:inline-block!important}a[href="/spoiler"]{background:black!important;color:black!important}a[href="/spoiler"]:hover{color:white!important}';
+
 			// Not needed anymore, leave it for the Garbage Collector
 			g.sub_css = {};
 

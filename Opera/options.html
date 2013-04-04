@@ -197,6 +197,19 @@
 				<p class="explain"><em>(Please note that GrEmB is discontinued.)</em> If you use <a href="http://nallar.me/scripts/">GrEmB</a> to display out-of-sub emotes, an extra CSS class has to be added to the emotes inside of the MLE box.</p>
 			</li>
 			<li>
+				<select id="intervalToCheckCSS">
+					<option value="-1">never</option>
+					<option value="28800000">8 hours</option>
+					<option value="50400000">14 hours</option>
+					<option value="72000000">20 hours</option>
+					<option value="86400000">1 day</option>
+					<option value="172800000">2 days</option>
+					<option value="604800000">1 week</option>
+				</select>
+				<label>Interval to check the subreddit stylesheets for changes.</label>
+				<p class="explain">Update checks occur every time you visit reddit or the extension gets reloaded. If equal or more time than set here has passed since the last check, an update is started.</p>
+			</li>
+			<li>
 				<input type="submit" id="force-update" class="update" value="force stylesheet check" />
 				<p class="explain">Get and parse the stylesheets from r/mylittlepony and r/MLPlounge for emotes.</p>
 			</li>

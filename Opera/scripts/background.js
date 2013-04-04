@@ -119,12 +119,21 @@ if( I_AM == BROWSER.FIREFOX ) {
 var PREF = {
 	CONFIG: "mle.config",
 	EMOTES: "mle.emotes",
+	META: "mle.meta",
 	SUBREDDIT_CSS: "mle.subreddit.css",
 	SUBREDDIT_EMOTES: "mle.subreddit.emotes"
 };
 
+
 var DEFAULT_SUB_CSS = {},
     DEFAULT_SUB_EMOTES = {};
+
+
+// Information that the user won't need to backup
+var DEFAULT_META = {
+	lastSubredditCheck: 0
+};
+
 
 // Default config
 var DEFAULT_CONFIG = {
@@ -147,13 +156,14 @@ var DEFAULT_CONFIG = {
 	ctxMenu: true,
 	displayEmotesOutOfSub: true,
 	injectEmoteCSS: true,
+	intervalToCheckCSS: 28800000, // [ms] // Default is 8 hours.
 	msgAnimationSpeed: 1000, // [ms]
 	msgPosition: "top", // "top" or "bottom"
 	msgTimeout: 7000 // [ms] // How long a popup message is displayed.
 };
 
 
-// Default emotes of r/mylittlepony.
+// Default emotes of r/mylittlepony
 var DEFAULT_EMOTES = {
 	"A": [
 		"twipride", "twicrazy", "twiright", "twibeam", "spikemeh",
@@ -195,7 +205,8 @@ var DEFAULT_EMOTES = {
 };
 
 var CURRENT_CONFIG = null,
-    CURRENT_EMOTES = null;
+    CURRENT_EMOTES = null,
+    META = null;
 
 
 
@@ -232,7 +243,12 @@ var BrowserOpera = {
 				? JSON.parse( wpref[PREF.EMOTES] )
 				: saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
-		updateConfig( CURRENT_CONFIG );
+		META = wpref[PREF.META]
+				? JSON.parse( wpref[PREF.META] )
+				: saveDefaultToStorage( PREF.META, DEFAULT_META );
+
+		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
+		updateObject( META, DEFAULT_META, PREF.META );
 
 		response.config = CURRENT_CONFIG;
 		response.emotes = CURRENT_EMOTES;
@@ -357,7 +373,12 @@ var BrowserChrome = {
 					? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES )
 					: JSON.parse( items[PREF.EMOTES] );
 
-			updateConfig( CURRENT_CONFIG );
+			META = !items[PREF.META]
+					? saveDefaultToStorage( PREF.META, DEFAULT_META )
+					: JSON.parse( items[PREF.META] );
+
+			updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
+			updateObject( META, DEFAULT_META, PREF.META );
 
 			response.config = CURRENT_CONFIG;
 			response.emotes = CURRENT_EMOTES;
@@ -467,7 +488,12 @@ var BrowserFirefox = {
 				? JSON.parse( ss.storage[PREF.EMOTES] )
 				: saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
-		updateConfig( CURRENT_CONFIG );
+		META = ss.storage[PREF.META]
+				? JSON.parse( ss.storage[PREF.META] )
+				: saveDefaultToStorage( PREF.META, DEFAULT_META );
+
+		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
+		updateObject( META, DEFAULT_META, PREF.META );
 
 		response.config = CURRENT_CONFIG;
 		response.emotes = CURRENT_EMOTES;
@@ -581,14 +607,33 @@ var Updater = {
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
 	xhrUserAgent: "My Little Emotebox v2.3-dev by /u/meinstuhlknarrt",
+	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
 	xhrProgress: 0,
 
 	tableCodeRegex: /^[abce][0-9]{2}$/i,
+	linkStart: 'a[href|="/',
 
 	emoteCSS: {},
 	emotes: {},
+
+
+	/**
+	 * Check if it is time for scheduled update
+	 * and start the process if it is the case.
+	 */
+	check: function() {
+		// Less than zero means automatic checks are disabled
+		if( META.lastSubredditCheck < 0 ) {
+			return;
+		}
+		if( Date.now() - META.lastSubredditCheck >= CURRENT_CONFIG.intervalToCheckCSS ) {
+			META.lastSubredditCheck = Date.now() + this.xhrWait;
+			saveToStorage( PREF.META, META );
+			this.getCSS();
+		}
+	},
 
 
 	/**
@@ -596,19 +641,14 @@ var Updater = {
 	 */
 	getCSS: function() {
 		if( this.isProgressFinished() ) {
-			saveToStorage( PREF.SUBREDDIT_CSS, this.emoteCSS );
-			saveToStorage( PREF.SUBREDDIT_EMOTES, this.emotes );
-
-			this.emoteCSS = {};
-			this.emotes = {};
-			this.xhrProgress = 0;
-
+			this.wrapUp();
 			return;
 		}
 
  		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
  		this.emoteCSS[this.xhrCurrentTarget] = [];
 		this.emotes[this.xhrCurrentTarget] = [];
+
 		this.xhrProgress++;
 
 		var xhr = new XMLHttpRequest(),
@@ -635,21 +675,12 @@ var Updater = {
 			// The reddit API guidelines say:
 			// Not more than 1 request every 2 seconds.
 			if( !Updater.isProgressFinished() ) {
-				setTimeout( Updater.getCSS.bind( Updater ), 2000 );
+				setTimeout( Updater.getCSS.bind( Updater ), Updater.xhrWait );
 			}
 			else {
 				Updater.getCSS();
 			}
 		}
-	},
-
-
-	/**
-	 * Check if all XHR targets have been used.
-	 * @return {Boolean} True if no more XHR calls will be made, false otherwise.
-	 */
-	isProgressFinished: function() {
-		return this.xhrProgress >= this.xhrTargets.length;
 	},
 
 
@@ -660,12 +691,12 @@ var Updater = {
 	 * @return {Object}     Emotes ordered by table.
 	 */
 	extractEmotesStep1: function( css ) {
-		var needleImage = "background-image",
-		    needlePosition = "background-position",
-		    selectors = [],
+		var cssCopy = css,
 		    emoteCSS = [],
-		    cssCopy = css;
-		var idx, selector, eCSS, foundBgPosition, needleLength, record;
+		    needleImage = "background-image",
+		    needlePosition = "background-position",
+		    selectors = [];
+		var eCSS, foundBgPosition, idx, needleLength, record, selector;
 
 		while( true ) {
 			idxImage = cssCopy.indexOf( needleImage );
@@ -676,8 +707,9 @@ var Updater = {
 				break;
 			}
 
-			if( idxPosition < 0
-					|| ( idxImage >= 0 && idxPosition >= 0 && idxImage < idxPosition ) ) {
+			// Is there "background-image" or "background-position"?
+			// If both: Which one is first?
+			if( idxPosition < 0 || ( idxImage >= 0 && idxPosition >= 0 && idxImage < idxPosition ) ) {
 				idx = idxImage;
 				needleLength = needleImage.length;
 			}
@@ -696,33 +728,28 @@ var Updater = {
 				if( cssCopy[i] == "}" ) {
 					break;
 				}
-				// Ignore the selectors of a found background-position,
+				// Ignore the selectors of a found "background-position",
 				// because this will only result in doubled selectors.
 				if( !foundBgPosition && record ) {
-					selector[selector.length] = cssCopy[i];
+					selector.push( cssCopy[i] );
 				}
 				if( cssCopy[i] == "{" ) {
 					record = true;
 				}
 
-				eCSS[eCSS.length] = cssCopy[i];
+				eCSS.push( cssCopy[i] );
 			}
 
 			// Get the rest of the relevant CSS part
-			eCSS = eCSS.reverse();
-
-			for( var i = idx + 1; i < cssCopy.length; i++ ) {
-				eCSS[eCSS.length] = cssCopy[i];
-
-				if( cssCopy[i] == "}" ) {
-					break;
-				}
-			}
+			eCSS = eCSS.reverse().join( "" );
+			eCSS += this.getRestOfCSS( cssCopy, idx );
+			emoteCSS.push( eCSS );
 
 			if( !foundBgPosition ) {
-				selectors[selectors.length] = selector.reverse().join( "" );
+				selector = selector.reverse().join( "" );
+				selectors.push( selector );
 			}
-			emoteCSS[emoteCSS.length] = eCSS.join( "" );
+
 			cssCopy = cssCopy.substr( idx + needleLength );
 		}
 
@@ -732,15 +759,36 @@ var Updater = {
 
 
 	/**
+	 * Get the rest of the relevant CSS part starting from
+	 * the found needle position to the end of the rule.
+	 * @param  {String} cssCopy Current part of the CSS.
+	 * @param  {int}    idx     Index of the found needle.
+	 * @return {String}         Extracted CSS.
+	 */
+	getRestOfCSS: function( cssCopy, idx ) {
+		var css = "";
+
+		for( var i = idx + 1; i < cssCopy.length; i++ ) {
+			css += cssCopy[i];
+
+			if( cssCopy[i] == "}" ) {
+				break;
+			}
+		}
+
+		return css;
+	},
+
+
+	/**
 	 * Extract the emote names.
 	 */
 	extractEmotesStep2: function() {
 		var emotesCurrent = this.emotes[this.xhrCurrentTarget],
 		    cssCurrent = this.emoteCSS[this.xhrCurrentTarget];
-		var linkStart = 'a[href|="/',
-		    emotes = [],
+		var emotes = [],
+		    idx = -1,
 		    purgedCSS = [];
-		    idx = -1;
 		var css, emote, selector, subEmoteList;
 
 		// Extract emote names
@@ -750,55 +798,30 @@ var Updater = {
 
 			for( var j = 0; j < selector.length; j++ ) {
 				emote = selector[j].trim();
-				idx = emote.indexOf( linkStart );
+				idx = emote.indexOf( this.linkStart );
 
 				if( idx == -1 ) {
 					continue;
 				}
 
-				emote = emote.substring( idx + linkStart.length, emote.length - 2 );
+				emote = emote.substring( idx + this.linkStart.length, emote.length - 2 );
 				// "dance" emotes from the Plounge
 				// ":hov", because we already removed the last two characters
 				emote = emote.replace( '"]:hov', '' );
 
 				if( emotes.indexOf( emote ) == -1 ) {
-					subEmoteList[subEmoteList.length] = emote;
+					subEmoteList.push( emote );
 				}
 			}
 
 			// Emotes were found
 			if( idx >= 0 ) {
-				emotes[emotes.length] = subEmoteList;
+				emotes.push( subEmoteList );
 			}
 		}
 
-		// Remove wrongly identified CSS
-		var cssParts, selectors, s;
-
-		for( var i = 0; i < cssCurrent.length; i++ ) {
-			css = cssCurrent[i];
-
-			if( css.indexOf( linkStart ) >= 0 ) {
-				// Remove non-emote selectors
-				cssParts = css.split( "{" );
-				selectors = cssParts[0].split( "," );
-				css = "";
-
-				for( var j = 0; j < selectors.length; j++ ) {
-					s = selectors[j];
-
-					if( s.indexOf( linkStart ) >= 0 ) {
-						css += "," + s;
-					}
-				}
-
-				purgedCSS[purgedCSS.length] = css.substring( 1 ) + "{" + cssParts[1];
-			}
-		}
-
-
+		this.emoteCSS[this.xhrCurrentTarget] = this.removeNonEmoteCSS( cssCurrent );
 		this.emotes[this.xhrCurrentTarget] = emotes;
-		this.emoteCSS[this.xhrCurrentTarget] = purgedCSS.join( "\n" );
 	},
 
 
@@ -810,18 +833,18 @@ var Updater = {
 		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
 		var newEmoteList = [],
 		    nonTableEmotes = [];
-		var newEmoteSubList, group, isTableCode;
+		var emote, group, newEmoteSubList;
 
 		for( var i = 0; i < emotesCurrent.length; i++ ) {
 			newEmoteSubList = [];
 			group = [];
 
 			for( var j = 0; j < emotesCurrent[i].length; j++ ) {
-				group.push( emotesCurrent[i][j] );
-				isTableCode = ( emotesCurrent[i][j].match( this.tableCodeRegex ) != null );
+				emote = emotesCurrent[i][j];
+				group.push( emote );
 
 				// Start new group if table code has been reached.
-				if( isTableCode ) {
+				if( this.isTableCode( emote ) ) {
 					newEmoteSubList.push( group );
 					group = [];
 				}
@@ -838,7 +861,65 @@ var Updater = {
 		if( nonTableEmotes.length > 0 ) {
 			newEmoteList.push( nonTableEmotes );
 		}
+
 		this.emotes[this.xhrCurrentTarget] = newEmoteList;
+	},
+
+
+	/**
+	 * Check if all XHR targets have been used.
+	 * @return {Boolean} True if no more XHR calls will be made, false otherwise.
+	 */
+	isProgressFinished: function() {
+		return ( this.xhrProgress >= this.xhrTargets.length );
+	},
+
+
+	/**
+	 * Checks if a given emote is in table code form, for example "a02".
+	 * @param  {String}  emote Emote name.
+	 * @return {Boolean}       True if the emote is in table code form, false otherwise.
+	 */
+	isTableCode: function( emote ) {
+		return ( emote.match( this.tableCodeRegex ) != null );
+	},
+
+
+	/**
+	 * Remove wrongly identified CSS.
+	 * @param  {Array}  css
+	 * @return {String}
+	 */
+	removeNonEmoteCSS: function( css ) {
+		var purgedCSS = [];
+		var parts, purged, s, selectors;
+
+		for( var i = 0; i < css.length; i++ ) {
+			purged = css[i];
+
+			// Alrighty, there is at least one emote selector in there
+			if( purged.indexOf( this.linkStart ) >= 0 ) {
+
+				// Remove the non-emote selectors ...
+				parts = purged.split( "{" );
+				selectors = parts[0].split( "," );
+				purged = "";
+
+				// ... by only keeping the emote selectors
+				for( var j = 0; j < selectors.length; j++ ) {
+					s = selectors[j];
+
+					if( s.indexOf( this.linkStart ) >= 0 ) {
+						purged += "," + s;
+					}
+				}
+
+				purged = purged.substring( 1 ) + "{" + parts[1];
+				purgedCSS.push( purged );
+			}
+		}
+
+		return purgedCSS.join( "\n" );
 	},
 
 
@@ -863,6 +944,8 @@ var Updater = {
 			for( var j = 0; j < emotesCurrent[i].length; j++ ) {
 				emote = emotesCurrent[i][j];
 
+				// If the emote doesn't start with "r" or does, but the
+				// part after the first "r" isn't a known emote: keep it
 				if( emote[0] != "r" || flatCopy.indexOf( emote.substr( 1 ) ) == -1 ) {
 					newEmoteList[i].push( emote );
 				}
@@ -877,6 +960,20 @@ var Updater = {
 				this.emotes[this.xhrCurrentTarget].push( newEmoteList[i].slice( 0 ) );
 			}
 		}
+	},
+
+
+	/**
+	 * Called at the end of updating ALL subreddit CSS.
+	 * Saves the emotes and CSS. Resets counter.
+	 */
+	wrapUp: function() {
+		saveToStorage( PREF.SUBREDDIT_CSS, this.emoteCSS );
+		saveToStorage( PREF.SUBREDDIT_EMOTES, this.emotes );
+
+		this.emoteCSS = {};
+		this.emotes = {};
+		this.xhrProgress = 0;
 	}
 
 
@@ -939,6 +1036,7 @@ function handleMessage( e, sender, sendResponse ) {
 
 		case BG_TASK.LOAD:
 			response = loadConfigAndEmotes( { task: data.task }, source );
+			Updater.check();
 			break;
 
 		case BG_TASK.SAVE_EMOTES:
@@ -1008,6 +1106,29 @@ function changeListName( oldName, newName ) {
 
 
 /**
+ * Load the configuration and lists/emotes from the extension storage.
+ * @param  {Object} response Part of the response object to send. Contains the task value.
+ * @param  {Object} sender Sender of message. Used to send response. (Chrome and Firefox only)
+ * @return {Object} Response with the loaded config and emotes.
+ */
+function loadConfigAndEmotes( response, sender ) {
+	if( !response ) {
+		response = {};
+	}
+
+	try {
+		response = MyBrowser.loadConfigAndEmotes( response, sender );
+	}
+	catch( err ) {
+		MyBrowser.logError( "Background process: Could not load preferences." );
+		MyBrowser.logError( err );
+	}
+
+	return response;
+};
+
+
+/**
  * Merge the currently loaded emotes with the update.
  * @param  {Object} emotes  Changed lists with their emotes.
  * @return {Object} Updated emote lists.
@@ -1052,19 +1173,20 @@ function mergeWithConfig( obj ) {
 
 
 /**
- * Update the currently stored config in case of newly added options.
- * @param  {Object} current_config The config as it is currently stored (not JSON).
- * @return {Object} The updated config.
+ * Save a default value to the extension storage.
+ * @param  {int} key Key to save the object under.
+ * @param  {Object} obj Default value to save.
+ * @return {Object} Default value. Same as parameter "obj".
  */
-function updateConfig( current_config ) {
-	for( var key in DEFAULT_CONFIG ) {
-		if( !current_config.hasOwnProperty( key ) ) {
-			current_config[key] = DEFAULT_CONFIG[key];
-		}
-	}
-	saveToStorage( PREF.CONFIG, current_config );
+function saveDefaultToStorage( key, obj ) {
+	var r = saveToStorage( key, obj );
+	var msg = r.success
+			? "Background process: \"" + key + "\" not in extension preferences yet. Created default."
+			: "Background process: Could not save default value.";
 
-	return current_config;
+	MyBrowser.logError( msg );
+
+	return obj;
 };
 
 
@@ -1096,43 +1218,21 @@ function saveToStorage( key, obj ) {
 
 
 /**
- * Load the configuration and lists/emotes from the extension storage.
- * @param  {Object} response Part of the response object to send. Contains the task value.
- * @param  {Object} sender Sender of message. Used to send response. (Chrome and Firefox only)
- * @return {Object} Response with the loaded config and emotes.
+ * Update the currently stored object in case of newly added keys/values.
+ * @param  {Object} current       The object as it is currently stored (not JSON).
+ * @param  {Object} defaultValues The default state of the object.
+ * @param  {String} storageKey    The storage key to save it under.
+ * @return {Object}               The updated object.
  */
-function loadConfigAndEmotes( response, sender ) {
-	if( !response ) {
-		response = {};
+function updateObject( current, defaultValues, storageKey ) {
+	for( var key in defaultValues ) {
+		if( !current.hasOwnProperty( key ) ) {
+			current[key] = defaultValues[key];
+		}
 	}
+	saveToStorage( storageKey, current );
 
-	try {
-		response = MyBrowser.loadConfigAndEmotes( response, sender );
-	}
-	catch( err ) {
-		MyBrowser.logError( "Background process: Could not load preferences." );
-		MyBrowser.logError( err );
-	}
-
-	return response;
-};
-
-
-/**
- * Save a default value to the extension storage.
- * @param  {int} key Key to save the object under.
- * @param  {Object} obj Default value to save.
- * @return {Object} Default value. Same as parameter "obj".
- */
-function saveDefaultToStorage( key, obj ) {
-	var r = saveToStorage( key, obj );
-	var msg = r.success
-			? "Background process: \"" + key + "\" not in extension preferences yet. Created default."
-			: "Background process: Could not save default value.";
-
-	MyBrowser.logError( msg );
-
-	return obj;
+	return current;
 };
 
 
