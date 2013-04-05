@@ -22,6 +22,8 @@ if( I_AM == BROWSER.FIREFOX ) {
 	var sprefs = require( "simple-prefs" );
 	var ss = require( "simple-storage" );
 	var tabs = require( "tabs" );
+	var Request = require( "request" ).Request;
+	var Timer = require( "timers" );
 
 	var workers = [];
 
@@ -61,6 +63,16 @@ if( I_AM == BROWSER.FIREFOX ) {
 		worker.on( "detach", function() {
 			forgetWorker( this );
 		} );
+	};
+
+
+	/**
+	 * Call a function after a given value of milliseconds.
+	 * @param {Function} callback The function to call.
+	 * @param {int}      timeout  Timeout in milliseconds.
+	 */
+	function setTimeout( callback, timeout ) {
+		Timer.setTimeout( callback, timeout );
 	};
 
 
@@ -239,6 +251,24 @@ var BrowserOpera = {
 
 
 	/**
+	 * Send a XMLHttpRequest.
+	 * @param  {String}   method    POST or GET.
+	 * @param  {String}   url       URL to send the request to.
+	 * @param  {bool}     async     If to make the request async.
+	 * @param  {String}   userAgent The User-Agent to sent.
+	 * @param  {Function} callback  Callback function to handle the response.
+	 */
+	sendRequest: function( method, url, async, userAgent, callback ) {
+		var xhr = new XMLHttpRequest();
+
+		xhr.open( method, url, async );
+		xhr.setRequestHeader( "User-Agent", userAgent );
+		xhr.onreadystatechange = callback.bind( xhr );
+		xhr.send();
+	},
+
+
+	/**
 	 * Load config and emotes in Opera.
 	 * @param  {Object} response Response object that will get send to the content script later.
 	 * @param  {bool}   loadMeta True, if META data shall be included in the response.
@@ -351,6 +381,24 @@ var BrowserChrome = {
 		var saveObj = {};
 		saveObj[key] = val;
 		chrome.storage.local.set( saveObj );
+	},
+
+
+	/**
+	 * Send a XMLHttpRequest.
+	 * @param  {String}   method    POST or GET.
+	 * @param  {String}   url       URL to send the request to.
+	 * @param  {bool}     async     If to make the request async.
+	 * @param  {String}   userAgent The User-Agent to sent.
+	 * @param  {Function} callback  Callback function to handle the response.
+	 */
+	sendRequest: function( method, url, async, userAgent, callback ) {
+		var xhr = new XMLHttpRequest();
+
+		xhr.open( method, url, async );
+		xhr.setRequestHeader( "User-Agent", userAgent );
+		xhr.onreadystatechange = callback.bind( xhr );
+		xhr.send();
 	},
 
 
@@ -490,6 +538,30 @@ var BrowserFirefox = {
 	 */
 	save: function( key, val ) {
 		ss.storage[key] = val;
+	},
+
+
+	/**
+	 * Send a XMLHttpRequest.
+	 * ONLY USEABLE FOR THE UPDATER AT THIS MOMENT!
+	 * @param  {String}   method    POST or GET.
+	 * @param  {String}   url       URL to send the request to.
+	 * @param  {bool}     async     If to make the request async.
+	 * @param  {String}   userAgent The User-Agent to sent.
+	 * @param  {Function} callback  Callback function to handle the response. (Not used in Firefox.)
+	 */
+	sendRequest: function( method, url, async, userAgent, callback ) {
+		var req = new Request( {
+			url: url,
+			onComplete: function( response ) {
+				Updater.handleCSS( response.text );
+			},
+			headers: {
+				"User-Agent": userAgent
+			}
+		} );
+
+		req.get();
 	},
 
 
@@ -672,35 +744,43 @@ var Updater = {
 
 		this.xhrProgress++;
 
-		var xhr = new XMLHttpRequest(),
-		    url = "http://www.reddit.com/" + this.xhrCurrentTarget + "/stylesheet";
+		var url = "http://www.reddit.com/" + this.xhrCurrentTarget + "/stylesheet";
 
-		xhr.open( this.xhrMethod, url, this.xhrAsync );
-		xhr.setRequestHeader( "User-Agent", this.xhrUserAgent );
-		xhr.onreadystatechange = this.handleCSS.bind( xhr );
-		xhr.send();
+		MyBrowser.sendRequest(
+			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.handleCSSCallback
+		);
 	},
 
 
 	/**
 	 * After receiving the stylesheet, start extracting the emotes.
+	 * @param {String} response Response to the request.
 	 */
-	handleCSS: function() {
-		if( this.readyState == 4 ) {
-			Updater.extractEmotesStep1( this.responseText );
-			Updater.extractEmotesStep2();
-			Updater.removeReverseEmotes();
-			Updater.groupSameEmotes();
+	handleCSS: function( response ) {
+		this.extractEmotesStep1( response );
+		this.extractEmotesStep2();
+		this.removeReverseEmotes();
+		this.groupSameEmotes();
 
-			// Get next subreddit CSS.
-			// The reddit API guidelines say:
-			// Not more than 1 request every 2 seconds.
-			if( !Updater.isProgressFinished() ) {
-				setTimeout( Updater.getCSS.bind( Updater ), Updater.xhrWait );
-			}
-			else {
-				Updater.getCSS();
-			}
+		// Get next subreddit CSS.
+		// The reddit API guidelines say:
+		// Not more than 1 request every 2 seconds.
+		if( !this.isProgressFinished() ) {
+			setTimeout( this.getCSS.bind( this ), this.xhrWait );
+		}
+		else {
+			this.getCSS();
+		}
+	},
+
+
+	/**
+	 * After receiving the stylesheet, start extracting the emotes.
+	 * (Callback function for browser who use XMLHttpRequest.)
+	 */
+	handleCSSCallback: function() {
+		if( this.readyState == 4 ) {
+			Updater.handleCSS( this.responseText );
 		}
 	},
 
