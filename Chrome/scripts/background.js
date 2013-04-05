@@ -241,9 +241,10 @@ var BrowserOpera = {
 	/**
 	 * Load config and emotes in Opera.
 	 * @param  {Object} response Response object that will get send to the content script later.
+	 * @param  {bool}   loadMeta True, if META data shall be included in the response.
 	 * @return {Object} response
 	 */
-	loadConfigAndEmotes: function( response, sender ) {
+	loadConfigAndEmotes: function( response, sender, loadMeta ) {
 		var wpref = widget.preferences;
 
 		CURRENT_CONFIG = wpref[PREF.CONFIG]
@@ -263,6 +264,9 @@ var BrowserOpera = {
 
 		response.config = CURRENT_CONFIG;
 		response.emotes = CURRENT_EMOTES;
+		if( loadMeta ) {
+			response.meta = META;
+		}
 
 		response.sub_css = wpref[PREF.SUBREDDIT_CSS]
 				? JSON.parse( wpref[PREF.SUBREDDIT_CSS] )
@@ -368,10 +372,11 @@ var BrowserChrome = {
 	/**
 	 * Load config and emotes in Chrome.
 	 * @param  {Object} response Response object that will get send to the content script.
-	 * @param  {Object} sender Sender of message. Used to send response. (Chrome only)
+	 * @param  {Object} sender   Sender of message. Used to send response. (Chrome only)
+	 * @param  {bool}   loadMeta True, if META data shall be included in the response.
 	 * @return {Object} response
 	 */
-	loadConfigAndEmotes: function( response, sender ) {
+	loadConfigAndEmotes: function( response, sender, loadMeta ) {
 		this.tabs.push( sender.tab.id );
 		chrome.tabs.onRemoved.addListener( this.onTabRemove.bind( this ) );
 
@@ -393,6 +398,9 @@ var BrowserChrome = {
 
 			response.config = CURRENT_CONFIG;
 			response.emotes = CURRENT_EMOTES;
+			if( loadMeta ) {
+				response.meta = META;
+			}
 
 			response.sub_css = !items[PREF.SUBREDDIT_CSS]
 					? saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS )
@@ -488,9 +496,10 @@ var BrowserFirefox = {
 	/**
 	 * Load config and emotes in Firefox.
 	 * @param  {Object} response Response object that will get send to the content script later.
+	 * @param  {bool}   loadMeta True, if META data shall be included in the response.
 	 * @return {Object} response
 	 */
-	loadConfigAndEmotes: function( response, sender ) {
+	loadConfigAndEmotes: function( response, sender, loadMeta ) {
 		CURRENT_CONFIG = ss.storage[PREF.CONFIG]
 				? JSON.parse( ss.storage[PREF.CONFIG] )
 				: saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
@@ -508,6 +517,9 @@ var BrowserFirefox = {
 
 		response.config = CURRENT_CONFIG;
 		response.emotes = CURRENT_EMOTES;
+		if( loadMeta ) {
+			response.meta = META;
+		}
 
 		response.sub_css = ss.storage[PREF.SUBREDDIT_CSS]
 				? JSON.parse( ss.storage[PREF.SUBREDDIT_CSS] )
@@ -640,8 +652,6 @@ var Updater = {
 			return;
 		}
 		if( Date.now() - META.lastSubredditCheck >= CURRENT_CONFIG.intervalToCheckCSS ) {
-			META.lastSubredditCheck = Date.now() + this.xhrWait;
-			saveToStorage( PREF.META, META );
 			this.getCSS();
 		}
 	},
@@ -1086,6 +1096,9 @@ var Updater = {
 	 * Saves the emotes and CSS. Resets counter.
 	 */
 	wrapUp: function() {
+		META.lastSubredditCheck = Date.now();
+		saveToStorage( PREF.META, META );
+
 		saveToStorage( PREF.SUBREDDIT_CSS, this.emoteCSS );
 		saveToStorage( PREF.SUBREDDIT_EMOTES, this.emotes );
 
@@ -1156,7 +1169,7 @@ function handleMessage( e, sender, sendResponse ) {
 			break;
 
 		case BG_TASK.LOAD:
-			response = loadConfigAndEmotes( { task: data.task }, source );
+			response = loadConfigAndEmotes( { task: data.task }, source, !!data.loadMeta );
 			Updater.check();
 			break;
 
@@ -1229,16 +1242,17 @@ function changeListName( oldName, newName ) {
 /**
  * Load the configuration and lists/emotes from the extension storage.
  * @param  {Object} response Part of the response object to send. Contains the task value.
- * @param  {Object} sender Sender of message. Used to send response. (Chrome and Firefox only)
- * @return {Object} Response with the loaded config and emotes.
+ * @param  {Object} sender   Sender of message. Used to send response. (Chrome and Firefox only)
+ * @param  {bool}   loadMeta True, if META data shall be included in the response.
+ * @return {Object}          Response with the loaded config and emotes.
  */
-function loadConfigAndEmotes( response, sender ) {
+function loadConfigAndEmotes( response, sender, loadMeta ) {
 	if( !response ) {
 		response = {};
 	}
 
 	try {
-		response = MyBrowser.loadConfigAndEmotes( response, sender );
+		response = MyBrowser.loadConfigAndEmotes( response, sender, loadMeta );
 	}
 	catch( err ) {
 		MyBrowser.logError( "Background process: Could not load preferences." );

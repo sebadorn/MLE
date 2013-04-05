@@ -2,11 +2,12 @@
 
 
 var CONFIG = null,
-    EMOTES = null;
+    EMOTES = null,
+    META = null;
 
 var OPT_CFG = {
-		MSG_TIMEOUT: 8000 // [ms]
-	};
+	MSG_TIMEOUT: 8000 // [ms]
+};
 
 
 /**
@@ -372,6 +373,9 @@ function registerEventSettingChanged() {
 	// <select>s
 	for( var i = 0; i < selects.length; i++ ) {
 		select = selects[i];
+		if( select.hasAttribute( "data-meta" ) ) {
+			continue;
+		}
 		select.addEventListener( "change", saveSetting, false );
 
 		// Select currently set <option>
@@ -385,6 +389,9 @@ function registerEventSettingChanged() {
 	// <input type="checkbox">s
 	for( var i = 0; i < checkboxes.length; i++ ) {
 		chkbox = checkboxes[i];
+		if( chkbox.hasAttribute( "data-meta" ) ) {
+			continue;
+		}
 		chkbox.addEventListener( "change", saveSetting, false );
 		chkbox.checked = CONFIG[chkbox.id];
 	}
@@ -392,6 +399,9 @@ function registerEventSettingChanged() {
 	// <input type="number">s
 	for( var i = 0; i < numbers.length; i++ ) {
 		nmbr = numbers[i];
+		if( nmbr.hasAttribute( "data-meta" ) ) {
+			continue;
+		}
 		nmbr.addEventListener( "change", saveSetting, false );
 		nmbr.value = CONFIG[nmbr.id];
 	}
@@ -399,6 +409,9 @@ function registerEventSettingChanged() {
 	// <input type="text">s
 	for( var i = 0; i < texts.length; i++ ) {
 		txt = texts[i];
+		if( txt.hasAttribute( "data-meta" ) ) {
+			continue;
+		}
 		txt.addEventListener( "change", saveSetting, false );
 		txt.value = CONFIG[txt.id];
 	}
@@ -452,6 +465,7 @@ function handleBackgroundMessages( e ) {
 		case BG_TASK.LOAD:
 			CONFIG = data.config;
 			EMOTES = data.emotes;
+			META = data.meta;
 			init2();
 			break;
 
@@ -465,10 +479,30 @@ function handleBackgroundMessages( e ) {
 
 
 /**
+ * Insert the META data where it should be displayed.
+ */
+function insertMetaData() {
+	var lastCheck = document.getElementById( "lastSubredditCheck" ),
+	    date = new Date( META.lastSubredditCheck );
+	var month = date.getMonth() + 1,
+	    day = date.getDay(),
+	    hours = date.getHours(),
+	    minutes = date.getMinutes();
+
+	if( month < 10 ) { month = "0" + month; }
+	if( day < 10 ) { day = "0" + day; }
+	if( hours < 10 ) { hours = "0" + hours; }
+	if( minutes < 10 ) { minutes = "0" + minutes; }
+
+	lastCheck.value = date.getFullYear() + "-" + month + "-" + day + " " + hours + ":" + minutes;
+};
+
+
+/**
  * Load config through background process.
  */
 function loadConfig() {
-	postMessage( { task: BG_TASK.LOAD } );
+	postMessage( { task: BG_TASK.LOAD, loadMeta: true } );
 };
 
 
@@ -482,8 +516,12 @@ function init() {
 };
 
 
+/**
+ * Second setup phase after receiving the config, emotes and meta data.
+ */
 function init2() {
 	registerEventSettingChanged();
+	insertMetaData();
 };
 
 

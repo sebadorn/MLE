@@ -234,8 +234,13 @@
 				<p class="explain">Update checks occur every time you visit reddit or the extension gets reloaded. If equal or more time than set here has passed since the last check, an update is started.</p>
 			</li>
 			<li>
-				<input type="submit" id="force-update" class="update" value="force stylesheet check" />
+				<input type="submit" id="force-update" class="update" value="force stylesheet update" />
 				<p class="explain">Get and parse the stylesheets from r/mylittlepony and r/MLPlounge for emotes.</p>
+			</li>
+			<li>
+				<input type="text" class="long" id="lastSubredditCheck" data-meta="true" readonly />
+				<label>Last time the subreddits have been checked for new emotes.</label>
+				<p class="explain">Format: <code>yyyy-mm-dd hh:mm</code></p>
 			</li>
 			<li class="export-import">
 				<label>Export config</label>

@@ -67,9 +67,15 @@ input[type="text"] {
 	width: 97px;
 }
 
-input.color {
+input.color,
+input.long {
 	font-family: monospace;
 	width: 160px;
+}
+
+input[data-meta] {
+	font-size: 13px;
+	text-align: center;
 }
 
 input[readonly] {
