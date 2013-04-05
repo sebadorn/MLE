@@ -761,6 +761,7 @@ var Updater = {
 				selectors.push( selector );
 			}
 
+			// Remove the CSS part we just processed
 			cssCopy = cssCopy.substr( idx + needleLength );
 		}
 
@@ -1005,13 +1006,15 @@ var Updater = {
 	 */
 	removeNonEmoteCSS: function( css ) {
 		var purgedCSS = [];
-		var parts, purged, s, selectors;
+		var idx, idxFilly, parts, purged, s, selectors;
 
 		for( var i = 0; i < css.length; i++ ) {
 			purged = css[i];
+			idx = purged.indexOf( this.linkStart );
+			idxFilly = purged.indexOf( 'a[href="/filly"]' );
 
 			// Alrighty, there is at least one emote selector in there
-			if( purged.indexOf( this.linkStart ) >= 0 ) {
+			if( idx >= 0 || idxFilly >= 0 ) {
 
 				// Remove the non-emote selectors ...
 				parts = purged.split( "{" );
@@ -1021,8 +1024,10 @@ var Updater = {
 				// ... by only keeping the emote selectors
 				for( var j = 0; j < selectors.length; j++ ) {
 					s = selectors[j];
+					idx = s.indexOf( this.linkStart );
+					idxFilly = s.indexOf( 'a[href="/filly"]' );
 
-					if( s.indexOf( this.linkStart ) >= 0 ) {
+					if( idx >= 0 || idxFilly >= 0 ) {
 						purged += "," + s;
 					}
 				}

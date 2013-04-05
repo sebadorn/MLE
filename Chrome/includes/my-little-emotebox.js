@@ -1227,10 +1227,10 @@
 
 			// Don't include CSS on the subreddit it originates from
 			if( !here.match( /^\/r\/mlplounge\// ) ) {
-				styleNode.textContent += g.sub_css["r/mlplounge"];
+				styleNode.textContent += g.sub_css["r/mlplounge"] + "\n\n";
 			}
 			if( !here.match( /^\/r\/mylittlepony\// ) ) {
-				styleNode.textContent += g.sub_css["r/mylittlepony"];
+				styleNode.textContent += g.sub_css["r/mylittlepony"] + "\n\n";
 			}
 
 			// Special modifiers from r/mylittlepony
