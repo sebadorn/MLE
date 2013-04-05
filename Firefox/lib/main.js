@@ -66,16 +66,6 @@ if( I_AM == BROWSER.FIREFOX ) {
 	};
 
 
-	/**
-	 * Call a function after a given value of milliseconds.
-	 * @param {Function} callback The function to call.
-	 * @param {int}      timeout  Timeout in milliseconds.
-	 */
-	function setTimeout( callback, timeout ) {
-		Timer.setTimeout( callback, timeout );
-	};
-
-
 	// Add content scripts to web pages
 	pageMod.PageMod( {
 		include: "*",
@@ -122,6 +112,23 @@ if( I_AM == BROWSER.FIREFOX ) {
 		UPDATE_LIST_DELETE: 10,
 		UPDATE_CSS: 11
 	};
+
+}
+// Chrome only.
+else if( I_AM == BROWSER.CHROME ) {
+
+	// TODO: Uncomment when chrome.declarativeWebRequest finds
+	// its way into the stable channel. It's currently experimental.
+
+	// // Set an individual User-Agent for our XMLHttpRequests.
+	// chrome.declarativeWebRequest.onRequest.addRules( [ {
+	// 	priority: 100,
+	// 	actions: [
+	// 		new chrome.declarativeWebRequest.SetRequestHeader( {
+	// 			name: "User-Agent", value: Updater.xhrUserAgent
+	// 		} )
+	// 	]
+	// } ] );
 
 }
 
@@ -241,30 +248,11 @@ var BrowserOpera = {
 
 
 	/**
-	 * Save to extension storage.
-	 * @param {String} key
-	 * @param {String} val String as JSON.
+	 * Broadcast a message to everything extension related.
+	 * @param {Object} msg
 	 */
-	save: function( key, val ) {
-		widget.preferences[key] = val;
-	},
-
-
-	/**
-	 * Send a XMLHttpRequest.
-	 * @param  {String}   method    POST or GET.
-	 * @param  {String}   url       URL to send the request to.
-	 * @param  {bool}     async     If to make the request async.
-	 * @param  {String}   userAgent The User-Agent to sent.
-	 * @param  {Function} callback  Callback function to handle the response.
-	 */
-	sendRequest: function( method, url, async, userAgent, callback ) {
-		var xhr = new XMLHttpRequest();
-
-		xhr.open( method, url, async );
-		xhr.setRequestHeader( "User-Agent", userAgent );
-		xhr.onreadystatechange = callback.bind( xhr );
-		xhr.send();
+	broadcast: function( msg ) {
+		opera.extension.broadcastMessage( msg );
 	},
 
 
@@ -306,7 +294,21 @@ var BrowserOpera = {
 				? JSON.parse( wpref[PREF.SUBREDDIT_EMOTES] )
 				: saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
 
+		// It's ugly to place that function call here.
+		// But THANKS TO CHROME that's the way it has to be.
+		// Unless I come up with a good way to refactor this.
+		Updater.check();
+
 		return response;
+	},
+
+
+	/**
+	 * Post an error to the error console.
+	 * @param {String} msg
+	 */
+	logError: function( msg ) {
+		opera.postError( msg );
 	},
 
 
@@ -322,11 +324,11 @@ var BrowserOpera = {
 
 
 	/**
-	 * Broadcast a message to everything extension related.
-	 * @param {Object} msg
+	 * Register a function to handle messaging between pages.
+	 * @param {function} handler
 	 */
-	broadcast: function( msg ) {
-		opera.extension.broadcastMessage( msg );
+	registerMessageHandler: function( handler ) {
+		opera.extension.onmessage = handler;
 	},
 
 
@@ -341,46 +343,12 @@ var BrowserOpera = {
 
 
 	/**
-	 * Post an error to the error console.
-	 * @param {String} msg
-	 */
-	logError: function( msg ) {
-		opera.postError( msg );
-	},
-
-
-	/**
-	 * Register a function to handle messaging between pages.
-	 * @param {function} handler
-	 */
-	registerMessageHandler: function( handler ) {
-		opera.extension.onmessage = handler;
-	}
-
-
-};
-
-
-
-/**
- * Browser "class" for Chrome.
- * @type {Object}
- */
-var BrowserChrome = {
-
-
-	tabs: [],
-
-
-	/**
 	 * Save to extension storage.
 	 * @param {String} key
 	 * @param {String} val String as JSON.
 	 */
 	save: function( key, val ) {
-		var saveObj = {};
-		saveObj[key] = val;
-		chrome.storage.local.set( saveObj );
+		widget.preferences[key] = val;
 	},
 
 
@@ -399,6 +367,113 @@ var BrowserChrome = {
 		xhr.setRequestHeader( "User-Agent", userAgent );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
+	}
+
+
+};
+
+
+
+/**
+ * Browser "class" for Chrome.
+ * @type {Object}
+ */
+var BrowserChrome = {
+
+
+	tabs: [],
+
+
+	/**
+	 * Broadcast a message to everything extension related.
+	 * @param {Object} msg
+	 */
+	broadcast: function( msg ) {
+		for( var i = 0; i < this.tabs.length; i++ ) {
+			chrome.tabs.sendMessage( this.tabs[i], msg, handleMessage );
+		}
+	},
+
+
+	/**
+	 * CHROME ONLY.
+	 * Handle the items loaded from the storage.
+	 * (this == binded object with variables)
+	 * @param  {Object} items Loaded items in key/value pairs.
+	 */
+	handleLoadedItems: function( items ) {
+		CURRENT_CONFIG = !items[PREF.CONFIG]
+				? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG )
+				: JSON.parse( items[PREF.CONFIG] );
+
+		CURRENT_EMOTES = !items[PREF.EMOTES]
+				? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES )
+				: JSON.parse( items[PREF.EMOTES] );
+
+		META = !items[PREF.META]
+				? saveDefaultToStorage( PREF.META, DEFAULT_META )
+				: JSON.parse( items[PREF.META] );
+
+		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
+		updateObject( META, DEFAULT_META, PREF.META );
+
+		this.response.config = CURRENT_CONFIG;
+		this.response.emotes = CURRENT_EMOTES;
+		if( this.loadMeta ) {
+			this.response.meta = META;
+		}
+
+		this.response.sub_css = !items[PREF.SUBREDDIT_CSS]
+				? saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS )
+				: JSON.parse( items[PREF.SUBREDDIT_CSS] );
+
+		this.response.sub_emotes = !items[PREF.SUBREDDIT_EMOTES]
+				? saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES )
+				: JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
+
+		// It's ugly to place that function call here.
+		// But THANKS TO CHROME that's the way it has to be.
+		// Unless I come up with a good way to refactor this.
+		Updater.check();
+
+		// Send loaded items to the tab that sent the request.
+		if( this.sender ) {
+			chrome.tabs.sendMessage( this.sender.tab.id, this.response, handleMessage );
+		}
+	},
+
+
+	/**
+	 * Load config and emotes in Chrome.
+	 * @param  {Object} response Response object that will get send to the content script.
+	 * @param  {Object} sender   Sender of message. Used to send response. (Chrome only)
+	 * @param  {bool}   loadMeta True, if META data shall be included in the response.
+	 * @return {Object} response
+	 */
+	loadConfigAndEmotes: function( response, sender, loadMeta ) {
+		var packet = {
+			loadMeta: loadMeta,
+			response: response,
+			sender: sender
+		};
+
+		this.tabs.push( sender.tab.id );
+		chrome.tabs.onRemoved.addListener( this.onTabRemove.bind( this ) );
+
+		chrome.storage.local.get( null, this.handleLoadedItems.bind( packet ) );
+
+		// Response unaltered.
+		// Actual response happens in this.handleLoadedItems.
+		return response;
+	},
+
+
+	/**
+	 * Post an error to the error console.
+	 * @param {String} msg
+	 */
+	logError: function( msg ) {
+		console.error( msg );
 	},
 
 
@@ -418,57 +493,6 @@ var BrowserChrome = {
 
 
 	/**
-	 * Load config and emotes in Chrome.
-	 * @param  {Object} response Response object that will get send to the content script.
-	 * @param  {Object} sender   Sender of message. Used to send response. (Chrome only)
-	 * @param  {bool}   loadMeta True, if META data shall be included in the response.
-	 * @return {Object} response
-	 */
-	loadConfigAndEmotes: function( response, sender, loadMeta ) {
-		this.tabs.push( sender.tab.id );
-		chrome.tabs.onRemoved.addListener( this.onTabRemove.bind( this ) );
-
-		chrome.storage.local.get( [PREF.CONFIG, PREF.EMOTES], function( items ) {
-			CURRENT_CONFIG = !items[PREF.CONFIG]
-					? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG )
-					: JSON.parse( items[PREF.CONFIG] );
-
-			CURRENT_EMOTES = !items[PREF.EMOTES]
-					? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES )
-					: JSON.parse( items[PREF.EMOTES] );
-
-			META = !items[PREF.META]
-					? saveDefaultToStorage( PREF.META, DEFAULT_META )
-					: JSON.parse( items[PREF.META] );
-
-			updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
-			updateObject( META, DEFAULT_META, PREF.META );
-
-			response.config = CURRENT_CONFIG;
-			response.emotes = CURRENT_EMOTES;
-			if( loadMeta ) {
-				response.meta = META;
-			}
-
-			response.sub_css = !items[PREF.SUBREDDIT_CSS]
-					? saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS )
-					: JSON.parse( items[PREF.SUBREDDIT_CSS] );
-
-			response.sub_emotes = !items[PREF.SUBREDDIT_EMOTES]
-					? saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES )
-					: JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
-
-			// Send loaded items to the tab that sent the request.
-			if( sender ) {
-				chrome.tabs.sendMessage( sender.tab.id, response, handleMessage );
-			}
-		} );
-
-		return response;
-	},
-
-
-	/**
 	 * Open the options page.
 	 */
 	openOptions: function() {
@@ -480,13 +504,11 @@ var BrowserChrome = {
 
 
 	/**
-	 * Broadcast a message to everything extension related.
-	 * @param {Object} msg
+	 * Register a function to handle messaging between pages.
+	 * @param {function} handler
 	 */
-	broadcast: function( msg ) {
-		for( var i = 0; i < this.tabs.length; i++ ) {
-			chrome.tabs.sendMessage( this.tabs[i], msg, handleMessage );
-		}
+	registerMessageHandler: function( handler ) {
+		chrome.extension.onMessage.addListener( handler );
 	},
 
 
@@ -503,20 +525,31 @@ var BrowserChrome = {
 
 
 	/**
-	 * Post an error to the error console.
-	 * @param {String} msg
+	 * Save to extension storage.
+	 * @param {String} key
+	 * @param {String} val String as JSON.
 	 */
-	logError: function( msg ) {
-		console.error( msg );
+	save: function( key, val ) {
+		var saveObj = {};
+		saveObj[key] = val;
+		chrome.storage.local.set( saveObj );
 	},
 
 
 	/**
-	 * Register a function to handle messaging between pages.
-	 * @param {function} handler
+	 * Send a XMLHttpRequest.
+	 * @param  {String}   method    POST or GET.
+	 * @param  {String}   url       URL to send the request to.
+	 * @param  {bool}     async     If to make the request async.
+	 * @param  {String}   userAgent The User-Agent to sent. (NOT USED IN CHROME.)
+	 * @param  {Function} callback  Callback function to handle the response.
 	 */
-	registerMessageHandler: function( handler ) {
-		chrome.extension.onMessage.addListener( handler );
+	sendRequest: function( method, url, async, userAgent, callback ) {
+		var xhr = new XMLHttpRequest();
+
+		xhr.open( method, url, async );
+		xhr.onreadystatechange = callback.bind( xhr );
+		xhr.send();
 	}
 
 
@@ -532,36 +565,18 @@ var BrowserFirefox = {
 
 
 	/**
-	 * Save to extension storage.
-	 * @param {String} key
-	 * @param {String} val String as JSON.
+	 * Broadcast a message to everything extension related.
+	 * @param {Object} msg
 	 */
-	save: function( key, val ) {
-		ss.storage[key] = val;
-	},
-
-
-	/**
-	 * Send a XMLHttpRequest.
-	 * ONLY USEABLE FOR THE UPDATER AT THIS MOMENT!
-	 * @param  {String}   method    POST or GET.
-	 * @param  {String}   url       URL to send the request to.
-	 * @param  {bool}     async     If to make the request async.
-	 * @param  {String}   userAgent The User-Agent to sent.
-	 * @param  {Function} callback  Callback function to handle the response. (Not used in Firefox.)
-	 */
-	sendRequest: function( method, url, async, userAgent, callback ) {
-		var req = new Request( {
-			url: url,
-			onComplete: function( response ) {
-				Updater.handleCSS( response.text );
-			},
-			headers: {
-				"User-Agent": userAgent
+	broadcast: function( msg ) {
+		for( var i = 0; i < workers.length; i++ ) {
+			try {
+				workers[i].postMessage( msg );
 			}
-		} );
-
-		req.get();
+			catch( err ) {
+				forgetWorker( workers[i] );
+			}
+		}
 	},
 
 
@@ -601,7 +616,21 @@ var BrowserFirefox = {
 				? JSON.parse( ss.storage[PREF.SUBREDDIT_EMOTES] )
 				: saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
 
+		// It's ugly to place that function call here.
+		// But THANKS TO CHROME that's the way it has to be.
+		// Unless I come up with a good way to refactor this.
+		Updater.check();
+
 		return response;
+	},
+
+
+	/**
+	 * Post an error to the error console.
+	 * @param  {String} msg
+	 */
+	logError: function( msg ) {
+		console.error( msg );
 	},
 
 
@@ -616,18 +645,13 @@ var BrowserFirefox = {
 
 
 	/**
-	 * Broadcast a message to everything extension related.
-	 * @param {Object} msg
+	 * Register a function to handle messaging between pages.
+	 * THIS IS JUST A DUMMY FUNCTION.
+	 * @see   handleOnAttach()
+	 * @param {function} handler
 	 */
-	broadcast: function( msg ) {
-		for( var i = 0; i < workers.length; i++ ) {
-			try {
-				workers[i].postMessage( msg );
-			}
-			catch( err ) {
-				forgetWorker( workers[i] );
-			}
-		}
+	registerMessageHandler: function( handler ) {
+		// pass
 	},
 
 
@@ -642,22 +666,36 @@ var BrowserFirefox = {
 
 
 	/**
-	 * Post an error to the error console.
-	 * @param  {String} msg
+	 * Save to extension storage.
+	 * @param {String} key
+	 * @param {String} val String as JSON.
 	 */
-	logError: function( msg ) {
-		console.error( msg );
+	save: function( key, val ) {
+		ss.storage[key] = val;
 	},
 
 
 	/**
-	 * Register a function to handle messaging between pages.
-	 * THIS IS JUST A DUMMY FUNCTION.
-	 * @see   handleOnAttach()
-	 * @param {function} handler
+	 * Send a XMLHttpRequest.
+	 * ONLY USEABLE FOR THE UPDATER AT THIS MOMENT!
+	 * @param  {String}   method    POST or GET.
+	 * @param  {String}   url       URL to send the request to.
+	 * @param  {bool}     async     If to make the request async.
+	 * @param  {String}   userAgent The User-Agent to sent.
+	 * @param  {Function} callback  Callback function to handle the response. (NOT USED IN FIREFOX.)
 	 */
-	registerMessageHandler: function( handler ) {
-		// pass
+	sendRequest: function( method, url, async, userAgent, callback ) {
+		var req = new Request( {
+			url: url,
+			onComplete: function( response ) {
+				Updater.handleCSS( response.text );
+			},
+			headers: {
+				"User-Agent": userAgent
+			}
+		} );
+
+		req.get();
 	}
 
 
@@ -698,7 +736,7 @@ var Updater = {
 
 
 	// Config
-	xhrAsyn: true,
+	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
 	xhrUserAgent: "My Little Emotebox v2.3-dev by /u/meinstuhlknarrt",
@@ -766,7 +804,15 @@ var Updater = {
 		// The reddit API guidelines say:
 		// Not more than 1 request every 2 seconds.
 		if( !this.isProgressFinished() ) {
-			setTimeout( this.getCSS.bind( this ), this.xhrWait );
+			// Firefox doesn't know window.setTimeout in main.js.
+			// Great. But it has require( "timers" ).setTimeout which
+			// does EXACTLY THE SAME. Go figure.
+			if( setTimeout ) {
+				setTimeout( this.getCSS.bind( this ), this.xhrWait );
+			}
+			else {
+				Timer.setTimeout( this.getCSS.bind( this ), this.xhrWait );
+			}
 		}
 		else {
 			this.getCSS();
@@ -1250,7 +1296,6 @@ function handleMessage( e, sender, sendResponse ) {
 
 		case BG_TASK.LOAD:
 			response = loadConfigAndEmotes( { task: data.task }, source, !!data.loadMeta );
-			Updater.check();
 			break;
 
 		case BG_TASK.SAVE_EMOTES:

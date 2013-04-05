@@ -38,10 +38,11 @@
 	"options_page": "options.html",
 
 	"permissions": [
+		"storage",
+		"contextMenus",
+		//"declarativeWebRequest",
 		"http://reddit.com/",
 		"http://*.reddit.com/",
-		"http://www.redditstatic.com/",
-		"storage",
-		"contextMenus"
+		"http://www.redditstatic.com/"
 	]
 }
