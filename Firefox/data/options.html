@@ -70,7 +70,7 @@
 	<fieldset>
 		<input type="radio" name="page" id="style" hidden />
 		<ul class="form">
-			<li>
+			<li class="headline">
 				<h2>Emote box</h2>
 			</li>
 			<li>
@@ -88,7 +88,7 @@
 				<input type="number" id="boxPosX" value="" />
 				<span class="unit">px</span>
 				<label>Box margin from the side</label>
-				<p class="explain">If the left or right side is specified with the <em>X axis orientation</em> setting.</p>
+				<p class="explain">If it is the left or right side is specified in the <em>X axis orientation</em> setting.</p>
 			</li>
 			<li>
 				<input type="number" id="boxPosTop" value="" />
@@ -136,7 +136,7 @@
 				<label>Border color around emotes</label>
 				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
 			</li>
-			<li>
+			<li class="headline">
 				<h2>Notifier</h2>
 			</li>
 			<li>
@@ -163,6 +163,9 @@
 	<fieldset>
 		<input type="radio" name="page" id="emotes" hidden />
 		<ul class="form">
+			<li class="headline">
+				<h2>Backup</h2>
+			</li>
 			<li class="export-import">
 				<label>Export emotes</label>
 				<textarea id="export-emotes-ta" readonly></textarea>
@@ -179,29 +182,29 @@
 				<input type="submit" id="reset-emotes" class="reset" value="reset emotes" />
 				<p class="explain">Turns the lists and emotes back to the default.</p>
 			</li>
-			<li>
+			<li class="headline">
 				<h2>Emote settings for auto-updates</h2>
 				<p class="explain">The emotes we get from the subreddit stylesheet are merged with certain emote lists of the extension. Here you can set, which lists you want the emotes to be automatically be put into. If a list with the provided name doesn't exist, it will be created.</p>
 			</li>
 			<li>
 				<input type="text" id="listNameTableA" value="" />
-				<label for="listNameTableA">List for the emotes of table A from r/mylittlepony.</label>
+				<label for="listNameTableA">List for the emotes of table A from r/mylittlepony</label>
 			</li>
 			<li>
 				<input type="text" id="listNameTableB" value="" />
-				<label for="listNameTableB">List for the emotes of table B from r/mylittlepony.</label>
+				<label for="listNameTableB">List for the emotes of table B from r/mylittlepony</label>
 			</li>
 			<li>
 				<input type="text" id="listNameTableC" value="" />
-				<label for="listNameTableC">List for the emotes of table C from r/mylittlepony.</label>
+				<label for="listNameTableC">List for the emotes of table C from r/mylittlepony</label>
 			</li>
 			<li>
 				<input type="text" id="listNameTableE" value="" />
-				<label for="listNameTableE">List for the emotes of table E from r/mylittlepony.</label>
+				<label for="listNameTableE">List for the emotes of table E from r/mylittlepony</label>
 			</li>
 			<li>
 				<input type="text" id="listNamePlounge" value="" />
-				<label for="listNamePlounge">List for the non-table emotes from r/MLPLounge.</label>
+				<label for="listNamePlounge">List for the non-table emotes from r/MLPLounge</label>
 			</li>
 		</ul>
 	</fieldset>
@@ -210,15 +213,17 @@
 	<fieldset>
 		<input type="radio" name="page" id="advanced" hidden />
 		<ul class="form">
-			<li>
-				<input type="checkbox" id="adjustForBetterPonymotes" value="true" />
-				<label for="adjustForBetterPonymotes">Adjust for BetterPonymotes</label>
-				<p class="explain">If you use <a href="http://rainbow.mlas1.us/">BetterPonymotes</a> to display out-of-sub emotes, an extra CSS class has to be added to the emotes inside of the MLE box.</p>
+			<li class="headline">
+				<h2>Emote Updates</h2>
 			</li>
 			<li>
-				<input type="checkbox" id="adjustForGrEmB" value="true" />
-				<label for="adjustForGrEmB">Adjust for GrEmB</label>
-				<p class="explain"><em>(Please note that GrEmB is discontinued.)</em> If you use <a href="http://nallar.me/scripts/">GrEmB</a> to display out-of-sub emotes, an extra CSS class has to be added to the emotes inside of the MLE box.</p>
+				<input type="submit" id="force-update" class="update" value="force stylesheet update" />
+				<p class="explain">Get and parse the stylesheets from r/mylittlepony and r/MLPlounge for emotes.</p>
+			</li>
+			<li>
+				<input type="text" class="long" id="lastSubredditCheck" data-meta="true" readonly />
+				<label>Last time the subreddits have been checked for new emotes</label>
+				<p class="explain"><em>Readonly.</em> Format: <code>yyyy-mm-dd hh:mm</code></p>
 			</li>
 			<li>
 				<select id="intervalToCheckCSS">
@@ -230,17 +235,27 @@
 					<option value="172800000">2 days</option>
 					<option value="604800000">1 week</option>
 				</select>
-				<label>Interval to check the subreddit stylesheets for changes.</label>
-				<p class="explain">Update checks occur every time you visit reddit or the extension gets reloaded. If equal or more time than set here has passed since the last check, an update is started.</p>
+				<label>Interval to check the subreddit stylesheets for changes</label>
+				<p class="explain">
+					Update checks occur every time you visit reddit or this options page.<br />
+					If equal or more time than set here has passed since the last check, an update is started.
+				</p>
+			</li>
+			<li class="headline">
+				<h2>Compatibility</h2>
 			</li>
 			<li>
-				<input type="submit" id="force-update" class="update" value="force stylesheet update" />
-				<p class="explain">Get and parse the stylesheets from r/mylittlepony and r/MLPlounge for emotes.</p>
+				<input type="checkbox" id="adjustForBetterPonymotes" value="true" />
+				<label for="adjustForBetterPonymotes">Adjust for BetterPonymotes</label>
+				<p class="explain">If you use <a href="http://rainbow.mlas1.us/">BetterPonymotes</a> to display out-of-sub emotes, an extra CSS class has to be added to the emotes inside of the MLE box.</p>
 			</li>
 			<li>
-				<input type="text" class="long" id="lastSubredditCheck" data-meta="true" readonly />
-				<label>Last time the subreddits have been checked for new emotes.</label>
-				<p class="explain">Format: <code>yyyy-mm-dd hh:mm</code></p>
+				<input type="checkbox" id="adjustForGrEmB" value="true" />
+				<label for="adjustForGrEmB">Adjust for GrEmB</label>
+				<p class="explain"><em>(Please note that GrEmB is discontinued.)</em> If you use <a href="http://nallar.me/scripts/">GrEmB</a> to display out-of-sub emotes, an extra CSS class has to be added to the emotes inside of the MLE box.</p>
+			</li>
+			<li class="headline">
+				<h2>Backup</h2>
 			</li>
 			<li class="export-import">
 				<label>Export config</label>

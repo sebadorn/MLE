@@ -40,6 +40,11 @@ h2 {
 	text-transform: uppercase;
 }
 
+li.headline {
+	background-color: #f2f2f8;
+	padding: 20px !important;
+}
+
 input, select, textarea {
 	background-color: #ffffff;
 	border: 1px solid #e0e0e0;
@@ -70,16 +75,16 @@ input[type="text"] {
 input.color,
 input.long {
 	font-family: monospace;
+	font-size: 13px;
 	width: 160px;
 }
 
 input[data-meta] {
-	font-size: 13px;
 	text-align: center;
 }
 
 input[readonly] {
-	background-color: #e0e0e0 !important;
+	background-color: #f0f0f0 !important;
 	color: #a0a0a0 !important;
 }
 
