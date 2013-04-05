@@ -1,11 +1,11 @@
 {
 	"A": [
 		"twipride", "twicrazy", "twiright", "twibeam", "spikemeh",
-		"celestiawut", "celestiamad", "lunateehee", "lunawait", "derpwizard",
-		"pinkiefear", "ppcute", "pinkieawe", "ajhappy", "ajsup",
+		"celestiawut", "celestiamad", "lunateehee", "lunawait", "paperbagderpy",
+		"ppfear", "ppcute", "pinkieawe", "ajhappy", "ajsup",
 		"ajlie", "abbored", "abmeh", "swagintosh", "grannysmith",
 		"flutterwhoa", "flutterroll", "flutterjerk", "rdcry", "scootaderp",
-		"scootaplease", "scootacheer", "ohcomeon", "sbbook", "raritynews",
+		"scootaplease", "scootacheer", "ohcomeon", "sbbook", "raritypaper",
 		"raritydaww", "shiningarmor", "cadence", "chrysalis", "priceless",
 		"silverspoon", "rarityreally", "applegasp", "rarishock", "applederp"
 	],
@@ -31,15 +31,16 @@
 	"E": [
 		"fillytgap", "rdhuh", "rdsalute", "awwyeah", "twiponder",
 		"spikewtf", "huhhuh", "wahaha", "sbstare", "cutealoo",
-		"ajbaffle", "absmile", "abhuh", "macintears", "lyra",
-		"bonbon", "spitfire", "lunahappy", "sotrue", "nmm",
-		"punchdrunk", "whooves", "octavia", "colgate", "cheerilee",
-		"thehorror", "gilda", "snails", "dealwithit", "discentia"
+		"ajconfused", "absmile", "abhuh", "macintears", "lyra",
+		"bonbon", "spitfire", "happyluna", "sotrue", "nmm",
+		"berry", "whooves", "octavia", "colgate", "cheerilee",
+		"lily", "gilda", "snails", "dealwithit", "discentia"
 	],
-	"PLounge": [
-		"fillyrarity", "twidurr", "amazingmagic", "karmasalute", "dishappy",
-		"karmastare", "abdance", "ajdance", "dashdance", "lunadance",
-		"pinkiedance", "raritydance", "scootadance", "sweetiedance", "trixiedance"
+	"Plounge": [
+		"ajdance", "pinkiedance", "sweetiedance", "dashdance", "scootadance",
+		"lunadance", "raritydance", "abdance", "smooze", "fillyrarity",
+		"twidurr", "amazingmagic", "karmasalute", "dishappy", "karmastare",
+		"ohnoes", "trixiedance", "filly"
 	],
 	"MyLittleLivestream": [
 		"berryparty", "blegh", "lunawant", "whytwi", "vygrab",

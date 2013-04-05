@@ -157,21 +157,26 @@ var DEFAULT_CONFIG = {
 	displayEmotesOutOfSub: true,
 	injectEmoteCSS: true,
 	intervalToCheckCSS: 28800000, // [ms] // Default is 8 hours.
+	listNameTableA: "A", // Name of the list for the emotes of table A
+	listNameTableB: "B", // Name of the list for the emotes of table B
+	listNameTableC: "C", // Name of the list for the emotes of table C
+	listNameTableE: "E", // Name of the list for the emotes of table E
+	listNamePlounge: "Plounge", // Name of the list for the non-table emotes of the Plounge
 	msgAnimationSpeed: 1000, // [ms]
 	msgPosition: "top", // "top" or "bottom"
 	msgTimeout: 7000 // [ms] // How long a popup message is displayed.
 };
 
 
-// Default emotes of r/mylittlepony
+// Default emotes of r/mylittlepony and r/MLPLounge
 var DEFAULT_EMOTES = {
 	"A": [
 		"twipride", "twicrazy", "twiright", "twibeam", "spikemeh",
-		"celestiawut", "celestiamad", "lunateehee", "lunawait", "derpwizard",
-		"pinkiefear", "ppcute", "pinkieawe", "ajhappy", "ajsup",
+		"celestiawut", "celestiamad", "lunateehee", "lunawait", "paperbagderpy",
+		"ppfear", "ppcute", "pinkieawe", "ajhappy", "ajsup",
 		"ajlie", "abbored", "abmeh", "swagintosh", "grannysmith",
 		"flutterwhoa", "flutterroll", "flutterjerk", "rdcry", "scootaderp",
-		"scootaplease", "scootacheer", "ohcomeon", "sbbook", "raritynews",
+		"scootaplease", "scootacheer", "ohcomeon", "sbbook", "raritypaper",
 		"raritydaww", "shiningarmor", "cadence", "chrysalis", "priceless",
 		"silverspoon", "rarityreally", "applegasp", "rarishock", "applederp"
 	],
@@ -197,10 +202,16 @@ var DEFAULT_EMOTES = {
 	"E": [
 		"fillytgap", "rdhuh", "rdsalute", "awwyeah", "twiponder",
 		"spikewtf", "huhhuh", "wahaha", "sbstare", "cutealoo",
-		"ajbaffle", "absmile", "abhuh", "macintears", "lyra",
-		"bonbon", "spitfire", "lunahappy", "sotrue", "nmm",
-		"punchdrunk", "whooves", "octavia", "colgate", "cheerilee",
-		"thehorror", "gilda", "snails", "dealwithit", "discentia"
+		"ajconfused", "absmile", "abhuh", "macintears", "lyra",
+		"bonbon", "spitfire", "happyluna", "sotrue", "nmm",
+		"berry", "whooves", "octavia", "colgate", "cheerilee",
+		"lily", "gilda", "snails", "dealwithit", "discentia"
+	],
+	"Plounge": [
+		"ajdance", "pinkiedance", "sweetiedance", "dashdance", "scootadance",
+		"lunadance", "raritydance", "abdance", "smooze", "fillyrarity",
+		"twidurr", "amazingmagic", "karmasalute", "dishappy", "karmastare",
+		"ohnoes", "trixiedance", "filly"
 	]
 };
 
@@ -832,7 +843,8 @@ var Updater = {
 	groupSameEmotes: function() {
 		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
 		var newEmoteList = [],
-		    nonTableEmotes = [];
+		    nonTableEmotes = [],
+		    noDoubles = [];
 		var emote, group, newEmoteSubList;
 
 		for( var i = 0; i < emotesCurrent.length; i++ ) {
@@ -859,10 +871,35 @@ var Updater = {
 		}
 
 		if( nonTableEmotes.length > 0 ) {
-			newEmoteList.push( nonTableEmotes );
+			// Remove doubled emotes
+			for( var i = 0; i < nonTableEmotes.length; i++ ) {
+				if( noDoubles.indexOf( nonTableEmotes[i] ) < 0 ) {
+					noDoubles.push( nonTableEmotes[i] );
+				}
+			}
+
+			newEmoteList.push( [noDoubles] );
 		}
 
 		this.emotes[this.xhrCurrentTarget] = newEmoteList;
+	},
+
+
+	/**
+	 * Get the table name (A/B/C/E) for a given emote and its alternative names.
+	 * @param  {Array}  group Emote and its names.
+	 * @return {String}       Table name of the emote or false if it cannot be identified.
+	 */
+	identifyTableOfEmoteGroup: function( group ) {
+		var emote, table;
+
+		for( var i = group.length - 1; i > 0; i-- ) {
+			if( group[i].match( this.tableCodeRegex ) ) {
+				return group[i][0].toUpperCase();
+			}
+		}
+
+		return false;
 	},
 
 
@@ -882,6 +919,82 @@ var Updater = {
 	 */
 	isTableCode: function( emote ) {
 		return ( emote.match( this.tableCodeRegex ) != null );
+	},
+
+
+	/**
+	 * Merge the emotes extracted from the subreddit stylesheets
+	 * with our lists. Or create the list if it doesn't exist yet.
+	 */
+	mergeSubredditEmotesIntoLists: function() {
+		var cfg = CURRENT_CONFIG;
+		var emoteCluster, group, table;
+		var r_mlp = this.emotes["r/mylittlepony"],
+		    r_plounge = this.emotes["r/mlplounge"];
+
+		// r/mylittlepony
+		// Different tables to take care of.
+		for( var i = 0; i < r_mlp.length; i++ ) {
+			emoteCluster = r_mlp[i];
+
+			for( var j = 0; j < emoteCluster.length; j++ ) {
+				group = emoteCluster[j];
+				table = this.identifyTableOfEmoteGroup( group );
+
+				if( table === false ) {
+					continue;
+				}
+
+				switch( table ) {
+					case "A":
+						table = cfg.listNameTableA;
+						break;
+					case "B":
+						table = cfg.listNameTableB;
+						break;
+					case "C":
+						table = cfg.listNameTableC;
+						break;
+					case "E":
+						table = cfg.listNameTableE;
+						break;
+				}
+
+				// Create table if not there anymore
+				if( !CURRENT_EMOTES.hasOwnProperty( table ) ) {
+					CURRENT_EMOTES[table] = [];
+				}
+				// Add emote to the table if not in there already
+				if( CURRENT_EMOTES[table].indexOf( group[0] ) < 0 ) {
+					CURRENT_EMOTES[table].push( group[0] );
+				}
+			}
+		}
+
+		// r/mlplounge
+		// No tables, but additional emotes.
+		for( var i = 0; i < r_plounge.length; i++ ) {
+			emoteCluster = r_plounge[i];
+
+			for( var j = 0; j < emoteCluster.length; j++ ) {
+				group = emoteCluster[j];
+				table = this.identifyTableOfEmoteGroup( group );
+
+				if( table !== false ) {
+					continue;
+				}
+
+				if( !CURRENT_EMOTES.hasOwnProperty( cfg.listNamePlounge ) ) {
+					CURRENT_EMOTES[cfg.listNamePlounge] = [];
+				}
+
+				for( var k = 0; k < group.length; k++ ) {
+					if( CURRENT_EMOTES[cfg.listNamePlounge].indexOf( group[k] ) < 0 ) {
+						CURRENT_EMOTES[cfg.listNamePlounge].push( group[k] );
+					}
+				}
+			}
+		}
 	},
 
 
@@ -970,6 +1083,9 @@ var Updater = {
 	wrapUp: function() {
 		saveToStorage( PREF.SUBREDDIT_CSS, this.emoteCSS );
 		saveToStorage( PREF.SUBREDDIT_EMOTES, this.emotes );
+
+		this.mergeSubredditEmotesIntoLists();
+		saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
 
 		this.emoteCSS = {};
 		this.emotes = {};

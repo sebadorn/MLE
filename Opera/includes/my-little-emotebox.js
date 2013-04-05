@@ -4,43 +4,43 @@
 
 
 	var GLOBAL = {
-			// Loaded config
-			config: null,
-			// Loaded emotes
-			emotes: null,
-			// Keep track of mouse stats
-			MOUSE: {
-				lastX: null,
-				lastY: null
-			},
-			// A message type from the background to ignore one time
-			msgIgnoreOnce: 0,
-			// Reference to the timeout object for the notifier
-			msgTimeout: null,
-			// Noise for CSS classes and IDs, to minimise the probability
-			// of accidentally overwriting existing styles.
-			noise: "-bd6acd4a",
-			// Holding references to DOMElements
-			REF: {
-				emoteBlocks: {},
-				focusedInput: null,
-				inputAddEmote: null,
-				inputAddList: null,
-				lists: {},
-				listsCont: null,
-				mainCont: null,
-				mngForm: null,
-				msg: null,
-				selectListAddEmote: null,
-				selectListDelete: null
-			},
-			// String, key of block in REF.emoteBlocks
-			shownBlock: null,
-			// CSS for out-of-subreddit emote display
-			sub_css: null,
-			// Emotes found in the stylesheets
-			sub_emotes: null
-		};
+		// Loaded config
+		config: null,
+		// Loaded emotes
+		emotes: null,
+		// Keep track of mouse stats
+		MOUSE: {
+			lastX: null,
+			lastY: null
+		},
+		// A message type from the background to ignore one time
+		msgIgnoreOnce: 0,
+		// Reference to the timeout object for the notifier
+		msgTimeout: null,
+		// Noise for CSS classes and IDs, to minimise the probability
+		// of accidentally overwriting existing styles.
+		noise: "-bd6acd4a",
+		// Holding references to DOMElements
+		REF: {
+			emoteBlocks: {},
+			focusedInput: null,
+			inputAddEmote: null,
+			inputAddList: null,
+			lists: {},
+			listsCont: null,
+			mainCont: null,
+			mngForm: null,
+			msg: null,
+			selectListAddEmote: null,
+			selectListDelete: null
+		},
+		// String, key of block in REF.emoteBlocks
+		shownBlock: null,
+		// CSS for out-of-subreddit emote display
+		sub_css: null,
+		// Emotes found in the stylesheets
+		sub_emotes: null
+	};
 
 
 
@@ -276,6 +276,7 @@
 				g.emotes = data.emotes;
 				g.sub_css = data.sub_css;
 				g.sub_emotes = data.sub_emotes;
+
 				Init.initStep2();
 				Init = null;
 				break;
@@ -995,7 +996,7 @@
 				 #mle-manage%":
 						"box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;",
 				".mle-block% a":
-						"display: inline-block; float: none; border: 1px solid " + cfg.boxEmoteBorder + "; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;",
+						"display: inline-block !important; float: none !important; border: 1px solid " + cfg.boxEmoteBorder + "; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;",
 				".mle-block% a:hover":
 						"border-color: #96BFE9;",
 				// Notifier

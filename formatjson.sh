@@ -18,6 +18,6 @@ if [ ${FILE: -5} == ".json" ]; then
 	    -e 's/\],/\],\n\t/g' \
 	    -e 's/":\[/": \[\n\t\t/g' \
 	    -e 's/\]/\n\t\]/g' \
-	    -e 's/}/\n}/g' $FILE
+	    -e 's/}/\n}/g' "$FILE"
 	echo "Done."
 fi
