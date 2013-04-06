@@ -236,7 +236,9 @@ var DEFAULT_EMOTES = {
 
 var CURRENT_CONFIG = null,
     CURRENT_EMOTES = null,
-    META = null;
+    META = null,
+    SUBREDDIT_CSS = null,
+    SUBREDDIT_EMOTES = null;
 
 
 
@@ -277,22 +279,24 @@ var BrowserOpera = {
 				? JSON.parse( wpref[PREF.META] )
 				: saveDefaultToStorage( PREF.META, DEFAULT_META );
 
+		SUBREDDIT_CSS = wpref[PREF.SUBREDDIT_CSS]
+				? JSON.parse( wpref[PREF.SUBREDDIT_CSS] )
+				: saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
+
+		SUBREDDIT_EMOTES = wpref[PREF.SUBREDDIT_EMOTES]
+				? JSON.parse( wpref[PREF.SUBREDDIT_EMOTES] )
+				: saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
+
 		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( META, DEFAULT_META, PREF.META );
 
 		response.config = CURRENT_CONFIG;
 		response.emotes = CURRENT_EMOTES;
+		response.sub_css = SUBREDDIT_CSS;
+		response.sub_emotes = SUBREDDIT_EMOTES;
 		if( loadMeta ) {
 			response.meta = META;
 		}
-
-		response.sub_css = wpref[PREF.SUBREDDIT_CSS]
-				? JSON.parse( wpref[PREF.SUBREDDIT_CSS] )
-				: saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
-
-		response.sub_emotes = wpref[PREF.SUBREDDIT_EMOTES]
-				? JSON.parse( wpref[PREF.SUBREDDIT_EMOTES] )
-				: saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
 
 		// It's ugly to place that function call here.
 		// But THANKS TO CHROME that's the way it has to be.
@@ -414,22 +418,24 @@ var BrowserChrome = {
 				? saveDefaultToStorage( PREF.META, DEFAULT_META )
 				: JSON.parse( items[PREF.META] );
 
+		SUBREDDIT_CSS = !items[PREF.SUBREDDIT_CSS]
+				? saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS )
+				: JSON.parse( items[PREF.SUBREDDIT_CSS] );
+
+		SUBREDDIT_EMOTES = !items[PREF.SUBREDDIT_EMOTES]
+				? saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES )
+				: JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
+
 		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( META, DEFAULT_META, PREF.META );
 
 		this.response.config = CURRENT_CONFIG;
 		this.response.emotes = CURRENT_EMOTES;
+		this.response.sub_css = SUBREDDIT_CSS;
+		this.response.sub_emotes = SUBREDDIT_EMOTES;
 		if( this.loadMeta ) {
 			this.response.meta = META;
 		}
-
-		this.response.sub_css = !items[PREF.SUBREDDIT_CSS]
-				? saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS )
-				: JSON.parse( items[PREF.SUBREDDIT_CSS] );
-
-		this.response.sub_emotes = !items[PREF.SUBREDDIT_EMOTES]
-				? saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES )
-				: JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
 
 		// It's ugly to place that function call here.
 		// But THANKS TO CHROME that's the way it has to be.
@@ -599,22 +605,24 @@ var BrowserFirefox = {
 				? JSON.parse( ss.storage[PREF.META] )
 				: saveDefaultToStorage( PREF.META, DEFAULT_META );
 
+		SUBREDDIT_CSS = ss.storage[PREF.SUBREDDIT_CSS]
+				? JSON.parse( ss.storage[PREF.SUBREDDIT_CSS] )
+				: saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
+
+		SUBREDDIT_EMOTES = ss.storage[PREF.SUBREDDIT_EMOTES]
+				? JSON.parse( ss.storage[PREF.SUBREDDIT_EMOTES] )
+				: saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
+
 		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( META, DEFAULT_META, PREF.META );
 
 		response.config = CURRENT_CONFIG;
 		response.emotes = CURRENT_EMOTES;
+		response.sub_css = SUBREDDIT_CSS;
+		response.sub_emotes = SUBREDDIT_EMOTES;
 		if( loadMeta ) {
 			response.meta = META;
 		}
-
-		response.sub_css = ss.storage[PREF.SUBREDDIT_CSS]
-				? JSON.parse( ss.storage[PREF.SUBREDDIT_CSS] )
-				: saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
-
-		response.sub_emotes = ss.storage[PREF.SUBREDDIT_EMOTES]
-				? JSON.parse( ss.storage[PREF.SUBREDDIT_EMOTES] )
-				: saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
 
 		// It's ugly to place that function call here.
 		// But THANKS TO CHROME that's the way it has to be.
@@ -688,7 +696,11 @@ var BrowserFirefox = {
 		var req = new Request( {
 			url: url,
 			onComplete: function( response ) {
-				Updater.handleCSS( response.text );
+				var lastModified = response.headers["Last-Modified"],
+				    contentType = response.headers["Content-Type"];
+
+				lastModified = Date.parse( lastModified );
+				Updater.handleCSS( response.text, lastModified, contentType );
 			},
 			headers: {
 				"User-Agent": userAgent
@@ -745,8 +757,13 @@ var Updater = {
 	xhrCurrentTarget: null,
 	xhrProgress: 0,
 
-	tableCodeRegex: /^[abce][0-9]{2}$/i,
+	// If true, the Last-Modified header will be ignored.
+	// Will be reset to false at the end of the update process.
+	// @see Updater.wrapUp()
+	forceUpdate: false,
+
 	linkStart: 'a[href|="/',
+	tableCodeRegex: /^[abce][0-9]{2}$/i,
 
 	emoteCSS: {},
 	emotes: {},
@@ -762,6 +779,8 @@ var Updater = {
 			return;
 		}
 		if( Date.now() - META.lastSubredditCheck >= CURRENT_CONFIG.intervalToCheckCSS ) {
+			this.emoteCSS = SUBREDDIT_CSS;
+			this.emotes = SUBREDDIT_EMOTES;
 			this.getCSS();
 		}
 	},
@@ -776,9 +795,14 @@ var Updater = {
 			return;
 		}
 
- 		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
- 		this.emoteCSS[this.xhrCurrentTarget] = [];
-		this.emotes[this.xhrCurrentTarget] = [];
+		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
+
+		if( !this.emoteCSS.hasOwnProperty( this.xhrCurrentTarget ) ) {
+			this.emoteCSS[this.xhrCurrentTarget] = [];
+		}
+		if( !this.emotes.hasOwnProperty( this.xhrCurrentTarget ) ) {
+			this.emotes[this.xhrCurrentTarget] = [];
+		}
 
 		this.xhrProgress++;
 
@@ -792,13 +816,23 @@ var Updater = {
 
 	/**
 	 * After receiving the stylesheet, start extracting the emotes.
-	 * @param {String} response Response to the request.
+	 * @param {String} responseText Response to the request.
+	 * @param {int}    lastModified A timestamp when the stylesheet has been last modified.
+	 *                              (At least according to what the server tells us.)
+	 * @param {String} contentType  Content-Type of the received resource. We need "text/css".
 	 */
-	handleCSS: function( response ) {
-		this.extractEmotesStep1( response );
-		this.extractEmotesStep2();
-		this.removeReverseEmotes();
-		this.groupSameEmotes();
+	handleCSS: function( responseText, lastModified, contentType ) {
+		// Don't process if it isn't CSS.
+		if( contentType == "text/css" ) {
+			// Only process the stylesheet if something changed since the last check
+			// or it is a forced update.
+			if( this.forceUpdate || lastModified >= META.lastSubredditCheck ) {
+				this.extractEmotesStep1( responseText );
+				this.extractEmotesStep2();
+				this.removeReverseEmotes();
+				this.groupSameEmotes();
+			}
+		}
 
 		// Get next subreddit CSS.
 		// The reddit API guidelines say:
@@ -807,7 +841,7 @@ var Updater = {
 			// Firefox doesn't know window.setTimeout in main.js.
 			// Great. But it has require( "timers" ).setTimeout which
 			// does EXACTLY THE SAME. Go figure.
-			if( setTimeout ) {
+			if( typeof setTimeout != "undefined" ) {
 				setTimeout( this.getCSS.bind( this ), this.xhrWait );
 			}
 			else {
@@ -826,7 +860,11 @@ var Updater = {
 	 */
 	handleCSSCallback: function() {
 		if( this.readyState == 4 ) {
-			Updater.handleCSS( this.responseText );
+			var lastModified = this.getResponseHeader( "Last-Modified" ),
+			    contentType = this.getResponseHeader( "Content-Type" );
+
+			lastModified = Date.parse( lastModified );
+			Updater.handleCSS( this.responseText, lastModified, contentType );
 		}
 	},
 
@@ -1231,6 +1269,7 @@ var Updater = {
 		this.mergeSubredditEmotesIntoLists();
 		saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
 
+		this.forceUpdate = false;
 		this.emoteCSS = {};
 		this.emotes = {};
 		this.xhrProgress = 0;
@@ -1324,6 +1363,7 @@ function handleMessage( e, sender, sendResponse ) {
 			break;
 
 		case BG_TASK.UPDATE_CSS:
+			Updater.forceUpdate = true;
 			Updater.getCSS();
 			break;
 

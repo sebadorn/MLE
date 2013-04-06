@@ -55,7 +55,7 @@ input, select, textarea {
 }
 
 input[type="text"], input[type="number"] {
-	padding: 4px 2px;
+	padding: 4px 4px;
 }
 
 input[type="checkbox"] {
