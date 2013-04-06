@@ -29,8 +29,9 @@
 			lists: {},
 			listsCont: null,
 			mainCont: null,
-			mngForm: null,
+			mngPage: null,
 			msg: null,
+			searchPage: null,
 			selectListAddEmote: null,
 			selectListDelete: null
 		},
@@ -40,6 +41,84 @@
 		sub_css: null,
 		// Emotes found in the stylesheets
 		sub_emotes: null
+	};
+
+
+	/**
+	 * Tags for all the emotes.
+	 * I am starting to doubt if this is such a good idea.
+	 */
+	var TAGS = {
+		"happy": [
+			"twipride", "twibeam", "raritydaww", "ajhappy", "lunateehee",
+			"scootacheer"
+		],
+		"sad": [
+		],
+		"angry": [
+		],
+		"incredulous": [
+		],
+		"scared": [
+		],
+		"shocked": [
+		],
+		"derp": [
+		],
+		"thoughtful": [
+		],
+		"smug": [
+		],
+		"bashful": [
+		],
+		"determined": [
+		],
+		"evil": [
+		],
+		"distraught": [
+		],
+		"blank": [
+		],
+		"misc": [
+		]
+
+		// "twipride", "twicrazy", "twiright", "twibeam", "spikemeh",
+		// "celestiawut", "celestiamad", "lunateehee", "lunawait", "paperbagderpy",
+		// "ppfear", "ppcute", "pinkieawe", "ajhappy", "ajsup",
+		// "ajlie", "abbored", "abmeh", "swagintosh", "grannysmith",
+		// "flutterwhoa", "flutterroll", "flutterjerk", "rdcry", "scootaderp",
+		// "scootaplease", "scootacheer", "ohcomeon", "sbbook", "raritypaper",
+		// "raritydaww", "shiningarmor", "cadence", "chrysalis", "priceless",
+		// "silverspoon", "rarityreally", "applegasp", "rarishock", "applederp",
+
+		// "ppseesyou", "ppshrug", "ppboring", "rdcool", "rdsmile",
+		// "soawesome", "rdwut", "squintyjack", "ajsly", "ajcower",
+		// "ajugh", "ajwut", "abwut", "eeyup", "fluttershh",
+		// "fluttershy", "fluttersrs", "flutterfear", "flutterwink", "flutteryay",
+		// "spikenervous", "takealetter", "noooo", "spikepushy", "manspike",
+		// "facehoof", "twisquint", "twirage", "dumbfabric", "rarityyell",
+		// "raritywhine", "raritydress", "rarityannoyed", "raritywut", "raritywhy",,
+		// "rarityjudge", "rarityprimp", "trixiesmug", "dj", "cockatrice",
+
+		// "rdsitting", "rdhappy", "rdannoyed", "gross", "louder",
+		// "twistare", "twismug", "twismile", "ohhi", "party",
+		// "hahaha", "joy", "pinkamina", "ajfrown", "hmmm",
+		// "raritysad", "fabulous", "derpyhappy", "derp", "derpyshock",
+		// "flutterblush", "loveme", "lunasad", "lunagasp", "celestia",
+		// "scootaloo", "angel", "allmybits", "zecora", "photofinish",
+		// "trixiesad", "changeling", "rdscared", "twidaw", "whattheflut",
+
+		// "fillytgap", "rdhuh", "rdsalute", "awwyeah", "twiponder",
+		// "spikewtf", "huhhuh", "wahaha", "sbstare", "cutealoo",
+		// "ajconfused", "absmile", "abhuh", "macintears", "lyra",
+		// "bonbon", "spitfire", "happyluna", "sotrue", "nmm",
+		// "berry", "whooves", "octavia", "colgate", "cheerilee",
+		// "lily", "gilda", "snails", "dealwithit", "discentia",
+
+		// "ajdance", "pinkiedance", "sweetiedance", "dashdance", "scootadance",
+		// "lunadance", "raritydance", "abdance", "smooze", "fillyrarity",
+		// "twidurr", "amazingmagic", "karmasalute", "dishappy", "karmastare",
+		// "ohnoes", "trixiedance", "filly"
 	};
 
 
@@ -184,12 +263,22 @@
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Remove from DOM
-		children = g.REF.emoteBlocks[list].childNodes;
 		emoteSlash = "/" + emote;
+		children = g.REF.emoteBlocks[list].childNodes;
 
 		for( var i = 0; i < children.length; i++ ) {
 			if( children[i].pathname == emoteSlash ) {
 				g.REF.emoteBlocks[list].removeChild( children[i] );
+				break;
+			}
+		}
+
+		// If it is from the search page
+		children = g.REF.searchPage.childNodes;
+
+		for( var i = 0; i < children.length; i++ ) {
+			if( children[i].pathname == emoteSlash ) {
+				g.REF.searchPage.removeChild( children[i] );
 				break;
 			}
 		}
@@ -493,11 +582,25 @@
 
 
 	/**
+	 * Remove all children from a node.
+	 * @param  {DOMElement} node
+	 * @return {DOMElement}
+	 */
+	function removeAllChildren( node ) {
+		while( node.firstChild ) {
+			node.removeChild( node.firstChild );
+		}
+
+		return node;
+	};
+
+
+	/**
 	 * Rename a list.
 	 * @param {Object} list The list element that triggered the name change.
 	 */
 	function renameList( list, e ) {
-		if( e.keyCode == "13" ) { // 13 == Enter
+		if( e.keyCode == 13 ) { // 13 = Enter
 			var g = GLOBAL;
 			var name = list.querySelector( "strong" ),
 			    listNameOld = name.textContent,
@@ -576,6 +679,27 @@
 
 		if( ae && ae.tagName && ae.tagName.toLowerCase() == "textarea" ) {
 			GLOBAL.REF.focusedInput = ae;
+		}
+	};
+
+
+	/**
+	 * Remove all emote blocks and pages (manage/search) from
+	 * the MLE window. Well, technically only one will be
+	 * removed since only one is attached at any given moment.
+	 */
+	function removeAllBlocksAndPages() {
+		var g = GLOBAL;
+
+		if( g.shownBlock != null ) {
+			g.REF.mainCont.removeChild( g.REF.emoteBlocks[g.shownBlock] );
+			g.shownBlock = null;
+		}
+		else if( g.REF.mngPage.parentNode == g.REF.mainCont ) {
+			g.REF.mainCont.removeChild( g.REF.mngPage );
+		}
+		else if( g.REF.searchPage.parentNode == g.REF.mainCont ) {
+			g.REF.mainCont.removeChild( g.REF.searchPage );
 		}
 	};
 
@@ -683,17 +807,16 @@
 	 * it won't be needed that often, probably.
 	 */
 	function showManagePage( e ) {
-		var form = GLOBAL.REF.mngForm;
+		var gr = GLOBAL.REF;
 
-		// Hide emote blocks
 		toggleEmoteBlock( false );
 
 		// Create manage elements if first time opening manage page
-		if( form.childNodes.length < 1 ) {
-			Builder.createManagePage( form );
+		if( gr.mngPage.childNodes.length < 1 ) {
+			Builder.createManagePage( gr.mngPage );
 		}
 
-		form.className = "show-manage";
+		gr.mainCont.appendChild( gr.mngPage );
 	};
 
 
@@ -732,7 +855,6 @@
 		    geb = g.REF.emoteBlocks,
 		    gnl = g.REF.lists,
 		    e_target = e.target;
-		var form;
 
 		// In case a child element was clicked instead of the (parent) list element container
 		if( e_target != this ) {
@@ -747,28 +869,17 @@
 			e_target.className = "activelist";
 		}
 
-		// Show "Manage" page
-		if( !e ) {
-			g.REF.mainCont.removeChild( geb[g.shownBlock] );
-			g.shownBlock = null;
-		}
-		// Show emotes of chosen block
-		else {
-			var name;
+		removeAllBlocksAndPages();
 
-			form = g.REF.mngForm;
-			form.className = "";
+		// Show emotes of chosen block
+		if( e ) {
+			var name;
 
 			for( var listName in geb ) {
 				name = e_target.querySelector( "strong" );
 
-				if( e && name && name.textContent == listName ) {
-					if( !g.shownBlock ) {
-						g.REF.mainCont.appendChild( geb[listName] );
-					}
-					else {
-						g.REF.mainCont.replaceChild( geb[listName], geb[g.shownBlock] );
-					}
+				if( name && name.textContent == listName ) {
+					g.REF.mainCont.appendChild( geb[listName] );
 					g.shownBlock = listName;
 					break;
 				}
@@ -924,9 +1035,9 @@
 				"#mle%.show,\
 				 #mle%.show ul,\
 				 #mle%.show .mle-dragbar,\
-				 #mle%.show .mle-block%,\
 				 #mle%.show .mle-btn,\
-				 #mle%.show #mle-manage%.show-manage,\
+				 #mle%.show .mle-search,\
+				 #mle%.show div,\
 				 #mle-ctxmenu%.show,\
 				 .diag.show":
 						"display: block;",
@@ -967,6 +1078,17 @@
 						"background-color: #f4f4f4 !important; border-top-color: #b0b0b0; color: #a0a0a0; font-weight: normal !important; left: 98px; padding-left: 8px; padding-right: 8px; z-index: 14;",
 				"#mle% .mle-opt-link:hover":
 						"border-top-color: #606060; color: #000000;",
+				// Search field
+				"#mle% .mle-search":
+						"border: 1px solid #e0e0e0; border-top-color: #b0b0b0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; color: #b0b0b0; display: none; left: 175px; padding: 3px 5px; position: absolute; top: -1px; width: 120px; z-index: 16;",
+				"#mle% .mle-search:active,\
+				 #mle% .mle-search:focus":
+						"color: #101010;",
+				// Search page
+				"strong.search-header%":
+						"border-bottom: 1px solid #e0e0e0; color: #101010; display: block; font-size: 14px; font-weight: normal; margin: 14px 0 10px; padding-bottom: 2px;",
+				"strong.search-header%:first-child":
+						"margin-top: 0;",
 				// Close button
 				"#mle% .mle-close":
 						"right: 10px; z-index: 20; padding-left: 12px; padding-right: 12px;",
@@ -991,10 +1113,12 @@
 						"color: #909090; display: block; font-size: 9px; font-weight: normal !important; white-space: nowrap;",
 				"#mle% li input":
 						"box-sizing: border-box; width: 100%;",
-				// Emote blocks
+				// Blocks and pages
 				".mle-block%,\
-				 #mle-manage%":
+				 .mle-manage%,\
+				 .mle-search%":
 						"box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;",
+				// Emote blocks
 				".mle-block% a":
 						"display: inline-block !important; float: none !important; border: 1px solid " + cfg.boxEmoteBorder + "; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;",
 				".mle-block% a:hover":
@@ -1005,22 +1129,22 @@
 				".mle-msg%.show":
 						cfg.msgPosition + ": 0;",
 				// Manage page
-				"#mle-manage% label":
+				".mle-manage% label":
 						"border-bottom: 1px solid #e0e0e0; display: block; font-weight: bold; margin-bottom: 10px; padding-bottom: 4px;",
-				"#mle-manage% div":
+				".mle-manage% div":
 						"padding-bottom: 20px;",
-				"#mle-manage% input[type=\"text\"]":
+				".mle-manage% input[type=\"text\"]":
 						"background-color: #ffffff; border: 1px solid #d0d0d0; padding: 2px 4px; width: 120px;",
-				"#mle-manage% select":
+				".mle-manage% select":
 						"background-color: #ffffff; border: 1px solid #d0d0d0; max-width: 100px; padding: 2px 4px;",
-				"#mle-manage% input[type=\"submit\"]":
+				".mle-manage% input[type=\"submit\"]":
 						"background-color: #6189b5; border: 0; border-radius: 2px; color: #ffffff; margin-left: 12px; padding: 3px 8px;",
-				"#mle-manage% input[type=\"submit\"]:hover":
+				".mle-manage% input[type=\"submit\"]:hover":
 						"background-color: #202020 !important;",
 				"#previewaddemote%":
 						"display: inline-block; border: 1px solid #505050; border-radius: 2px; float: none; margin-top: 10px; min-height: 4px; min-width: 4px;",
-				"#mle% em":
-						"font-style: italic;"
+				".mle-manage% span":
+						"line-height: 16px;"
 			};
 
 			if( cfg.boxTrigger != "float" ) {
@@ -1074,31 +1198,29 @@
 		addHTML: function() {
 			var d = document,
 			    g = GLOBAL;
-			var close = d.createElement( "span" ),
-			    fragmentNode = d.createDocumentFragment(),
-			    labelMain = d.createElement( "strong" ),
-			    mainContainer = d.createElement( "div" ),
-			    mngForm = d.createElement( "div" ),
-			    mngTrigger = d.createElement( "span" ),
-			    msg = d.createElement( "p" ),
-			    optTrigger = d.createElement( "span" );
-			var dragbar;
+			var fragmentNode = d.createDocumentFragment();
+			var close, dragbar, labelMain, mngPage, mngTrigger,
+			    msg, optTrigger, searchTrigger, searchPage;
 
 			// Add headline
+			labelMain = d.createElement( "strong" );
 			labelMain.className = "mle-header";
 			labelMain.textContent = g.config.boxLabelMinimized;
 
 			// Add close button
+			close = d.createElement( "span" );
 			close.className = "mle-close mle-btn";
 			close.textContent = "x";
 			close.addEventListener( "click", mainContainerHide, false );
 
 			// Add manage link
+			mngTrigger = d.createElement( "span" );
 			mngTrigger.className = "mle-mng-link mle-btn";
 			mngTrigger.textContent = "Manage";
 			mngTrigger.addEventListener( "click", showManagePage, false );
 
 			// Add options link
+			optTrigger = d.createElement( "span" );
 			optTrigger.className = "mle-opt-link mle-btn";
 			optTrigger.textContent = "Options";
 			optTrigger.title = "Opens the options page";
@@ -1106,11 +1228,24 @@
 				postMessage( { task: BG_TASK.OPEN_OPTIONS } );
 			}, false );
 
+			// Add search field
+			searchTrigger = d.createElement( "input" );
+			searchTrigger.className = "mle-search";
+			searchTrigger.value = "search";
+			searchTrigger.addEventListener( "click", Search.activate, false );
+			searchTrigger.addEventListener( "keyup", Search.submit.bind( Search ), false );
+
+			// Add search page
+			searchPage = d.createElement( "div" );
+			searchPage.className = "mle-block" + g.noise;
+
 			// Add manage page
-			mngForm.id = "mle-manage" + g.noise;
+			mngPage = d.createElement( "div" );
+			mngPage.className = "mle-manage" + g.noise;
 
 			// Add most-of-the-time-hidden message block
 			// (NOT a part of the main container)
+			msg = d.createElement( "p" );
 			msg.className = "mle-msg" + g.noise;
 
 			// Add invisible dragging bars
@@ -1127,9 +1262,9 @@
 			fragmentNode = appendChildren(
 				fragmentNode,
 				[
+					mngTrigger, optTrigger, searchTrigger,
 					labelMain, close,
-					mngTrigger, optTrigger,
-					this.createEmoteBlocksAndNav(), mngForm
+					this.createEmoteBlocksAndNav()
 				]
 			);
 
@@ -1138,7 +1273,8 @@
 			g.REF.mainCont.appendChild( fragmentNode );
 
 			g.REF.msg = msg;
-			g.REF.mngForm = mngForm;
+			g.REF.mngPage = mngPage;
+			g.REF.searchPage = searchPage;
 
 			d.body.appendChild( g.REF.mainCont );
 			d.body.appendChild( msg );
@@ -1314,28 +1450,51 @@
 		/**
 		 * Create a single emote.
 		 * @param {String} link
+		 * @param {bool}   draggable If the emote shall be draggable.
 		 */
-		createEmote: function( link ) {
+		createEmote: function( link, draggable ) {
 			var emote = document.createElement( "a" );
+
+			if( typeof draggable == "undefined" ) {
+				draggable = true;
+			}
 
 			emote.href = link;
 			emote = this.addClassesForEmote( emote );
 
 			emote.addEventListener( "click", insertEmote, false );
-			emote.addEventListener( "dragstart", DragAndDrop.dragstartMoveEmote.bind( DragAndDrop ), false );
 
-			// The "dragenter" and "dragover" events have
-			// to be stopped in order for "drop" to work.
-			emote.addEventListener( "dragenter", stopEvent, false );
-			emote.addEventListener( "dragover", stopEvent, false );
+			if( draggable ) {
+				emote.addEventListener( "dragstart", DragAndDrop.dragstartMoveEmote.bind( DragAndDrop ), false );
 
-			// Stop "dragend" as well, so if the drop target isn't
-			// an emote, the browser doesn't open the emote URL.
-			emote.addEventListener( "dragend", stopEvent, false );
+				// The "dragenter" and "dragover" events have
+				// to be stopped in order for "drop" to work.
+				emote.addEventListener( "dragenter", stopEvent, false );
+				emote.addEventListener( "dragover", stopEvent, false );
 
-			emote.addEventListener( "drop", DragAndDrop.dropMoveEmote.bind( DragAndDrop ), false );
+				// Stop "dragend" as well, so if the drop target isn't
+				// an emote, the browser doesn't open the emote URL.
+				emote.addEventListener( "dragend", stopEvent, false );
+
+				emote.addEventListener( "drop", DragAndDrop.dropMoveEmote.bind( DragAndDrop ), false );
+			}
 
 			return emote;
+		},
+
+
+		/**
+		 * Create a header for the search page results.
+		 * @param  {String}     listName Name of the list.
+		 * @return {DOMElement}
+		 */
+		createHeaderForSearch: function( listName ) {
+			var header = document.createElement( "strong" );
+
+			header.className = "search-header" + GLOBAL.noise;
+			header.textContent = listName;
+
+			return header;
 		},
 
 
@@ -1455,6 +1614,13 @@
 					this.mngAreaForNote(
 						"Rename list",
 						"Double-click on the list name. Confirm the new name with [Enter]."
+					),
+					this.mngAreaForNote(
+						"Search",
+						"There are additional search modes. Set one of the following as prefix:<br /><br />"
+						+ "<code>regex:</code> Use regular expressions.<br />"
+						+ "<code>alt:</code> Include alternative names learned from the subreddit stylesheets.<br />"
+						+ "<code>tag:</code> Get all emotes with the given tag, for example \"happy\"."
 					)
 				];
 			var frag = appendChildren( document.createDocumentFragment(), areas );
@@ -1565,7 +1731,7 @@
 		 */
 		mngAreaForNote: function( title, text ) {
 			var d = document;
-			var note = d.createElement( "em" );
+			var note = d.createElement( "span" );
 
 			note.innerHTML = text;
 
@@ -1701,9 +1867,7 @@
 			var listLink,
 			    ul = g.REF.listsCont;
 
-			while( ul.firstChild ) {
-				ul.removeChild( ul.firstChild );
-			}
+			removeAllChildren( ul );
 
 			g.REF.lists = {};
 
@@ -1778,10 +1942,7 @@
 		 * @param {Array}      emotes Emotes of the list.
 		 */
 		updateListsChangeExisting: function( block, emotes ) {
-			// Remove all emotes of the list to update
-			while( block.firstChild ) {
-				block.removeChild( block.firstChild );
-			}
+			removeAllChildren( block );
 
 			// Add all emotes of the updated list
 			block.appendChild( this.createEmotesOfList( emotes ) );
@@ -2157,6 +2318,15 @@
 			var emote = this.REF.selectedEmote.pathname,
 			    list = GLOBAL.shownBlock;
 
+			// If the emote is from the search page
+			if( list == null ) {
+				list = this.REF.selectedEmote.getAttribute( "data-list" );
+
+				if( list == null ) {
+					return;
+				}
+			}
+
 			deleteEmote( emote, list );
 		},
 
@@ -2190,6 +2360,15 @@
 			var emote = this.REF.selectedEmote.pathname,
 			    listNew = e.target.textContent,
 			    listOld = GLOBAL.shownBlock;
+
+			// If the emote is from the search page
+			if( listOld == null ) {
+				listOld = this.REF.selectedEmote.getAttribute( "data-list" );
+
+				if( listOld == null ) {
+					return;
+				}
+			}
 
 			if( listNew == listOld ) {
 				return;
@@ -2258,6 +2437,245 @@
 			}
 			else {
 				this.REF.menu.className += " out-of-box";
+			}
+		}
+
+
+	};
+
+
+
+	/**
+	 * The search.
+	 * @type {Object}
+	 */
+	var Search = {
+
+
+		MODE: {
+			ALTERNATIVES: 1,
+			NORMAL: 2,
+			REGEX: 3,
+			TAG: 4
+		},
+
+
+		/**
+		 * Activate the search field, because the user clicked it.
+		 */
+		activate: function( e ) {
+			if( e.target.value == "search" ) {
+				e.target.value = "";
+			}
+		},
+
+
+		/**
+		 * Get the mode for the search.
+		 * @param  {String} firstPart The first part of the search term before a ":".
+		 * @return {int}              A Search.MODE. Defaults to NORMAL.
+		 */
+		getMode: function( firstPart ) {
+			var mode;
+
+			switch( firstPart.trim() ) {
+				case "regex":
+					mode = this.MODE.REGEX;
+					break;
+				case "alt":
+					mode = this.MODE.ALTERNATIVES;
+					break;
+				case "tag":
+					mode = this.MODE.TAG;
+					break;
+				default:
+					mode = this.MODE.NORMAL;
+			}
+
+			return mode;
+		},
+
+
+		/**
+		 * The alternative name search mode.
+		 * Includes alternative names like "a00" as well.
+		 * @param  {String} emote Emote name.
+		 * @param  {String} term  Search term.
+		 * @return {bool}         True if term is contained in emote or
+		 *                        an alternate name for that emote.
+		 */
+		searchAlt: function( emote, term ) {
+			var subEmotes = GLOBAL.sub_emotes,
+			    alternatives = [];
+			var emoteList, emoteLists, group;
+
+			// Get all the alternative names of the emote
+			for( var subreddit in subEmotes ) {
+				emoteLists = subEmotes[subreddit];
+
+				for( var i = 0; i < emoteLists.length; i++ ) {
+					emoteList = emoteLists[i];
+
+					for( var j = 0; j < emoteList.length; j++ ) {
+						group = emoteList[j];
+
+						// Emote is from this group, check the alternative names
+						if( group.indexOf( emote ) >= 0 ) {
+							alternatives = alternatives.concat( group );
+						}
+					}
+				}
+			}
+
+			// Check the alternative names
+			// + the original one, of course
+			for( var i = 0; i < alternatives.length; i++ ) {
+				if( alternatives[i].indexOf( term ) >= 0 ) {
+					return true;
+				}
+			}
+
+			return false;
+		},
+
+
+		/**
+		 * The normal search mode. Tests if the search
+		 * term is contained in the emote name.
+		 * @param  {String} emote Emote name.
+		 * @param  {String} term  Search term.
+		 * @return {bool}         True if term is contained in emote.
+		 */
+		searchNormal: function( emote, term ) {
+			return emote.indexOf( term ) >= 0;
+		},
+
+
+		/**
+		 * The regex search mode. Tests if the regular
+		 * expression matches the emote name.
+		 * @param  {String} emote Emote name.
+		 * @param  {RegExp} term  Regular expression.
+		 * @return {bool}         True if the regexp matches the emote name.
+		 */
+		searchRegex: function( emote, term ) {
+			return term.test( emote );
+		},
+
+
+		/**
+		 * The tag search mode. Gives all emotes that have the given tag.
+		 * @param  {String} tag  A tag like "happy" or "sad".
+		 * @return {Array}       List of all the emotes that are tagged with the given tag.
+		 */
+		searchTag: function( tag ) {
+			if( !TAGS.hasOwnProperty( tag ) ) {
+				return [];
+			}
+			return TAGS[tag];
+		},
+
+
+		/**
+		 * Show the search result page.
+		 */
+		show: function() {
+			var gr = GLOBAL.REF;
+
+			toggleEmoteBlock( false );
+			gr.mainCont.appendChild( gr.searchPage );
+		},
+
+
+		/**
+		 * Start the search.
+		 * @param {DOMElement} searchInput The search field.
+		 */
+		start: function( searchInput ) {
+			var d = document,
+			    g = GLOBAL;
+			var searchPage = g.REF.searchPage,
+			    term = searchInput.value.trim();
+			var buildEmote, emote, header, list, mode, parts, searchFunc;
+
+			if( term.length == 0 ) {
+				return;
+			}
+
+			// Determine the search mode to use
+			parts = term.split( ":" );
+			mode = this.getMode( parts[0] );
+
+			// Get the search term without a possible mode prefix
+			if( parts.length == 1 ) {
+				term = parts[0];
+			}
+			else {
+				term = parts.slice( 1 ).join( ":" );
+			}
+
+			// Set the search method according to the mode
+			switch( mode ) {
+				case this.MODE.REGEX:
+					searchFunc = this.searchRegex;
+					term = new RegExp( term, "i" );
+					break;
+				case this.MODE.ALTERNATIVES:
+					searchFunc = this.searchAlt;
+					break;
+				case this.MODE.TAG:
+					break;
+				default:
+					searchFunc = this.searchNormal;
+			}
+
+			removeAllChildren( searchPage );
+
+			// Special search for tags, because it's faster that way
+			if( mode == this.MODE.TAG ) {
+				var taggedEmotes = this.searchTag( term );
+
+				for( var i = 0; i < taggedEmotes.length; i++ ) {
+					buildEmote = Builder.createEmote( "/" + taggedEmotes[i], false );
+					searchPage.appendChild( buildEmote );
+				}
+			}
+			// The "normal" search
+			else {
+				for( var listName in g.emotes ) {
+					list = g.emotes[listName];
+					header = false;
+
+					for( var i = 0; i < list.length; i++ ) {
+						emote = list[i];
+
+						if( searchFunc( emote, term ) ) {
+							if( !header ) {
+								header = Builder.createHeaderForSearch( listName );
+								searchPage.appendChild( header );
+							}
+
+							buildEmote = Builder.createEmote( "/" + emote, false );
+							buildEmote.setAttribute( "data-list", listName );
+							searchPage.appendChild( buildEmote );
+						}
+					}
+				}
+			}
+
+			if( searchPage.childNodes.length == 0 ) {
+				searchPage.appendChild( d.createTextNode( "No emotes found." ) );
+			}
+		},
+
+
+		/**
+		 * If the enter key has beend pressed, submit the search value.
+		 */
+		submit: function( e ) {
+			if( e.keyCode == 13 ) { // 13 = Enter
+				this.show();
+				this.start( e.target );
 			}
 		}
 
