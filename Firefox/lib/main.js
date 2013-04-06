@@ -175,7 +175,7 @@ var DEFAULT_CONFIG = {
 	ctxMenu: true,
 	displayEmotesOutOfSub: true,
 	injectEmoteCSS: true,
-	intervalToCheckCSS: 28800000, // [ms] // Default is 8 hours.
+	intervalToCheckCSS: 43200000, // [ms] // Default is 12 hours.
 	listNameTableA: "A", // Name of the list for the emotes of table A
 	listNameTableB: "B", // Name of the list for the emotes of table B
 	listNameTableC: "C", // Name of the list for the emotes of table C
