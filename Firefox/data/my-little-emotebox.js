@@ -1602,8 +1602,10 @@
 		 * Add an additional CSS class to every emote found on the page.
 		 */
 		findAndaddClassToPloungeEmotes: function() {
-			this.ploungeEmotesInbox();
-			this.ploungeEmotesOverview();
+			if( GLOBAL.config.adjustEmotesInInbox ) {
+				this.ploungeEmotesInbox();
+				this.ploungeEmotesOverview();
+			}
 		},
 
 

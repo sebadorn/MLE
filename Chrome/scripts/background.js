@@ -157,6 +157,7 @@ var DEFAULT_META = {
 // Default config
 var DEFAULT_CONFIG = {
 	addBlankAfterInsert: true,
+	adjustEmotesInInbox: true, // Adjust Plounge emotes in user overview and inbox
 	adjustForBetterPonymotes: true,
 	adjustForGrEmB: false,
 	boxAlign: "left", // "left" or "right"
