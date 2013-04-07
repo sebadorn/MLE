@@ -45,7 +45,7 @@ function setFirefoxInstallTrigger() {
 				"MLE": {
 					URL: e.target.href,
 					IconURL: "http://sebadorn.de/mlp/mle/MLE_32.png",
-					Hash: "sha256:8189ff5c9ce738d693d9940a78f00c6736c9c290f19b7074535bed6e02479b81",
+					Hash: "sha256:1f5a4e9014d27e831716e9387b32e8bc14d16ec725f9a65fcd6b2337a88c94ee",
 					toString: function() { return this.URL; }
 				}
 			};

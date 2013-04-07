@@ -1,5 +1,6 @@
 {
 	"addBlankAfterInsert": true,
+	"adjustEmotesInInbox": true,
 	"adjustForBetterPonymotes": true,
 	"adjustForGrEmB": false,
 	"boxAlign": "left",
@@ -18,7 +19,7 @@
 	"ctxMenu": true,
 	"displayEmotesOutOfSub": true,
 	"injectEmoteCSS": true,
-	"intervalToCheckCSS": 28800000,
+	"intervalToCheckCSS": 43200000,
 	"listNameTableA": "A",
 	"listNameTableB": "B",
 	"listNameTableC": "C",
