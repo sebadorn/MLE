@@ -752,7 +752,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "My Little Emotebox v2.4 by /u/meinstuhlknarrt",
+	xhrUserAgent: "My Little Emotebox v2.3 by /u/meinstuhlknarrt",
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
