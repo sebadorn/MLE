@@ -13,8 +13,6 @@
 			lastX: null,
 			lastY: null
 		},
-		// A message type from the background to ignore one time
-		msgIgnoreOnce: 0,
 		// Reference to the timeout object for the notifier
 		msgTimeout: null,
 		// Noise for CSS classes and IDs, to minimise the probability
@@ -188,7 +186,7 @@
 		var g = GLOBAL;
 		var idx, children, emoteSlash;
 		var update = {};
-
+console.log(g.emotes);
 		// Emotes don't have a leading slash
 		if( emote.indexOf( "/" ) == 0 ) {
 			emote = emote.substring( 1 );
@@ -202,7 +200,6 @@
 		g.emotes[list].splice( idx, 1 );
 
 		update[list] = g.emotes[list];
-		g.msgIgnoreOnce = BG_TASK.UPDATE_EMOTES;
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Remove from DOM
@@ -252,7 +249,6 @@
 
 		// Delete from emote lists
 		delete g.emotes[listName];
-		g.msgIgnoreOnce = BG_TASK.UPDATE_LIST_DELETE;
 		saveChangesToStorage( BG_TASK.UPDATE_LIST_DELETE, { deleteList: listName } );
 
 		// Remove from DOM.
@@ -295,13 +291,6 @@
 			return;
 		}
 
-		// Ignore message if flag for this task has been set.
-		// May be the case, if it is an update task that has been sent by this tab.
-		if( data.task == g.msgIgnoreOnce ) {
-			g.msgIgnoreOnce = 0;
-			return;
-		}
-
 		switch( data.task ) {
 			case BG_TASK.LOAD:
 				g.config = data.config;
@@ -332,7 +321,7 @@
 
 			case BG_TASK.UPDATE_LIST_NAME:
 				var u = data.update;
-				g.emotes[u.newName] = g.emotes[u.oldName];
+				g.emotes[u.newName] = g.emotes[u.oldName].slice( 0 );
 				delete g.emotes[u.oldName];
 				Builder.updateListName( u.oldName, u.newName );
 				break;
@@ -559,7 +548,7 @@
 			// Length: at least 1 char
 			if( listNameNew.length > 0 && listNameOld != listNameNew ) {
 				// Change emotes object (memory, not storage)
-				g.emotes[listNameNew] = g.emotes[listNameOld];
+				g.emotes[listNameNew] = g.emotes[listNameOld].slice( 0 );
 				g.emotes = reorderList( listNameNew, listNameOld );
 				delete g.emotes[listNameOld];
 
@@ -577,7 +566,6 @@
 				delete g.REF.lists[listNameOld];
 
 				// Save changes to storage
-				g.msgIgnoreOnce = BG_TASK.UPDATE_LIST_NAME;
 				saveChangesToStorage(
 					BG_TASK.UPDATE_LIST_NAME,
 					{ oldName: listNameOld, newName: listNameNew }
@@ -682,7 +670,6 @@
 
 		g.emotes[list].push( emote );
 		update[list] = g.emotes[list];
-		g.msgIgnoreOnce = BG_TASK.UPDATE_EMOTES;
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Add to DOM
@@ -743,7 +730,6 @@
 
 		g.emotes[listName] = [];
 		update[listName] = [];
-		g.msgIgnoreOnce = BG_TASK.UPDATE_EMOTES;
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		inputField.value = "";
@@ -876,7 +862,6 @@
 			boxPosTop: g.REF.mainCont.offsetTop,
 			boxPosX: posX
 		};
-		g.msgIgnoreOnce = BG_TASK.SAVE_CONFIG;
 		saveChangesToStorage( BG_TASK.SAVE_CONFIG, update );
 	};
 
@@ -1051,7 +1036,7 @@
 				"#mle% ul":
 						"direction: " + listDir + "; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;",
 				"#mle% li":
-						"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
+						"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr !important; padding: 8px 16px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
 				"#mle% li:first-child":
 						"border-top-width: 0;",
 				"#mle% li:last-child":
@@ -1904,11 +1889,22 @@
 		 * @param {String} newName New name for the list.
 		 */
 		updateListName: function( oldName, newName ) {
-			var gr = GLOBAL.REF;
+			var g = GLOBAL,
+			    gr = g.REF;
 			var strong;
 
-			for( var i = 0; i < gr.lists.length; i++ ) {
-				strong = gr.lists[i].querySelector( "strong" );
+			gr.emoteBlocks[newName] = gr.emoteBlocks[oldName];
+			delete gr.emoteBlocks[oldName];
+
+			gr.lists[newName] = gr.lists[oldName];
+			delete gr.lists[oldName];
+
+			if( g.shownBlock == oldName ) {
+				g.shownBlock = newName;
+			}
+
+			for( var name in gr.lists ) {
+				strong = gr.lists[name].querySelector( "strong" );
 
 				if( strong && strong.textContent == oldName ) {
 					strong.textContent = newName;
@@ -2093,7 +2089,6 @@
 			}
 
 			update[g.shownBlock] = list;
-			g.msgIgnoreOnce = BG_TASK.UPDATE_EMOTES;
 			saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 			this.REF.draggedEmote = null;
@@ -2146,7 +2141,6 @@
 			reordered = reorderList( nameSource, nameTarget );
 
 			g.emotes = reordered;
-			g.msgIgnoreOnce = BG_TASK.UPDATE_LIST_ORDER;
 			saveChangesToStorage( BG_TASK.UPDATE_LIST_ORDER, g.emotes );
 
 			this.REF.draggedList = null;

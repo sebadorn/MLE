@@ -250,12 +250,20 @@ var CURRENT_CONFIG = null,
 var BrowserOpera = {
 
 
+	tabSources: [],
+
+
 	/**
 	 * Broadcast a message to everything extension related.
+	 * @param {Object} source
 	 * @param {Object} msg
 	 */
-	broadcast: function( msg ) {
-		opera.extension.broadcastMessage( msg );
+	broadcast: function( source, msg ) {
+		for( var i = 0; i < this.tabSources.length; i++ ) {
+			if( this.tabSources[i] != source ) {
+				this.tabSources[i].postMessage( msg );
+			}
+		}
 	},
 
 
@@ -372,6 +380,26 @@ var BrowserOpera = {
 		xhr.setRequestHeader( "User-Agent", userAgent );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
+	},
+
+
+	/**
+	 * Register onconnect and ondisconnect events of content scripts.
+	 */
+	setup: function() {
+		opera.extension.onconnect = function( e ) {
+			if( this.tabSources.indexOf( e.source ) < 0 ) {
+				this.tabSources.push( e.source );
+			}
+		}.bind( this );
+
+		opera.extension.ondisconnect = function( e ) {
+			var idx = this.tabSources.indexOf( e.source );
+
+			if( idx >= 0 ) {
+				this.tabSources.splice( idx, 1 );
+			}
+		}.bind( this );
 	}
 
 
@@ -391,10 +419,14 @@ var BrowserChrome = {
 
 	/**
 	 * Broadcast a message to everything extension related.
+	 * @param {Object} sender
 	 * @param {Object} msg
 	 */
-	broadcast: function( msg ) {
+	broadcast: function( sender, msg ) {
 		for( var i = 0; i < this.tabs.length; i++ ) {
+			if( sender && sender.tab.id == this.tabs[i] ) {
+				continue;
+			}
 			chrome.tabs.sendMessage( this.tabs[i], msg, handleMessage );
 		}
 	},
@@ -557,6 +589,14 @@ var BrowserChrome = {
 		xhr.open( method, url, async );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
+	},
+
+
+	/**
+	 * THIS IS JUST A DUMMY FUNCTION.
+	 */
+	setup: function() {
+		// pass
 	}
 
 
@@ -573,10 +613,14 @@ var BrowserFirefox = {
 
 	/**
 	 * Broadcast a message to everything extension related.
+	 * @param {Object} sender
 	 * @param {Object} msg
 	 */
-	broadcast: function( msg ) {
+	broadcast: function( sender, msg ) {
 		for( var i = 0; i < workers.length; i++ ) {
+			if( sender == workers[i] ) {
+				continue;
+			}
 			try {
 				workers[i].postMessage( msg );
 			}
@@ -709,6 +753,14 @@ var BrowserFirefox = {
 		} );
 
 		req.get();
+	},
+
+
+	/**
+	 * THIS IS JUST A DUMMY FUNCTION.
+	 */
+	setup: function() {
+		// pass
 	}
 
 
@@ -1376,7 +1428,7 @@ function handleMessage( e, sender, sendResponse ) {
 	response.task = data.task;
 
 	if( broadcast ) {
-		MyBrowser.broadcast( response );
+		MyBrowser.broadcast( source, response );
 	}
 	else {
 		MyBrowser.respond( source, response );
@@ -1537,4 +1589,5 @@ function updateObject( current, defaultValues, storageKey ) {
 };
 
 
+MyBrowser.setup();
 MyBrowser.registerMessageHandler( handleMessage );
