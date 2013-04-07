@@ -44,84 +44,6 @@
 	};
 
 
-	/**
-	 * Tags for all the emotes.
-	 * I am starting to doubt if this is such a good idea.
-	 */
-	var TAGS = {
-		"happy": [
-			"twipride", "twibeam", "raritydaww", "ajhappy", "lunateehee",
-			"scootacheer"
-		],
-		"sad": [
-		],
-		"angry": [
-		],
-		"incredulous": [
-		],
-		"scared": [
-		],
-		"shocked": [
-		],
-		"derp": [
-		],
-		"thoughtful": [
-		],
-		"smug": [
-		],
-		"bashful": [
-		],
-		"determined": [
-		],
-		"evil": [
-		],
-		"distraught": [
-		],
-		"blank": [
-		],
-		"misc": [
-		]
-
-		// "twipride", "twicrazy", "twiright", "twibeam", "spikemeh",
-		// "celestiawut", "celestiamad", "lunateehee", "lunawait", "paperbagderpy",
-		// "ppfear", "ppcute", "pinkieawe", "ajhappy", "ajsup",
-		// "ajlie", "abbored", "abmeh", "swagintosh", "grannysmith",
-		// "flutterwhoa", "flutterroll", "flutterjerk", "rdcry", "scootaderp",
-		// "scootaplease", "scootacheer", "ohcomeon", "sbbook", "raritypaper",
-		// "raritydaww", "shiningarmor", "cadence", "chrysalis", "priceless",
-		// "silverspoon", "rarityreally", "applegasp", "rarishock", "applederp",
-
-		// "ppseesyou", "ppshrug", "ppboring", "rdcool", "rdsmile",
-		// "soawesome", "rdwut", "squintyjack", "ajsly", "ajcower",
-		// "ajugh", "ajwut", "abwut", "eeyup", "fluttershh",
-		// "fluttershy", "fluttersrs", "flutterfear", "flutterwink", "flutteryay",
-		// "spikenervous", "takealetter", "noooo", "spikepushy", "manspike",
-		// "facehoof", "twisquint", "twirage", "dumbfabric", "rarityyell",
-		// "raritywhine", "raritydress", "rarityannoyed", "raritywut", "raritywhy",,
-		// "rarityjudge", "rarityprimp", "trixiesmug", "dj", "cockatrice",
-
-		// "rdsitting", "rdhappy", "rdannoyed", "gross", "louder",
-		// "twistare", "twismug", "twismile", "ohhi", "party",
-		// "hahaha", "joy", "pinkamina", "ajfrown", "hmmm",
-		// "raritysad", "fabulous", "derpyhappy", "derp", "derpyshock",
-		// "flutterblush", "loveme", "lunasad", "lunagasp", "celestia",
-		// "scootaloo", "angel", "allmybits", "zecora", "photofinish",
-		// "trixiesad", "changeling", "rdscared", "twidaw", "whattheflut",
-
-		// "fillytgap", "rdhuh", "rdsalute", "awwyeah", "twiponder",
-		// "spikewtf", "huhhuh", "wahaha", "sbstare", "cutealoo",
-		// "ajconfused", "absmile", "abhuh", "macintears", "lyra",
-		// "bonbon", "spitfire", "happyluna", "sotrue", "nmm",
-		// "berry", "whooves", "octavia", "colgate", "cheerilee",
-		// "lily", "gilda", "snails", "dealwithit", "discentia",
-
-		// "ajdance", "pinkiedance", "sweetiedance", "dashdance", "scootadance",
-		// "lunadance", "raritydance", "abdance", "smooze", "fillyrarity",
-		// "twidurr", "amazingmagic", "karmasalute", "dishappy", "karmastare",
-		// "ohnoes", "trixiedance", "filly"
-	};
-
-
 
 	/**
 	 * Append multiple children to a DOMElement.
@@ -2566,7 +2488,7 @@
 		/**
 		 * The tag search mode. Gives all emotes that have the given tag.
 		 * @param  {String} tag  A tag like "happy" or "sad".
-		 * @return {Array}       List of all the emotes that are tagged with the given tag.
+		 * @return {Object}      List of all the emotes tagged with the given tag, organized by list.
 		 */
 		searchTag: function( tag ) {
 			if( !TAGS.hasOwnProperty( tag ) ) {
@@ -2634,10 +2556,18 @@
 			// Special search for tags, because it's faster that way
 			if( mode == this.MODE.TAG ) {
 				var taggedEmotes = this.searchTag( term );
+				var group;
 
-				for( var i = 0; i < taggedEmotes.length; i++ ) {
-					buildEmote = Builder.createEmote( "/" + taggedEmotes[i], false );
-					searchPage.appendChild( buildEmote );
+				for( var listName in taggedEmotes ) {
+					group = taggedEmotes[listName];
+					header = Builder.createHeaderForSearch( listName );
+					searchPage.appendChild( header );
+
+					for( var i = 0; i < group.length; i++ ) {
+						buildEmote = Builder.createEmote( "/" + group[i], false );
+						buildEmote.setAttribute( "data-list", listName );
+						searchPage.appendChild( buildEmote );
+					}
 				}
 			}
 			// The "normal" search
@@ -2785,6 +2715,137 @@
 
 
 	Init.start();
+
+
+
+	/**
+	 * Tags for all the emotes.
+	 * Based on Snivian_Moon's emote stats for r/mylittlepony.
+	 */
+	var TAGS = {
+		"happy": {
+			"A": [
+				"twipride", "twibeam", "raritydaww", "ajhappy",
+				"lunateehee", "scootacheer"
+			],
+			"B": [
+				"rdsmile", "soawesome", "dj", "dumbfabric",
+				"flutterwink", "flutteryay", "spikenervous", "raritydress"
+			],
+			"C": [
+				"joy", "hahaha", "ohhi", "party",
+				"celestia", "zecora", "twismile", "derpyhappy",
+				"scootaloo", "rdhappy", "rdsitting", "twidaw"
+			],
+			"E": [
+				"awwyeah", "cheerilee", "dealwithit", "sotrue",
+				"spitfire", "colgate", "absmile", "happyluna",
+				"bonbon", "lyra", "cutealoo", "huhhuh",
+				"wahaha"
+			],
+			"Plounge": [
+				"fillyrarity", "dishappy", "amazingmagic", "sweetiedance",
+				"scootadance", "lunadance", "raritydance", "ajdance",
+				"abdance", "trixiedance", "filly"
+			]
+		},
+		"sad": {
+			"A": ["rdcry", "paperbagderpy", "lunawait"],
+			"C": ["trixiesad", "lunasad", "raritysad"],
+			"E": ["macintears"]
+		},
+		"angry": {
+			"A": ["silverspoon", "cadence", "grannysmith", "ohcomeon"],
+			"B": ["rdcool", "twirage", "cockatrice", "fluttersrs"],
+			"C": ["angel", "rdannoyed", "louder", "loveme"],
+			"E": ["snails", "discentia"],
+			"Plounge": ["karmastare"]
+		},
+		"incredulous": {
+			"A": [
+				"rarityreally", "raritypaper", "sbbook", "spikemeh",
+				"celestiamad", "abmeh"
+			],
+			"B": [
+				"twisquint", "facehoof", "ajugh", "squintyjack",
+				"rarityannoyed", "raritywut", "rarityjudge"
+			],
+			"C": ["whattheflut"],
+			"E": ["spikewtf", "abhuh", "rdhuh"],
+			"Plounge": ["twidurr"]
+		},
+		"scared": {
+			"A": ["ppfear"],
+			"B": ["abwut", "ajcower", "flutterfear"],
+			"C": ["rdscared"],
+			"E": ["lily"]
+		},
+		"shocked": {
+			"A": [
+				"rarishock", "applegasp", "pinkieawe", "celestiawut",
+				"flutterwhoa"
+			],
+			"B": ["ajwut"],
+			"C": ["lunagasp", "derpyshock"],
+			"E": ["ajconfused"]
+		},
+		"crazed": {
+			"A": ["applederp", "scootaderp", "twicrazy"],
+			"B": ["rdwut"],
+			"C": ["pinkamina"],
+			"Plounge": ["twidurr", "dashdance"]
+		},
+		"thoughtful": {
+			"A": ["scootaplease"],
+			"C": ["hmmm"],
+			"E": ["twiponder"]
+		},
+		"sarcastic": {
+			"A": [
+				"flutterroll", "flutterjerk", "ppcute", "twiright",
+				"ajsup", "ajlie"
+			],
+			"B": ["ajsly", "ppboring", "trixiesmug", "rarityprimp"],
+			"C": ["twismug"],
+			"E": ["octavia"]
+		},
+		"bashful": {
+			"A": ["shiningarmor"],
+			"B": ["fluttershy", "fluttershh"],
+			"C": ["flutterblush", "derp"],
+			"E": ["whooves"]
+		},
+		"determined": {
+			"A": ["swagintosh"],
+			"E": ["rdsalute", "fillytgap"],
+			"Plounge": ["karmasalute", "karmastare"]
+		},
+		"evil": {
+			"A": ["chrysalis", "priceless"],
+			"C": ["changeling"],
+			"E": ["gilda", "nmm"]
+		},
+		"distraught": {
+			"B": ["rarityyell", "raritywhine", "raritywhy", "noooo"]
+		},
+		"blank": {
+			"B": ["ppseesyou", "eeyup"],
+			"C": ["twistare", "photofinish", "ajfrown"],
+			"E": ["sbstare"]
+		},
+		"misc": {
+			"A": ["abbored"],
+			"B": ["takealetter", "manspike", "spikepushy", "ppshrug"],
+			"C": ["fabulous", "gross", "allmybits"],
+			"E": ["berry"],
+			"Plounge": ["smooze", "ohnoes"]
+		}
+	};
+
+	// Alternative names for certain tags
+	TAGS["derped"] = TAGS["crazed"];
+	TAGS["smug"] = TAGS["sarcastic"];
+	TAGS["malicious"] = TAGS["evil"];
 
 
 } )();
