@@ -548,7 +548,7 @@ console.log(g.emotes);
 			// Length: at least 1 char
 			if( listNameNew.length > 0 && listNameOld != listNameNew ) {
 				// Change emotes object (memory, not storage)
-				g.emotes[listNameNew] = g.emotes[listNameOld].slice( 0 );
+				g.emotes[listNameNew] = g.emotes[listNameOld];
 				g.emotes = reorderList( listNameNew, listNameOld );
 				delete g.emotes[listNameOld];
 
@@ -1039,7 +1039,7 @@ console.log(g.emotes);
 				"#mle% ul":
 						"direction: " + listDir + "; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;",
 				"#mle% li":
-						"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr !important; padding: 8px 16px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
+						"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
 				"#mle% li:first-child":
 						"border-top-width: 0;",
 				"#mle% li:last-child":
@@ -1055,7 +1055,7 @@ console.log(g.emotes);
 				"#mle% li span":
 						"color: #909090; display: block; font-size: 9px; font-weight: normal !important; white-space: nowrap;",
 				"#mle% li input":
-						"box-sizing: border-box; width: 100%;",
+						"box-sizing: border-box; -moz-box-sizing: border-box; width: 100%;",
 				// Blocks and pages
 				".mle-block%,\
 				 .mle-manage%,\
@@ -2144,7 +2144,6 @@ console.log(g.emotes);
 
 			e.preventDefault();
 
-			// Hooray for weird bugs. Opera fires the drop event two times.
 			if( this.REF.draggedList == null ) {
 				return;
 			}
