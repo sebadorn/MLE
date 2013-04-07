@@ -2526,7 +2526,7 @@
 
 			// Determine the search mode to use
 			parts = term.split( ":" );
-			mode = this.getMode( parts[0] );
+			mode = this.getMode( parts[0].toLowerCase() );
 
 			// Get the search term without a possible mode prefix
 			if( parts.length == 1 ) {
@@ -2535,6 +2535,7 @@
 			else {
 				term = parts.slice( 1 ).join( ":" );
 			}
+			term = term.toLowerCase();
 
 			// Set the search method according to the mode
 			switch( mode ) {
@@ -2546,6 +2547,7 @@
 					searchFunc = this.searchAlt;
 					break;
 				case this.MODE.TAG:
+					term = term.replace( " ", "" );
 					break;
 				default:
 					searchFunc = this.searchNormal;
@@ -2721,8 +2723,10 @@
 	/**
 	 * Tags for all the emotes.
 	 * Based on Snivian_Moon's emote stats for r/mylittlepony.
+	 * Extended with pony names.
 	 */
 	var TAGS = {
+		// mood/feeling
 		"happy": {
 			"A": [
 				"twipride", "twibeam", "raritydaww", "ajhappy",
@@ -2839,13 +2843,125 @@
 			"C": ["fabulous", "gross", "allmybits"],
 			"E": ["berry"],
 			"Plounge": ["smooze", "ohnoes"]
+		},
+		// pony names
+		"twilight": {
+			"A": ["twipride", "twiright", "twibeam", "twicrazy"],
+			"B": ["facehoof", "twisquint", "twirage"],
+			"C": ["twistare", "twismug", "twismile", "twidaw"],
+			"E": ["twiponder"],
+			"Plounge": ["twidurr"]
+		},
+		"pinkie": {
+			"A": ["ppfear", "ppcute", "pinkieawe"],
+			"B": ["ppseesyou", "ppshrug", "ppboring"],
+			"C": ["ohhi", "party", "hahaha", "joy", "pinkamina"],
+			"E": ["huhhuh"],
+			"Plounge": ["pinkiedance"]
+		},
+		"rarity": {
+			"A": ["raritypaper", "raritydaww", "rarityreally", "rarishock"],
+			"B": ["rarityyell", "raritywhine", "raritydress", "rarityannoyed", "raritywut", "raritywhy", "rarityjudge", "rarityprimp"],
+			"C": ["raritysad", "fabulous"],
+			"E": ["wahaha"],
+			"Plounge": ["fillyrarity", "raritydance"]
+		},
+		"rainbow": {
+			"A": ["rdcry"],
+			"B": ["rdcool", "rdsmile", "soawesome", "rdwut"],
+			"C": ["rdsitting", "rdhappy", "rdannoyed", "gross", "louder", "rdscared"],
+			"E": ["rdhuh", "rdsalute", "awwyeah"],
+			"Plounge": ["dashdance"]
+		},
+		"applejack": {
+			"A": ["ajhappy", "ajsup", "applegasp", "applederp", "ajlie"],
+			"B": ["squintyjack", "ajsly", "ajcower", "ajugh", "ajwut"],
+			"C": ["ajfrown", "hmmm"],
+			"E": ["ajconfused"],
+			"Plounge": ["ajdance"]
+		},
+		"fluttershy": {
+			"A": ["flutterwhoa", "flutterroll", "flutterjerk"],
+			"B": ["fluttershh", "fluttershy", "fluttersrs", "flutterfear", "flutterwink", "flutteryay"],
+			"C": ["flutterblush", "loveme", "whattheflut"]
+		},
+		"spike": {
+			"A": ["spikemeh"],
+			"B": ["spikenervous", "takealetter", "noooo", "spikepushy", "manspike"],
+			"C": ["allmybits"],
+			"E": ["spikewtf"]
+		},
+		"celestia": {
+			"A": ["celestiawut", "celestiamad"],
+			"C": ["celestia"]
+		},
+		"luna": {
+			"A": ["lunateehee", "lunawait"],
+			"C": ["lunasad", "lunagasp"],
+			"E": ["happyluna", "nmm"],
+			"Plounge": ["lunadance"]
+		},
+		"derpy": {
+			"A": ["paperbagderpy"],
+			"C": ["derpyhappy", "derp", "derpyshock"]
+		},
+		"applebloom": {
+			"A": ["abbored", "abmeh"],
+			"B": ["abwut"],
+			"E": ["absmile", "abhuh"],
+			"Plounge": ["abdance"]
+		},
+		"scootaloo": {
+			"A": ["scootaderp", "scootaplease", "scootacheer"],
+			"C": ["scootaloo"],
+			"E": ["cutealoo"],
+			"Plounge": ["scootadance"]
+		},
+		"sweetie": {
+			"A": ["ohcomeon", "sbbook"],
+			"B": ["dumbfabric"],
+			"E": ["sbstare"],
+			"Plounge": ["sweetiedance"]
+		},
+		"macintosh": {
+			"A": ["swagintosh"],
+			"B": ["eeyup"],
+			"E": ["macintears"]
+		},
+		"trixie": {
+			"B": ["trixiesmug"],
+			"C": ["trixiesad"],
+			"E": ["fillytgap"],
+			"Plounge": ["amazingmagic", "trixiedance"]
+		},
+		"lyra": {
+			"E": ["lyra"]
 		}
 	};
 
 	// Alternative names for certain tags
 	TAGS["derped"] = TAGS["crazed"];
-	TAGS["smug"] = TAGS["sarcastic"];
 	TAGS["malicious"] = TAGS["evil"];
+	TAGS["smug"] = TAGS["sarcastic"];
+
+	// Alternative names for certain ponies
+	TAGS["aj"] = TAGS["applejack"];
+	TAGS["tia"] = TAGS["celestia"];
+	TAGS["ditzy"] = TAGS["derpy"];
+	TAGS["fs"] = TAGS["fluttershy"];
+	TAGS["bigmac"] = TAGS["macintosh"];
+	TAGS["bigmacintosh"] = TAGS["macintosh"];
+	TAGS["pinkiepie"] = TAGS["pinkie"];
+	TAGS["pp"] = TAGS["pinkie"];
+	TAGS["dash"] = TAGS["rainbow"];
+	TAGS["rainbowdash"] = TAGS["rainbow"];
+	TAGS["rd"] = TAGS["rainbow"];
+	TAGS["sweetiebelle"] = TAGS["sweetie"];
+	TAGS["tgap"] = TAGS["trixie"];
+	TAGS["ts"] = TAGS["twilight"];
+	TAGS["twilightsparkle"] = TAGS["twilight"];
+
+	TAGS["bestpony"] = TAGS["lyra"];
 
 
 } )();
