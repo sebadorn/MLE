@@ -565,6 +565,9 @@ console.log(g.emotes);
 				g.REF.lists[listNameNew] = g.REF.lists[listNameOld];
 				delete g.REF.lists[listNameOld];
 
+				// Change the <select>s of the manage page
+				Builder.updateManageSelects( listNameOld, listNameNew );
+
 				// Save changes to storage
 				saveChangesToStorage(
 					BG_TASK.UPDATE_LIST_NAME,
@@ -1911,6 +1914,8 @@ console.log(g.emotes);
 					break;
 				}
 			}
+
+			this.updateManageSelects( oldName, newName );
 		},
 
 
@@ -2002,6 +2007,37 @@ console.log(g.emotes);
 
 			// Add all emotes of the updated list
 			block.appendChild( this.createEmotesOfList( emotes ) );
+		},
+
+
+		/**
+		 * Update the <select>s of the manage page.
+		 * @param {String} oldName Old list name.
+		 * @param {String} newName New list name.
+		 */
+		updateManageSelects: function( oldName, newName ) {
+			var g = GLOBAL;
+			var selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
+			var newOption, options;
+
+			for( var i = 0; i < selectLists.length; i++ ) {
+				if( !selectLists[i] ) {
+					continue;
+				}
+
+				options = selectLists[i].childNodes;
+
+				for( var j = 0; j < options.length; j++ ) {
+					if( options[j].value == oldName ) {
+						newOption = document.createElement( "option" );
+						newOption.value = newName.replace( /"/g, '\\"' );
+						newOption.textContent = newName;
+
+						selectLists[i].replaceChild( newOption, options[j] );
+						break;
+					}
+				}
+			}
 		}
 
 
