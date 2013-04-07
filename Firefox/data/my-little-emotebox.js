@@ -129,6 +129,27 @@
 
 
 	/**
+	 * It is possible to change the names of the default lists.
+	 * If this happened, we have to adjust the default name each
+	 * time it is used internally.
+	 * @param  {String} listName
+	 * @return {String}
+	 */
+	function convertListNameToConfigName( listName ) {
+		var cfg = GLOBAL.config;
+
+		switch( listName ) {
+			case "A": return cfg.listNameTableA;
+			case "B": return cfg.listNameTableB;
+			case "C": return cfg.listNameTableC;
+			case "E": return cfg.listNameTableE;
+			case "Plounge": return cfg.listNamePlounge;
+			default: return listName;
+		}
+	};
+
+
+	/**
 	 * Convert the fixed position from a value for "left"
 	 * to a value for "right" of the main container.
 	 * @param  {int}     left  Pixel position from the left.
@@ -382,27 +403,25 @@
 	/**
 	 * Checks if a given DOM node is an emote.
 	 * @param  {DOMElement} node
-	 * @return {Boolean} True if emote, false otherwise.
+	 * @return {Boolean}    True if emote, false otherwise.
 	 */
 	function isEmote( node ) {
 		if( node.tagName.toLowerCase() != "a" ) {
 			return false;
 		}
-		if( !node.href ) {
+		if( !node.pathname ) {
 			return false;
 		}
 
-		var nodeHTML = node.outerHTML;
+		var path = node.pathname.toLowerCase();
 
-		if( nodeHTML.indexOf( "href=\"/" ) < 0
-				|| nodeHTML.indexOf( "href=\"//" ) > -1
-				|| nodeHTML.indexOf( "href=\"/http://" ) > -1
-				|| nodeHTML.indexOf( "href=\"/r/" ) > -1
-				|| nodeHTML.indexOf( "href=\"/user/" ) > -1
-				|| nodeHTML.indexOf( "href=\"/message/" ) > -1
-				|| node.pathname == "/account-activity" ) {
+		if( path[0] != "/" ) {
 			return false;
 		}
+		if( /^\/(\/|http:|r\/|user\/|message\/|account-activity)/i.test( path ) ) {
+			return false;
+		}
+
 		return true;
 	};
 
@@ -410,7 +429,7 @@
 	/**
 	 * Checks if a given DOM node is a draggable list element.
 	 * @param  {DOMElement} node
-	 * @return {Boolean} True if list, false otherwise.
+	 * @return {Boolean}    True if list, false otherwise.
 	 */
 	function isList( node ) {
 		if( node.tagName.toLowerCase() != "li" ) {
@@ -905,6 +924,9 @@
 	var Builder = {
 
 
+		ploungeClass: "mle-ploungemote",
+
+
 		/**
 		 * Add CSS classes to the emote so it will be displayed
 		 * if it is an out-of-sub emote.
@@ -1065,8 +1087,13 @@
 						"background-color: #202020 !important;",
 				"#previewaddemote%":
 						"display: inline-block; border: 1px solid #505050; border-radius: 2px; float: none; margin-top: 10px; min-height: 4px; min-width: 4px;",
-				".mle-manage% span":
-						"line-height: 16px;"
+				".mle-manage% div div":
+						"line-height: 16px; padding: 0;",
+				".mle-manage% table":
+						"margin-top: 10px;",
+				".mle-manage% th,\
+				 .mle-manage% td":
+						"border: 1px solid #e0e0e0; padding: 2px 4px; vertical-align: top;"
 			};
 
 			if( cfg.boxTrigger != "float" ) {
@@ -1273,9 +1300,11 @@
 			}
 
 			var head = document.getElementsByTagName( "head" )[0],
-			    styleNode = document.createElement( "style" ),
-			    here = window.location.pathname.toLowerCase();
+			    here = window.location.pathname.toLowerCase(),
+			    styleNode,
+			    subCSS;
 
+			styleNode = document.createElement( "style" );
 			styleNode.type = "text/css";
 			styleNode.id = "MLE-emotes" + g.noise;
 
@@ -1284,15 +1313,27 @@
 			// will be added in the future.
 
 			// Don't include CSS on the subreddit it originates from
-			if( !here.match( /^\/r\/mlplounge\// ) ) {
-				styleNode.textContent += g.sub_css["r/mlplounge"] + "\n\n";
+			if( !/^\/r\/mlplounge\//i.test( here ) ) {
+				// On the user/message page we know from which subreddit a
+				// comment comes from, therefore we can use the right emote.
+				if( /^\/(user|message)\//i.test( here ) ) {
+					subCSS = g.sub_css["r/mlplounge"] + "\n\n";
+					subCSS = subCSS.replace(
+						/a\[href\|="(\/[a-zA-Z0-9-]+)"]/g,
+						'a.' + this.ploungeClass + '[href|="$1"],$&'
+					);
+					this.findAndaddClassToPloungeEmotes();
+				}
+				else {
+					subCSS = g.sub_css["r/mlplounge"] + "\n\n";
+				}
+				styleNode.textContent += subCSS;
 			}
-			if( !here.match( /^\/r\/mylittlepony\// ) ) {
+			if( !/^\/r\/mylittlepony\//i.test( here ) ) {
 				styleNode.textContent += g.sub_css["r/mylittlepony"] + "\n\n";
 			}
 
 			// Special modifiers from r/mylittlepony
-			// TODO: Get them from the stylesheet instead of this copy&paste!
 			styleNode.textContent += 'a[href|="/sp"]{display:inline-block;padding-right:100%;width:0px;height:0px}a[href|="/sp"]+.reddit_show_hidden_emotes_span{display:none}a[href^="/"][href*="-in-"],a[href^="/"][href$="-in"],a[href^="/"][href*="-inp-"],a[href^="/"][href$="-inp"]{float:none!important;display:inline-block!important}a[href="/spoiler"]{background:black!important;color:black!important}a[href="/spoiler"]:hover{color:white!important}';
 
 			// Not needed anymore, leave it for the Garbage Collector
@@ -1539,10 +1580,11 @@
 					),
 					this.mngAreaForNote(
 						"Search",
-						"There are additional search modes. Set one of the following as prefix:<br /><br />"
-						+ "<code>regex:</code> Use regular expressions.<br />"
-						+ "<code>alt:</code> Include alternative names learned from the subreddit stylesheets.<br />"
-						+ "<code>tag:</code> Get all emotes with the given tag, for example \"happy\"."
+						"There are additional search modes. Set one of the following as prefix:<table>"
+						+ "<tr><th><code>regex:</code></th><td>Use regular expressions.</td></tr>"
+						+ "<tr><th><code>alt:</code></th><td>Include alternative names learned from the subreddit stylesheets. For example \"a00\" will find \"ajlie\".</td></tr>"
+						+ "<tr><th><code>tag:</code></th><td>Get all emotes with the given tag, for example \"happy\" or \"pinkie\".</td></tr>"
+						+ "</table>"
 					)
 				];
 			var frag = appendChildren( document.createDocumentFragment(), areas );
@@ -1550,6 +1592,15 @@
 			this.preventOverScrolling( form );
 
 			form.appendChild( frag );
+		},
+
+
+		/**
+		 * Add an additional CSS class to every emote found on the page.
+		 */
+		findAndaddClassToPloungeEmotes: function() {
+			this.ploungeEmotesInbox();
+			this.ploungeEmotesOverview();
 		},
 
 
@@ -1653,7 +1704,7 @@
 		 */
 		mngAreaForNote: function( title, text ) {
 			var d = document;
-			var note = d.createElement( "span" );
+			var note = d.createElement( "div" );
 
 			note.innerHTML = text;
 
@@ -1661,6 +1712,73 @@
 				d.createElement( "div" ),
 				[this.createLabel( title ), note]
 			);
+		},
+
+
+		/**
+		 * Add a plounge emote CSS class to the list of given emotes.
+		 * @param {Array} emotes List of emotes.
+		 */
+		ploungeEmotesAddClass: function( emotes ) {
+			var emote;
+
+			for( var i = 0; i < emotes.length; i++ ) {
+				emote = emotes[i];
+
+				if( isEmote( emote ) ) {
+					emote.className += " " + this.ploungeClass;
+				}
+			}
+		},
+
+
+		/**
+		 * Add an additional CSS class to the Plounge emotes in the inbox.
+		 */
+		ploungeEmotesInbox: function() {
+			var messages = document.querySelectorAll( ".message" );
+			var emotes, from, message, subjectLink;
+
+			for( var i = 0; i < messages.length; i++ ) {
+				message = messages[i];
+				subjectLink = message.querySelector( ".subject a" );
+
+				if( !subjectLink ) {
+					continue;
+				}
+
+				from = subjectLink.pathname.toLowerCase();
+
+				if( from.indexOf( "/r/mlplounge/" ) == 0 ) {
+					emotes = message.querySelectorAll( ".md a" );
+					this.ploungeEmotesAddClass( emotes );
+				}
+			}
+		},
+
+
+		/**
+		 * Add an additional CSS class to the Plounge emotes in the overview.
+		 */
+		ploungeEmotesOverview: function() {
+			var comments = document.querySelectorAll( ".comment" );
+			var comment, emotes, from, subreddit;
+
+			for( var i = 0; i < comments.length; i++ ) {
+				comment = comments[i];
+				subreddit = comment.querySelector( ".parent a.subreddit" );
+
+				if( !subreddit ) {
+					continue;
+				}
+
+				from = subreddit.pathname.toLowerCase();
+
+				if( from.indexOf( "/r/mlplounge/" ) == 0 ) {
+					emotes = comment.querySelectorAll( ".md a" );
+					this.ploungeEmotesAddClass( emotes );
+				}
+			}
 		},
 
 
@@ -2419,6 +2537,121 @@
 
 
 		/**
+		 * Get the search function according to the set mode.
+		 * @param  {Integer}  mode Search.MODE
+		 * @return {Function}
+		 */
+		getSearchFunc: function( mode ) {
+			var searchFunc;
+
+			switch( mode ) {
+				case this.MODE.REGEX:
+					searchFunc = this.searchRegex;
+					break;
+				case this.MODE.ALTERNATIVES:
+					searchFunc = this.searchAlt;
+					break;
+				case this.MODE.TAG:
+					searchFunc = this.searchTag;
+					break;
+				default:
+					searchFunc = this.searchNormal;
+			}
+
+			return searchFunc;
+		},
+
+
+		/**
+		 * Prepare the search term according to the used mode.
+		 * @param  {Integer}       mode  Search.MODE
+		 * @param  {Array}         parts Parts of the provided search term.
+		 * @return {String|RegExp}
+		 */
+		prepareSearchTerm: function( mode, parts ) {
+			var term;
+
+			// Get the search term without a possible mode prefix
+			if( parts.length == 1 ) {
+				term = parts[0];
+			}
+			else {
+				term = parts.slice( 1 ).join( ":" );
+			}
+
+			term = term.toLowerCase();
+
+			switch( mode ) {
+				case this.MODE.REGEX:
+					term = new RegExp( term, "i" );
+					break;
+				case this.MODE.ALTERNATIVES:
+				case this.MODE.TAG:
+					term = term.replace( " ", "" );
+					break;
+			}
+
+			return term;
+		},
+
+
+		/**
+		 * The routine for doing a search in NORMAL, REGEX or ALTERNATIVES mode.
+		 * @param  {String|RegExp} term
+		 * @param  {Function}      searchFunc
+		 */
+		routineForNormalMode: function( term, searchFunc ) {
+			var g = GLOBAL,
+			    searchPage = g.REF.searchPage;
+			var buildEmote, emote, list, header;
+
+			for( var listName in g.emotes ) {
+				list = g.emotes[listName];
+				header = false;
+
+				for( var i = 0; i < list.length; i++ ) {
+					emote = list[i];
+
+					if( searchFunc( emote, term ) ) {
+						if( !header ) {
+							header = Builder.createHeaderForSearch( listName );
+							searchPage.appendChild( header );
+						}
+
+						buildEmote = Builder.createEmote( "/" + emote, false );
+						buildEmote.setAttribute( "data-list", listName );
+						searchPage.appendChild( buildEmote );
+					}
+				}
+			}
+		},
+
+
+		/**
+		 * The routine for doing a search in TAG mode.
+		 * @param  {String} term
+		 */
+		routineForTagMode: function( term ) {
+			var searchPage = GLOBAL.REF.searchPage,
+			    taggedEmotes = this.searchTag( term );
+			var adjustedListName, buildEmote, group, header;
+
+			for( var listName in taggedEmotes ) {
+				group = taggedEmotes[listName];
+				adjustedListName = convertListNameToConfigName( listName );
+				header = Builder.createHeaderForSearch( adjustedListName );
+				searchPage.appendChild( header );
+
+				for( var i = 0; i < group.length; i++ ) {
+					buildEmote = Builder.createEmote( "/" + group[i], false );
+					buildEmote.setAttribute( "data-list", adjustedListName );
+					searchPage.appendChild( buildEmote );
+				}
+			}
+		},
+
+
+		/**
 		 * The alternative name search mode.
 		 * Includes alternative names like "a00" as well.
 		 * @param  {String} emote Emote name.
@@ -2518,81 +2751,29 @@
 			    g = GLOBAL;
 			var searchPage = g.REF.searchPage,
 			    term = searchInput.value.trim();
-			var buildEmote, emote, header, list, mode, parts, searchFunc;
+			var mode, parts, searchFunc;
 
 			if( term.length == 0 ) {
 				return;
 			}
 
+			removeAllChildren( searchPage );
+
 			// Determine the search mode to use
 			parts = term.split( ":" );
 			mode = this.getMode( parts[0].toLowerCase() );
 
-			// Get the search term without a possible mode prefix
-			if( parts.length == 1 ) {
-				term = parts[0];
-			}
-			else {
-				term = parts.slice( 1 ).join( ":" );
-			}
-			term = term.toLowerCase();
-
 			// Set the search method according to the mode
-			switch( mode ) {
-				case this.MODE.REGEX:
-					searchFunc = this.searchRegex;
-					term = new RegExp( term, "i" );
-					break;
-				case this.MODE.ALTERNATIVES:
-					searchFunc = this.searchAlt;
-					break;
-				case this.MODE.TAG:
-					term = term.replace( " ", "" );
-					break;
-				default:
-					searchFunc = this.searchNormal;
-			}
+			searchFunc = this.getSearchFunc( mode );
+			term = this.prepareSearchTerm( mode, parts );
 
-			removeAllChildren( searchPage );
-
-			// Special search for tags, because it's faster that way
+			// Special search routine for tags
 			if( mode == this.MODE.TAG ) {
-				var taggedEmotes = this.searchTag( term );
-				var group;
-
-				for( var listName in taggedEmotes ) {
-					group = taggedEmotes[listName];
-					header = Builder.createHeaderForSearch( listName );
-					searchPage.appendChild( header );
-
-					for( var i = 0; i < group.length; i++ ) {
-						buildEmote = Builder.createEmote( "/" + group[i], false );
-						buildEmote.setAttribute( "data-list", listName );
-						searchPage.appendChild( buildEmote );
-					}
-				}
+				this.routineForTagMode( term );
 			}
-			// The "normal" search
+			// The "normal" search for the other modes
 			else {
-				for( var listName in g.emotes ) {
-					list = g.emotes[listName];
-					header = false;
-
-					for( var i = 0; i < list.length; i++ ) {
-						emote = list[i];
-
-						if( searchFunc( emote, term ) ) {
-							if( !header ) {
-								header = Builder.createHeaderForSearch( listName );
-								searchPage.appendChild( header );
-							}
-
-							buildEmote = Builder.createEmote( "/" + emote, false );
-							buildEmote.setAttribute( "data-list", listName );
-							searchPage.appendChild( buildEmote );
-						}
-					}
-				}
+				this.routineForNormalMode( term, searchFunc );
 			}
 
 			if( searchPage.childNodes.length == 0 ) {
@@ -2728,30 +2909,11 @@
 	var TAGS = {
 		// mood/feeling
 		"happy": {
-			"A": [
-				"twipride", "twibeam", "raritydaww", "ajhappy",
-				"lunateehee", "scootacheer"
-			],
-			"B": [
-				"rdsmile", "soawesome", "dj", "dumbfabric",
-				"flutterwink", "flutteryay", "spikenervous", "raritydress"
-			],
-			"C": [
-				"joy", "hahaha", "ohhi", "party",
-				"celestia", "zecora", "twismile", "derpyhappy",
-				"scootaloo", "rdhappy", "rdsitting", "twidaw"
-			],
-			"E": [
-				"awwyeah", "cheerilee", "dealwithit", "sotrue",
-				"spitfire", "colgate", "absmile", "happyluna",
-				"bonbon", "lyra", "cutealoo", "huhhuh",
-				"wahaha"
-			],
-			"Plounge": [
-				"fillyrarity", "dishappy", "amazingmagic", "sweetiedance",
-				"scootadance", "lunadance", "raritydance", "ajdance",
-				"abdance", "trixiedance", "filly"
-			]
+			"A": ["twipride", "twibeam", "raritydaww", "ajhappy", "lunateehee", "scootacheer"],
+			"B": ["rdsmile", "soawesome", "dj", "dumbfabric", "flutterwink", "flutteryay", "spikenervous", "raritydress"],
+			"C": ["joy", "hahaha", "ohhi", "party", "celestia", "zecora", "twismile", "derpyhappy", "scootaloo", "rdhappy", "rdsitting", "twidaw"],
+			"E": ["awwyeah", "cheerilee", "dealwithit", "sotrue", "spitfire", "colgate", "absmile", "happyluna", "bonbon", "lyra", "cutealoo", "huhhuh", "wahaha"],
+			"Plounge": ["fillyrarity", "dishappy", "amazingmagic", "sweetiedance", "scootadance", "lunadance", "raritydance", "ajdance", "abdance", "trixiedance", "filly"]
 		},
 		"sad": {
 			"A": ["rdcry", "paperbagderpy", "lunawait"],
@@ -2766,14 +2928,8 @@
 			"Plounge": ["karmastare"]
 		},
 		"incredulous": {
-			"A": [
-				"rarityreally", "raritypaper", "sbbook", "spikemeh",
-				"celestiamad", "abmeh"
-			],
-			"B": [
-				"twisquint", "facehoof", "ajugh", "squintyjack",
-				"rarityannoyed", "raritywut", "rarityjudge"
-			],
+			"A": ["rarityreally", "raritypaper", "sbbook", "spikemeh", "celestiamad", "abmeh"],
+			"B": ["twisquint", "facehoof", "ajugh", "squintyjack", "rarityannoyed", "raritywut", "rarityjudge"],
 			"C": ["whattheflut"],
 			"E": ["spikewtf", "abhuh", "rdhuh"],
 			"Plounge": ["twidurr"]
@@ -2785,10 +2941,7 @@
 			"E": ["lily"]
 		},
 		"shocked": {
-			"A": [
-				"rarishock", "applegasp", "pinkieawe", "celestiawut",
-				"flutterwhoa"
-			],
+			"A": ["rarishock", "applegasp", "pinkieawe", "celestiawut", "flutterwhoa"],
 			"B": ["ajwut"],
 			"C": ["lunagasp", "derpyshock"],
 			"E": ["ajconfused"]
@@ -2805,10 +2958,7 @@
 			"E": ["twiponder"]
 		},
 		"sarcastic": {
-			"A": [
-				"flutterroll", "flutterjerk", "ppcute", "twiright",
-				"ajsup", "ajlie"
-			],
+			"A": ["flutterroll", "flutterjerk", "ppcute", "twiright", "ajsup", "ajlie"],
 			"B": ["ajsly", "ppboring", "trixiesmug", "rarityprimp"],
 			"C": ["twismug"],
 			"E": ["octavia"]
