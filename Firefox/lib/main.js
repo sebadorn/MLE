@@ -817,10 +817,10 @@ var Updater = {
 
 	/**
 	 * After receiving the stylesheet, start extracting the emotes.
-	 * @param {String} responseText Response to the request.
-	 * @param {int}    lastModified A timestamp when the stylesheet has been last modified.
-	 *                              (At least according to what the server tells us.)
-	 * @param {String} contentType  Content-Type of the received resource. We need "text/css".
+	 * @param {String}  responseText Response to the request.
+	 * @param {Integer} lastModified A timestamp when the stylesheet has been last modified.
+	 *                               (At least according to what the server tells us.)
+	 * @param {String}  contentType  Content-Type of the received resource. We need "text/css".
 	 */
 	handleCSS: function( responseText, lastModified, contentType ) {
 		// Don't process if it isn't CSS.

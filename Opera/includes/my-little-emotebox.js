@@ -975,6 +975,8 @@
 			zIndex = cfg.boxUnderHeader ? 10 : 10000;
 			listDir = ( cfg.boxScrollbar == "right" ) ? "ltr" : "rtl";
 
+			// Show out-of-sub emotes
+			this.addOutOfSubCSS();
 
 			// '%' will be replaced with noise
 			var css = {
@@ -1135,8 +1137,6 @@
 			styleNode.textContent = rules;
 
 			d.getElementsByTagName( "head" )[0].appendChild( styleNode );
-
-			this.addOutOfSubCSS();
 
 			// The CSS variable is a little big and we won't need this function again, sooo...
 			// Leave this function for the Garbage Collector.
