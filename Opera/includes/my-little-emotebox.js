@@ -1196,6 +1196,7 @@
 			// Add search page
 			searchPage = d.createElement( "div" );
 			searchPage.className = "mle-block" + g.noise;
+			this.preventOverScrolling( searchPage );
 
 			// Add manage page
 			mngPage = d.createElement( "div" );
@@ -1580,11 +1581,11 @@
 						"Right-click on the emote and select “Delete Emote”."
 					),
 					this.mngAreaForNote(
-						"Move list",
+						"Move lists",
 						"Use Drag&amp;Drop to move lists. A dragged object will be inserted before the one it was dropped on."
 					),
 					this.mngAreaForNote(
-						"Rename list",
+						"Rename lists",
 						"Double-click on the list name. Confirm the new name with [Enter]."
 					),
 					this.mngAreaForNote(
@@ -1594,6 +1595,14 @@
 						+ "<tr><th><code>alt:</code></th><td>Include alternative names learned from the subreddit stylesheets. For example \"a00\" will find \"ajlie\".</td></tr>"
 						+ "<tr><th><code>tag:</code></th><td>Get all emotes with the given tag, for example \"happy\" or \"pinkie\".</td></tr>"
 						+ "</table>"
+					),
+					this.mngAreaForNote(
+						"Backups",
+						"Please back up your emotes and config from time to time. You can export those on the options page and then copy&amp;paste them into a text file."
+					),
+					this.mngAreaForNote(
+						"Did you know?",
+						"You can move this window. Just grab it close to its border."
 					)
 				];
 			var frag = appendChildren( document.createDocumentFragment(), areas );
@@ -3104,6 +3113,9 @@
 			"E": ["fillytgap"],
 			"Plounge": ["amazingmagic", "trixiedance"]
 		},
+		"vinyl": {
+			"B": ["dj"]
+		},
 		"lyra": {
 			"E": ["lyra"]
 		}
@@ -3130,6 +3142,9 @@
 	TAGS["tgap"] = TAGS["trixie"];
 	TAGS["ts"] = TAGS["twilight"];
 	TAGS["twilightsparkle"] = TAGS["twilight"];
+	TAGS["djpon3"] = TAGS["vinyl"];
+	TAGS["djpon-3"] = TAGS["vinyl"];
+	TAGS["vinylscratch"] = TAGS["vinyl"];
 
 	TAGS["bestpony"] = TAGS["lyra"];
 
