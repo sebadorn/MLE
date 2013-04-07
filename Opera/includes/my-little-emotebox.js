@@ -413,12 +413,15 @@
 			return false;
 		}
 
-		var path = node.pathname.toLowerCase();
+		var nodeHTML = node.outerHTML;
 
-		if( path[0] != "/" ) {
-			return false;
-		}
-		if( /^\/(\/|http:|r\/|user\/|message\/|account-activity)/i.test( path ) ) {
+		if( nodeHTML.indexOf( 'href="/' ) < 0
+				|| nodeHTML.indexOf( 'href="//' ) > -1
+				|| nodeHTML.indexOf( 'href="/http://' ) > -1
+				|| node.pathname.indexOf( "/r/" ) == 0
+				|| node.pathname.indexOf( "/user/" ) == 0
+				|| node.pathname.indexOf( "/message/" ) == 0
+				|| node.pathname == "/account-activity" ) {
 			return false;
 		}
 
