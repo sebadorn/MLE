@@ -406,6 +406,12 @@
 	 * @return {Boolean}    True if emote, false otherwise.
 	 */
 	function isEmote( node ) {
+		// Emotes inside the BPM window
+		if( node.parentNode.id == "bpm-sb-results" ) {
+			return !!node.getAttribute( "data-emote" );
+		}
+
+		// Regular link emotes
 		if( node.tagName.toLowerCase() != "a" ) {
 			return false;
 		}
@@ -948,7 +954,7 @@
 
 			// If BetterPonymotes is used for out-of-sub emotes
 			if( cfg.adjustForBetterPonymotes ) {
-				emote.className += " bpmote-" + emoteName;
+				emote.className += " bpmote-" + emoteName.toLowerCase();
 			}
 			// If GrEmB is used
 			if( cfg.adjustForGrEmB ) {
@@ -1110,7 +1116,7 @@
 			if( cfg.ctxMenu ) {
 				css["#mle-ctxmenu%,\
 				     .diag"] =
-						"cursor: default; display: none; position: fixed; z-index: 10010; white-space: nowrap; background-color: #ffffff; border: 1px solid #d0d0d0; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;";
+						"cursor: default; display: none; position: fixed; z-index: 50000000; white-space: nowrap; background-color: #ffffff; border: 1px solid #d0d0d0; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;";
 				css["#mle-ctxmenu% li"] =
 						"display: none;";
 				css["#mle-ctxmenu% li,\
@@ -1123,7 +1129,7 @@
 				     #mle-ctxmenu%.out-of-box .out"] =
 						"display: block;";
 				css[".diag"] =
-						"max-height: " + ContextMenu.CONFIG.menuMaxHeight + "px; overflow: auto; width: " + ContextMenu.CONFIG.menuWidth + "px; z-index: 10020;";
+						"max-height: " + ContextMenu.CONFIG.menuMaxHeight + "px; overflow: auto; width: " + ContextMenu.CONFIG.menuWidth + "px; z-index: 50000010;";
 			}
 
 			styleNode.type = "text/css";
@@ -2431,11 +2437,20 @@
 		 * Save an emote to the chosen list.
 		 */
 		saveEmoteToList: function( e ) {
-			var g = GLOBAL;
-			var emote = this.REF.selectedEmote.pathname,
+			var emote = this.REF.selectedEmote,
 			    list = e.target.textContent;
+			var data, name;
 
-			saveEmote( emote, list );
+			// Regular link emote
+			if( typeof emote.pathname != "undefined" ) {
+				name = emote.pathname;
+			}
+			// Emote inside the BPM window
+			else if( !!emote.getAttribute( "data-emote" ) ) {
+				name = emote.getAttribute( "data-emote" );
+			}
+
+			saveEmote( name, list );
 
 			this.REF.dialogSaveEmote.className = "diag";
 			this.REF.selectedEmote = null;
