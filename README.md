@@ -5,6 +5,8 @@
 
 ## ToDo
 
+* `[Feature]` Emote click-blocker
+* `[Feature]` Alt text displayer
 * `[Feature]` Add easy way to use modifiers (-combine, -i, -in, -r, -shift, -slide, -spin)
 * `[Feature]` Add option for a context menu per browser API (not HTML, but actually extending it)
 * `[Feature]` Options to style context menu
