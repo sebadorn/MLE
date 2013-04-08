@@ -150,9 +150,9 @@
 	/**
 	 * Convert the fixed position from a value for "left"
 	 * to a value for "right" of the main container.
-	 * @param  {int}     left  Pixel position from the left.
-	 * @param  {boolean} isMax If the main container is maximized.
-	 * @return {int}     Pixel position from the right.
+	 * @param  {Integer} left  Pixel position from the left.
+	 * @param  {Boolean} isMax If the main container is maximized.
+	 * @return {Integer}       Pixel position from the right.
 	 */
 	function convertMainContLTR( left, isMax ) {
 		var cfg = GLOBAL.config;
@@ -165,9 +165,9 @@
 	/**
 	 * Convert the fixed position from a value for "right"
 	 * to a value for "left" of the main container.
-	 * @param  {int}     right Pixel position from the right.
-	 * @param  {boolean} isMax If the main container is maximized.
-	 * @return {int}     Pixel position from the left.
+	 * @param  {Integer} right Pixel position from the right.
+	 * @param  {Boolean} isMax If the main container is maximized.
+	 * @return {Integer}       Pixel position from the left.
 	 */
 	function convertMainContRTL( right, isMax ) {
 		var cfg = GLOBAL.config;
@@ -685,8 +685,8 @@ console.log(g.emotes);
 
 	/**
 	 * Saves emotes/lists to the storage.
-	 * @param {int}    task   BG_TASK.
-	 * @param {Object} update Change to update.
+	 * @param {Integer} task   BG_TASK.
+	 * @param {Object}  update Change to update.
 	 */
 	function saveChangesToStorage( task, update ) {
 		postMessage( { task: task, update: update } );
@@ -1410,8 +1410,8 @@ console.log(g.emotes);
 
 		/**
 		 * Create a single emote.
-		 * @param {String} link
-		 * @param {bool}   draggable If the emote shall be draggable.
+		 * @param {String}  link
+		 * @param {Boolean} draggable If the emote shall be draggable.
 		 */
 		createEmote: function( link, draggable ) {
 			var emote = document.createElement( "a" );
@@ -1461,8 +1461,8 @@ console.log(g.emotes);
 
 		/**
 		 * Create list element to toggle display of the corresponding emote box.
-		 * @param  {String} listName     Name of list.
-		 * @param  {int}    elementCount Number of emotes in this list.
+		 * @param  {String}     listName     Name of list.
+		 * @param  {Integer}    elementCount Number of emotes in this list.
 		 * @return {DOMElement}
 		 */
 		createListLink: function( listName, elementCount ) {
@@ -1876,8 +1876,8 @@ console.log(g.emotes);
 
 		/**
 		 * Update the emote counter of the list.
-		 * @param {String} listName Name of the list to update the counter of.
-		 * @param {int}    count    New number of emotes.
+		 * @param {String}  listName Name of the list to update the counter of.
+		 * @param {Integer} count    New number of emotes.
 		 */
 		updateEmoteCount: function( listName, count ) {
 			var counterDisplay = GLOBAL.REF.lists[listName].querySelector( "span" );
@@ -2274,8 +2274,8 @@ console.log(g.emotes);
 
 		/**
 		 * Create dialog for the option "Move Emote".
-		 * @param {int} x X coordinate from the left.
-		 * @param {int} y Y coordinate from the top.
+		 * @param {Integer} x X coordinate from the left.
+		 * @param {Integer} y Y coordinate from the top.
 		 */
 		createDialogMoveEmote: function( x, y ) {
 			if( !this.REF.dialogMoveEmote ) {
@@ -2306,8 +2306,8 @@ console.log(g.emotes);
 
 		/**
 		 * Create dialog for the option "Save Emote".
-		 * @param {int} x X coordinate from the left.
-		 * @param {int} y Y coordinate from the top.
+		 * @param {Integer} x X coordinate from the left.
+		 * @param {Integer} y Y coordinate from the top.
 		 */
 		createDialogSaveEmote: function( x, y ) {
 			if( !this.REF.dialogSaveEmote ) {
@@ -2571,7 +2571,7 @@ console.log(g.emotes);
 		/**
 		 * Get the mode for the search.
 		 * @param  {String} firstPart The first part of the search term before a ":".
-		 * @return {int}              A Search.MODE. Defaults to NORMAL.
+		 * @return {Integer}          A Search.MODE. Defaults to NORMAL.
 		 */
 		getMode: function( firstPart ) {
 			var mode;
@@ -2714,7 +2714,7 @@ console.log(g.emotes);
 		 * Includes alternative names like "a00" as well.
 		 * @param  {String} emote Emote name.
 		 * @param  {String} term  Search term.
-		 * @return {bool}         True if term is contained in emote or
+		 * @return {Boolean}      True if term is contained in emote or
 		 *                        an alternate name for that emote.
 		 */
 		searchAlt: function( emote, term ) {
@@ -2757,7 +2757,7 @@ console.log(g.emotes);
 		 * term is contained in the emote name.
 		 * @param  {String} emote Emote name.
 		 * @param  {String} term  Search term.
-		 * @return {bool}         True if term is contained in emote.
+		 * @return {Boolean}      True if term is contained in emote.
 		 */
 		searchNormal: function( emote, term ) {
 			return emote.indexOf( term ) >= 0;
@@ -2769,7 +2769,7 @@ console.log(g.emotes);
 		 * expression matches the emote name.
 		 * @param  {String} emote Emote name.
 		 * @param  {RegExp} term  Regular expression.
-		 * @return {bool}         True if the regexp matches the emote name.
+		 * @return {Boolean}      True if the regexp matches the emote name.
 		 */
 		searchRegex: function( emote, term ) {
 			return term.test( emote );

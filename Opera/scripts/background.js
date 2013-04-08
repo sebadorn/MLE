@@ -56,7 +56,6 @@ if( I_AM == BROWSER.FIREFOX ) {
 	 * @param {Object} worker
 	 */
 	function handleOnAttach( worker ) {
-		workers.push( worker );
 		worker.on( "message", function( msg ) {
 			handleMessage( msg, worker );
 		} );
@@ -269,12 +268,17 @@ var BrowserOpera = {
 
 	/**
 	 * Load config and emotes in Opera.
-	 * @param  {Object} response Response object that will get send to the content script later.
-	 * @param  {bool}   loadMeta True, if META data shall be included in the response.
-	 * @return {Object} response
+	 * @param  {Object}  response Response object that will get send to the content script later.
+	 * @param  {Boolean} loadMeta True, if META data shall be included in the response.
+	 * @return {Object}  response
 	 */
 	loadConfigAndEmotes: function( response, sender, loadMeta ) {
 		var wpref = widget.preferences;
+
+		// Remember this tab in which MLE is running
+		if( this.tabSources.indexOf( sender ) < 0 ) {
+			this.tabSources.push( sender );
+		}
 
 		CURRENT_CONFIG = wpref[PREF.CONFIG]
 				? JSON.parse( wpref[PREF.CONFIG] )
@@ -369,7 +373,7 @@ var BrowserOpera = {
 	 * Send a XMLHttpRequest.
 	 * @param  {String}   method    POST or GET.
 	 * @param  {String}   url       URL to send the request to.
-	 * @param  {bool}     async     If to make the request async.
+	 * @param  {Boolean}  async     If to make the request async.
 	 * @param  {String}   userAgent The User-Agent to sent.
 	 * @param  {Function} callback  Callback function to handle the response.
 	 */
@@ -387,12 +391,6 @@ var BrowserOpera = {
 	 * Register onconnect and ondisconnect events of content scripts.
 	 */
 	setup: function() {
-		opera.extension.onconnect = function( e ) {
-			if( this.tabSources.indexOf( e.source ) < 0 ) {
-				this.tabSources.push( e.source );
-			}
-		}.bind( this );
-
 		opera.extension.ondisconnect = function( e ) {
 			var idx = this.tabSources.indexOf( e.source );
 
@@ -484,10 +482,10 @@ var BrowserChrome = {
 
 	/**
 	 * Load config and emotes in Chrome.
-	 * @param  {Object} response Response object that will get send to the content script.
-	 * @param  {Object} sender   Sender of message. Used to send response. (Chrome only)
-	 * @param  {bool}   loadMeta True, if META data shall be included in the response.
-	 * @return {Object} response
+	 * @param  {Object}  response Response object that will get send to the content script.
+	 * @param  {Object}  sender   Sender of message. Used to send response. (Chrome only)
+	 * @param  {Boolean} loadMeta True, if META data shall be included in the response.
+	 * @return {Object}  response
 	 */
 	loadConfigAndEmotes: function( response, sender, loadMeta ) {
 		var packet = {
@@ -496,7 +494,11 @@ var BrowserChrome = {
 			sender: sender
 		};
 
-		this.tabs.push( sender.tab.id );
+		// Remember this tab in which MLE is running
+		if( this.tabs.indexOf( sender.tab.id ) < 0 ) {
+			this.tabs.push( sender.tab.id );
+		}
+
 		chrome.tabs.onRemoved.addListener( this.onTabRemove.bind( this ) );
 
 		chrome.storage.local.get( null, this.handleLoadedItems.bind( packet ) );
@@ -519,8 +521,8 @@ var BrowserChrome = {
 	/**
 	 * Called when a tab is closed.
 	 * A CHROME ONLY FUNCTION.
-	 * @param {int}    tabId ID of the removed tab.
-	 * @param {Object} info
+	 * @param {Integer} tabId ID of the removed tab.
+	 * @param {Object}  info
 	 */
 	onTabRemove: function( tabId, info ) {
 		var idx = this.tabs.indexOf( tabId );
@@ -579,7 +581,7 @@ var BrowserChrome = {
 	 * Send a XMLHttpRequest.
 	 * @param  {String}   method    POST or GET.
 	 * @param  {String}   url       URL to send the request to.
-	 * @param  {bool}     async     If to make the request async.
+	 * @param  {Boolean}  async     If to make the request async.
 	 * @param  {String}   userAgent The User-Agent to sent. (NOT USED IN CHROME.)
 	 * @param  {Function} callback  Callback function to handle the response.
 	 */
@@ -633,11 +635,16 @@ var BrowserFirefox = {
 
 	/**
 	 * Load config and emotes in Firefox.
-	 * @param  {Object} response Response object that will get send to the content script later.
-	 * @param  {bool}   loadMeta True, if META data shall be included in the response.
-	 * @return {Object} response
+	 * @param  {Object}  response Response object that will get send to the content script later.
+	 * @param  {Boolean} loadMeta True, if META data shall be included in the response.
+	 * @return {Object}  response
 	 */
 	loadConfigAndEmotes: function( response, sender, loadMeta ) {
+		// Remember this tab in which MLE is running
+		if( workers.indexOf( sender ) < 0 ) {
+			workers.push( sender );
+		}
+
 		CURRENT_CONFIG = ss.storage[PREF.CONFIG]
 				? JSON.parse( ss.storage[PREF.CONFIG] )
 				: saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
@@ -733,7 +740,7 @@ var BrowserFirefox = {
 	 * ONLY USEABLE FOR THE UPDATER AT THIS MOMENT!
 	 * @param  {String}   method    POST or GET.
 	 * @param  {String}   url       URL to send the request to.
-	 * @param  {bool}     async     If to make the request async.
+	 * @param  {Boolean}  async     If to make the request async.
 	 * @param  {String}   userAgent The User-Agent to sent.
 	 * @param  {Function} callback  Callback function to handle the response. (NOT USED IN FIREFOX.)
 	 */
@@ -1000,9 +1007,9 @@ var Updater = {
 	/**
 	 * Get the rest of the relevant CSS part starting from
 	 * the found needle position to the end of the rule.
-	 * @param  {String} cssCopy Current part of the CSS.
-	 * @param  {int}    idx     Index of the found needle.
-	 * @return {String}         Extracted CSS.
+	 * @param  {String}  cssCopy Current part of the CSS.
+	 * @param  {Integer} idx     Index of the found needle.
+	 * @return {String}          Extracted CSS.
 	 */
 	getRestOfCSS: function( cssCopy, idx ) {
 		var css = "";
@@ -1459,10 +1466,10 @@ function changeListName( oldName, newName ) {
 
 /**
  * Load the configuration and lists/emotes from the extension storage.
- * @param  {Object} response Part of the response object to send. Contains the task value.
- * @param  {Object} sender   Sender of message. Used to send response. (Chrome and Firefox only)
- * @param  {bool}   loadMeta True, if META data shall be included in the response.
- * @return {Object}          Response with the loaded config and emotes.
+ * @param  {Object}  response Part of the response object to send. Contains the task value.
+ * @param  {Object}  sender   Sender of message. Used to send response. (Chrome and Firefox only)
+ * @param  {Boolean} loadMeta True, if META data shall be included in the response.
+ * @return {Object}           Response with the loaded config and emotes.
  */
 function loadConfigAndEmotes( response, sender, loadMeta ) {
 	if( !response ) {
@@ -1527,9 +1534,9 @@ function mergeWithConfig( obj ) {
 
 /**
  * Save a default value to the extension storage.
- * @param  {int} key Key to save the object under.
- * @param  {Object} obj Default value to save.
- * @return {Object} Default value. Same as parameter "obj".
+ * @param  {Integer} key Key to save the object under.
+ * @param  {Object}  obj Default value to save.
+ * @return {Object}      Default value. Same as parameter "obj".
  */
 function saveDefaultToStorage( key, obj ) {
 	var r = saveToStorage( key, obj );
@@ -1545,9 +1552,9 @@ function saveDefaultToStorage( key, obj ) {
 
 /**
  * Save to the extension storage.
- * @param  {int}    key Key to save the object under.
- * @param  {Object} obj Object to save.
- * @return {Object} Contains key "success" with a bool value.
+ * @param  {Integer} key Key to save the object under.
+ * @param  {Object}  obj Object to save.
+ * @return {Object}      Contains key "success" with a boolean value.
  */
 function saveToStorage( key, obj ) {
 	var obj_json;

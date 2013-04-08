@@ -10,151 +10,38 @@ var OPT_CFG = {
 };
 
 
+
 /**
- * Send a message to the background process.
+ * Export current config.
  */
-function postMessage( msg ) {
-	// Opera
-	if( typeof opera != "undefined" ) {
-		opera.extension.postMessage( msg );
-	}
-	// Chrome
-	else if( typeof chrome != "undefined" ) {
-		chrome.extension.sendMessage( msg, handleBackgroundMessages );
-	}
-	// probably Firefox
-	else {
-		self.postMessage( msg );
-	}
+function exportConfig( e ) {
+	var ta = document.getElementById( "export-config-ta" );
+
+	ta.value = JSON.stringify( CONFIG );
 };
 
 
 /**
- * Changes the class of the chosen nav element to "active".
+ * Export emotes in JSON.
  */
-function toggleNav( e ) {
-	var nav = document.querySelectorAll( "nav label" );
-	var i;
+function exportEmotes( e ) {
+	var ta = document.getElementById( "export-emotes-ta" );
 
-	for( i = 0; i < nav.length; i++ ) {
-		if( nav[i] != e.target ) {
-			nav[i].className = "";
-		}
-	}
-
-	e.target.className = "active";
+	ta.value = JSON.stringify( EMOTES );
+	showMsg( ta.value.length + " bytes", "info" );
 };
 
 
 /**
- * Validate if given value is a color acceptable in CSS, excluding named colors.
- * @param  {String}  color
- * @return {Boolean} True if the value is a color, false otherwise.
+ * Tell the background process to get and parse the sub-reddit stylesheets.
  */
-function isColor( color ) {
-	if( color == "transparent" ) {
-		return true;
-	}
-	if( color.match( /^#[0-9a-f]{6}$/ ) ) {
-		return true;
-	}
-	if( color.match( /^rgb\([0-9]{1,3},[0-9]{1,3},[0-9]{1,3}\)$/ ) ) {
-		return true;
-	}
-	if( color.match( /^rgba\([0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[01]\.[0-9]+\)$/ ) ) {
-		return true;
-	}
-	return false;
-};
+function forceUpdate( e ) {
+	// Disable button until page reload to avoid
+	// multiple updates in a short time interval.
+	e.target.removeEventListener( "click", forceUpdate, false );
+	e.target.setAttribute( "readonly", "readonly" );
 
-
-/**
- * Save a setting that just changed.
- */
-function saveSetting( e ) {
-	var htmlTag = e.target.tagName.toLowerCase(),
-	    cfgName = e.target.id;
-	var val = null,
-	    cfg = {};
-
-	switch( htmlTag ) {
-		case "select":
-			val = saveHandleSelect( e );
-			break;
-
-		case "input":
-			try {
-				val = saveHandleInput( e );
-			}
-			catch( err ) { return; }
-			break;
-	}
-
-	if( val != null ) {
-		cfg[cfgName] = val;
-		postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
-	}
-};
-
-
-/**
- * Get the config value of a changed <input>.
- * @throws {Boolean} If no valid config value can be extracted.
- * @return {mixed} String, boolean or integer.
- */
-function saveHandleInput( e ) {
-	var val;
-
-	switch( e.target.type ) {
-		case "checkbox":
-			val = e.target.checked;
-			break;
-
-		case "number":
-			val = parseInt( e.target.value );
-			if( isNaN( val ) || val < 0 ) {
-				e.target.value = CONFIG[cfgName];
-				throw false;
-			}
-			break;
-
-		case "text":
-			val = e.target.value;
-			if( e.target.className == "color" ) {
-				val = val.replace( / /g, '' );
-				val = val.toLowerCase();
-
-				if( !isColor( val ) ) {
-					throw false;
-				}
-			}
-			break;
-	}
-
-	return val;
-};
-
-
-/**
- * Get the config value of a changed <select>.
- * @return {mixed} String or boolean.
- */
-function saveHandleSelect( e ) {
-	var val = getOptionValue( e.target );
-
-	if( e.target.id == "ctxMenu" ) {
-		val = ( val == "true" );
-	}
-	return val;
-};
-
-
-/**
- * Save emotes to storage.
- * @param {Object} emotes [description]
- */
-function saveEmotes( emotes ) {
-	postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
+	postMessage( { task: BG_TASK.UPDATE_CSS } );
 };
 
 
@@ -167,17 +54,30 @@ function getOptionValue( select ) {
 
 
 /**
- * Display a message box on the page.
- * @param {String} msg Message to display.
- * @param {String} mtype "err" or "info".
+ * Handle messages from the background process.
  */
-function showMsg( msg, mtype ) {
-	var msg_paragraph = document.getElementById( "msg" );
+function handleBackgroundMessages( e ) {
+	var data = e.data ? e.data : e;
 
-	msg_paragraph.innerHTML = msg;
-	msg_paragraph.className = mtype;
-	msg_paragraph.parentNode.className = "show";
-	window.setTimeout( hideMsg, OPT_CFG.MSG_TIMEOUT );
+	if( !data.task ) {
+		console.warn( "MyLittleEmotebox: Message from background process didn't contain the handled task." );
+		return;
+	}
+
+	switch( data.task ) {
+		case BG_TASK.LOAD:
+			CONFIG = data.config;
+			EMOTES = data.emotes;
+			META = data.meta;
+			init2();
+			break;
+
+		case BG_TASK.SAVE_CONFIG:
+			if( data.success ) {
+				CONFIG = data.config;
+			}
+			break;
+	}
 };
 
 
@@ -188,6 +88,35 @@ function hideMsg() {
 	var msg_box = document.getElementById( "msgbox" );
 
 	msg_box.className = "";
+};
+
+
+/**
+ * Import a config in JSON.
+ */
+function importConfig( e ) {
+	var ta = document.getElementById( "import-config-ta" );
+	var cfg = ta.value.trim();
+
+	if( cfg == "" ) {
+		showMsg( "Nothing to import.", "err" );
+		console.error( "MyLittleEmotebox: Nothing to import." );
+		return;
+	}
+
+	try {
+		cfg = JSON.parse( cfg );
+	}
+	catch( err ) {
+		showMsg( "Input not parsable as JSON.<br />Config remains unchanged.", "err" );
+		console.error( "MyLittleEmotebox: Could not parse input as JSON." );
+		console.error( err );
+		return;
+	}
+
+	postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
+	ta.value = "";
+	showMsg( "Import (probably) successful.<br />Changes show after next page load.", "info" );
 };
 
 
@@ -241,111 +170,70 @@ function importEmotes( e ) {
 
 
 /**
- * Export emotes in JSON.
+ * Insert the META data where it should be displayed.
  */
-function exportEmotes( e ) {
-	var ta = document.getElementById( "export-emotes-ta" );
+function insertMetaData() {
+	var lastCheck = document.getElementById( "lastSubredditCheck" ),
+	    date = new Date( META.lastSubredditCheck );
+	var month = date.getMonth() + 1,
+	    day = date.getDay(),
+	    hours = date.getHours(),
+	    minutes = date.getMinutes();
 
-	ta.value = JSON.stringify( EMOTES );
-	showMsg( ta.value.length + " bytes", "info" );
+	if( month < 10 ) { month = "0" + month; }
+	if( day < 10 ) { day = "0" + day; }
+	if( hours < 10 ) { hours = "0" + hours; }
+	if( minutes < 10 ) { minutes = "0" + minutes; }
+
+	lastCheck.value = date.getFullYear() + "-" + month + "-" + day + " " + hours + ":" + minutes;
 };
 
 
 /**
- * Reset all lists/emotes to the default.
+ * Validate if given value is a color acceptable in CSS, excluding named colors.
+ * @param  {String}  color
+ * @return {Boolean} True if the value is a color, false otherwise.
  */
-function resetEmotes( e ) {
-	if( window.confirm( "Do you really want to reset all lists and emotes?" ) ) {
-		exportEmotes();
-		postMessage( { task: BG_TASK.RESET_EMOTES } );
-		showMsg(
-			"Lists and emotes have been reset.<br />"
-			+ "There is an export from right before the reset,<br />"
-			+ "that you can still save before reloading the page. Think about it.",
-			"info"
-		);
+function isColor( color ) {
+	if( color == "transparent" ) {
+		return true;
 	}
-};
-
-
-/**
- * Export current config.
- */
-function exportConfig( e ) {
-	var ta = document.getElementById( "export-config-ta" );
-
-	ta.value = JSON.stringify( CONFIG );
-};
-
-
-/**
- * Import a config in JSON.
- */
-function importConfig( e ) {
-	var ta = document.getElementById( "import-config-ta" );
-	var cfg = ta.value.trim();
-
-	if( cfg == "" ) {
-		showMsg( "Nothing to import.", "err" );
-		console.error( "MyLittleEmotebox: Nothing to import." );
-		return;
+	if( color.match( /^#[0-9a-f]{6}$/ ) ) {
+		return true;
 	}
-
-	try {
-		cfg = JSON.parse( cfg );
+	if( color.match( /^rgb\([0-9]{1,3},[0-9]{1,3},[0-9]{1,3}\)$/ ) ) {
+		return true;
 	}
-	catch( err ) {
-		showMsg( "Input not parsable as JSON.<br />Config remains unchanged.", "err" );
-		console.error( "MyLittleEmotebox: Could not parse input as JSON." );
-		console.error( err );
-		return;
+	if( color.match( /^rgba\([0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[01]\.[0-9]+\)$/ ) ) {
+		return true;
 	}
-
-	postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
-	ta.value = "";
-	showMsg( "Import (probably) successful.<br />Changes show after next page load.", "info" );
+	return false;
 };
 
 
 /**
- * Reset the config back to the default values.
+ * Load config through background process.
  */
-function resetConfig( e ) {
-	if( window.confirm( "Do you really want to reset the config?" ) ) {
-		exportConfig();
-		postMessage( { task: BG_TASK.RESET_CONFIG } );
-		showMsg(
-			"Config has been reset.<br />"
-			+ "There is an export from right before the reset,<br />"
-			+ "that you can still save before reloading the page. Think about it.",
-			"info"
-		);
+function loadConfig() {
+	postMessage( { task: BG_TASK.LOAD, loadMeta: true } );
+};
+
+
+/**
+ * Send a message to the background process.
+ */
+function postMessage( msg ) {
+	// Opera
+	if( typeof opera != "undefined" ) {
+		opera.extension.postMessage( msg );
 	}
-};
-
-
-/**
- * Tell the background process to get and parse the sub-reddit stylesheets.
- */
-function forceUpdate( e ) {
-	// Disable button until page reload to avoid
-	// multiple updates in a short time interval.
-	e.target.removeEventListener( "click", forceUpdate, false );
-	e.target.setAttribute( "readonly", "readonly" );
-
-	postMessage( { task: BG_TASK.UPDATE_CSS } );
-};
-
-
-/**
- * Register click event on nav elements.
- */
-function registerEventToggleNav() {
-	var nav = document.querySelectorAll( "nav label" );
-	var i;
-
-	for( i = 0; i < nav.length; i++ ) {
-		nav[i].addEventListener( "click", toggleNav, false );
+	// Chrome
+	else if( typeof chrome != "undefined" ) {
+		chrome.extension.sendMessage( msg, handleBackgroundMessages );
+	}
+	// probably Firefox
+	else {
+		self.postMessage( msg );
 	}
 };
 
@@ -432,6 +320,19 @@ function registerEventSettingChanged() {
 
 
 /**
+ * Register click event on nav elements.
+ */
+function registerEventToggleNav() {
+	var nav = document.querySelectorAll( "nav label" );
+	var i;
+
+	for( i = 0; i < nav.length; i++ ) {
+		nav[i].addEventListener( "click", toggleNav, false );
+	}
+};
+
+
+/**
  * Register for messages from the background process.
  */
 function registerForBackgroundMessages() {
@@ -451,59 +352,161 @@ function registerForBackgroundMessages() {
 
 
 /**
- * Handle messages from the background process.
+ * Reset the config back to the default values.
  */
-function handleBackgroundMessages( e ) {
-	var data = e.data ? e.data : e;
-
-	if( !data.task ) {
-		console.warn( "MyLittleEmotebox: Message from background process didn't contain the handled task." );
-		return;
+function resetConfig( e ) {
+	if( window.confirm( "Do you really want to reset the config?" ) ) {
+		exportConfig();
+		postMessage( { task: BG_TASK.RESET_CONFIG } );
+		showMsg(
+			"Config has been reset.<br />"
+			+ "There is an export from right before the reset,<br />"
+			+ "that you can still save before reloading the page. Think about it.",
+			"info"
+		);
 	}
+};
 
-	switch( data.task ) {
-		case BG_TASK.LOAD:
-			CONFIG = data.config;
-			EMOTES = data.emotes;
-			META = data.meta;
-			init2();
+
+/**
+ * Reset all lists/emotes to the default.
+ */
+function resetEmotes( e ) {
+	if( window.confirm( "Do you really want to reset all lists and emotes?" ) ) {
+		exportEmotes();
+		postMessage( { task: BG_TASK.RESET_EMOTES } );
+		showMsg(
+			"Lists and emotes have been reset.<br />"
+			+ "There is an export from right before the reset,<br />"
+			+ "that you can still save before reloading the page. Think about it.",
+			"info"
+		);
+	}
+};
+
+
+/**
+ * Save emotes to storage.
+ * @param {Object} emotes [description]
+ */
+function saveEmotes( emotes ) {
+	postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
+};
+
+
+/**
+ * Get the config value of a changed <input>.
+ * @throws {Boolean} If no valid config value can be extracted.
+ * @return {mixed} String, boolean or integer.
+ */
+function saveHandleInput( e ) {
+	var val;
+
+	switch( e.target.type ) {
+		case "checkbox":
+			val = e.target.checked;
 			break;
 
-		case BG_TASK.SAVE_CONFIG:
-			if( data.success ) {
-				CONFIG = data.config;
+		case "number":
+			val = parseInt( e.target.value );
+			if( isNaN( val ) || val < 0 ) {
+				e.target.value = CONFIG[cfgName];
+				throw false;
+			}
+			break;
+
+		case "text":
+			val = e.target.value;
+			if( e.target.className == "color" ) {
+				val = val.replace( / /g, '' );
+				val = val.toLowerCase();
+
+				if( !isColor( val ) ) {
+					throw false;
+				}
 			}
 			break;
 	}
+
+	return val;
 };
 
 
 /**
- * Insert the META data where it should be displayed.
+ * Get the config value of a changed <select>.
+ * @return {mixed} String or boolean.
  */
-function insertMetaData() {
-	var lastCheck = document.getElementById( "lastSubredditCheck" ),
-	    date = new Date( META.lastSubredditCheck );
-	var month = date.getMonth() + 1,
-	    day = date.getDay(),
-	    hours = date.getHours(),
-	    minutes = date.getMinutes();
+function saveHandleSelect( e ) {
+	var val = getOptionValue( e.target );
 
-	if( month < 10 ) { month = "0" + month; }
-	if( day < 10 ) { day = "0" + day; }
-	if( hours < 10 ) { hours = "0" + hours; }
-	if( minutes < 10 ) { minutes = "0" + minutes; }
-
-	lastCheck.value = date.getFullYear() + "-" + month + "-" + day + " " + hours + ":" + minutes;
+	if( e.target.id == "ctxMenu" ) {
+		val = ( val == "true" );
+	}
+	return val;
 };
 
 
 /**
- * Load config through background process.
+ * Save a setting that just changed.
  */
-function loadConfig() {
-	postMessage( { task: BG_TASK.LOAD, loadMeta: true } );
+function saveSetting( e ) {
+	var htmlTag = e.target.tagName.toLowerCase(),
+	    cfgName = e.target.id;
+	var val = null,
+	    cfg = {};
+
+	switch( htmlTag ) {
+		case "select":
+			val = saveHandleSelect( e );
+			break;
+
+		case "input":
+			try {
+				val = saveHandleInput( e );
+			}
+			catch( err ) { return; }
+			break;
+	}
+
+	if( val != null ) {
+		cfg[cfgName] = val;
+		postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
+	}
 };
+
+
+/**
+ * Display a message box on the page.
+ * @param {String} msg Message to display.
+ * @param {String} mtype "err" or "info".
+ */
+function showMsg( msg, mtype ) {
+	var msg_paragraph = document.getElementById( "msg" );
+
+	msg_paragraph.innerHTML = msg;
+	msg_paragraph.className = mtype;
+	msg_paragraph.parentNode.className = "show";
+	window.setTimeout( hideMsg, OPT_CFG.MSG_TIMEOUT );
+};
+
+
+/**
+ * Changes the class of the chosen nav element to "active".
+ */
+function toggleNav( e ) {
+	var nav = document.querySelectorAll( "nav label" );
+	var i;
+
+	for( i = 0; i < nav.length; i++ ) {
+		if( nav[i] != e.target ) {
+			nav[i].className = "";
+		}
+	}
+
+	e.target.className = "active";
+};
+
+
 
 
 /**
