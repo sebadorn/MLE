@@ -176,7 +176,7 @@ function insertMetaData() {
 	var lastCheck = document.getElementById( "lastSubredditCheck" ),
 	    date = new Date( META.lastSubredditCheck );
 	var month = date.getMonth() + 1,
-	    day = date.getDay(),
+	    day = date.getDate(),
 	    hours = date.getHours(),
 	    minutes = date.getMinutes();
 

@@ -186,7 +186,7 @@
 		var g = GLOBAL;
 		var idx, children, emoteSlash;
 		var update = {};
-console.log(g.emotes);
+
 		// Emotes don't have a leading slash
 		if( emote.indexOf( "/" ) == 0 ) {
 			emote = emote.substring( 1 );
@@ -407,12 +407,19 @@ console.log(g.emotes);
 		if( !node.pathname ) {
 			return false;
 		}
+		// Making the hopeful assumption that emote
+		// names will never contain more than one "/"
+		if( node.pathname.split( "/" ).length > 2 ) {
+			return false;
+		}
 
 		var nodeHTML = node.outerHTML;
 
 		if( nodeHTML.indexOf( 'href="/' ) < 0
 				|| nodeHTML.indexOf( 'href="//' ) > -1
 				|| nodeHTML.indexOf( 'href="/http://' ) > -1
+				|| node.pathname == "/"
+				|| ( node.pathname.indexOf( "/gold" ) == 0 && node.search.length > 0 )
 				|| node.pathname.indexOf( "/r/" ) == 0
 				|| node.pathname.indexOf( "/user/" ) == 0
 				|| node.pathname.indexOf( "/message/" ) == 0
@@ -1119,6 +1126,14 @@ console.log(g.emotes);
 				css[".diag"] =
 						"max-height: " + ContextMenu.CONFIG.menuMaxHeight + "px; overflow: auto; width: " + ContextMenu.CONFIG.menuWidth + "px; z-index: 50000010;";
 			}
+			if( cfg.showEmoteTitleText ) {
+				css[".mle-titletext"] =
+						"background-color: #f0f0f0; border-radius: 2px; color: #808080; padding: 0 4px; text-shadow: 1px 1px 0 #ffffff;";
+			}
+			if( cfg.revealUnknownEmotes ) {
+				css[".mle-revealemote"] =
+						"border: 1px solid #e0e0e0; border-radius: 2px; color: #808080; display: inline-block; float: left; margin-right: 6px; padding: 2px 6px;";
+			}
 
 			styleNode.type = "text/css";
 			styleNode.id = "MLE" + g.noise;
@@ -1602,12 +1617,78 @@ console.log(g.emotes);
 
 
 		/**
+		 * Display the title text of an emote next to it.
+		 * @param {DOMElement} emote
+		 */
+		emoteShowTitleText: function( emote ) {
+			if( emote.title == "" ) {
+				return;
+			}
+
+			var text = document.createElement( "span" );
+
+			text.className = "mle-titletext";
+			text.textContent = emote.title;
+			emote.parentNode.insertBefore( text, emote.nextSibling );
+		},
+
+
+		/**
 		 * Add an additional CSS class to every emote found on the page.
 		 */
 		findAndaddClassToPloungeEmotes: function() {
 			if( GLOBAL.config.adjustEmotesInInbox ) {
 				this.ploungeEmotesInbox();
 				this.ploungeEmotesOverview();
+			}
+		},
+
+
+		/**
+		 * Iterates over all the emotes on the page in order
+		 * to maybe modify them in some way.
+		 */
+		modifyAllOnPageEmotes: function() {
+			var d = document,
+			    cfg = GLOBAL.config;
+			var emote, text;
+
+			// If we ain't gonna modify anything, then there's no reason
+			// to iterate through all the links, now is there?
+			if( !cfg.showEmoteTitleText && !cfg.stopEmoteLinkFollowing && !cfg.revealUnknownEmotes ) {
+				return;
+			}
+
+			// Iterate all the links
+			for( var i = 0; i < d.links.length; i++ ) {
+				emote = d.links[i];
+
+				if( isEmote( emote ) ) {
+					// Prevent following of the link (what an emote basically is)
+					if( cfg.stopEmoteLinkFollowing ) {
+						emote.addEventListener( "click", stopEvent, false );
+					}
+
+					// Display title text
+					if( cfg.showEmoteTitleText ) {
+						this.emoteShowTitleText( emote );
+					}
+
+					// Reveal unknown emotes
+					if( cfg.revealUnknownEmotes ) {
+						// Special emote, nevermind
+						if( emote.pathname.indexOf( "/sp" ) == 0 ) {
+							continue;
+						}
+
+						var emoteStyle = window.getComputedStyle( emote );
+
+						if( emoteStyle.width == "0px" && emoteStyle.height == "0px" ) {
+							emote.className += " mle-revealemote";
+							emote.textContent = emote.pathname;
+						}
+					}
+				}
 			}
 		},
 
@@ -2885,6 +2966,7 @@ console.log(g.emotes);
 		initStep2: function() {
 			Builder.addCSS();
 			Builder.addHTML();
+			Builder.modifyAllOnPageEmotes();
 		},
 
 

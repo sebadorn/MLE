@@ -183,7 +183,10 @@ var DEFAULT_CONFIG = {
 	listNamePlounge: "Plounge", // Name of the list for the non-table emotes of the Plounge
 	msgAnimationSpeed: 1000, // [ms]
 	msgPosition: "top", // "top" or "bottom"
-	msgTimeout: 7000 // [ms] // How long a popup message is displayed.
+	msgTimeout: 7000, // [ms] // How long a popup message is displayed.
+	revealUnknownEmotes: true,
+	showEmoteTitleText: false,
+	stopEmoteLinkFollowing: true
 };
 
 
