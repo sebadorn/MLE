@@ -61,6 +61,11 @@
 	 * Callback function for the DOMNodeInserted event.
 	 */
 	function buttonObserverDOMEvent( e ) {
+		// nodeType = 3 = TEXT_NODE
+		if( e.target.nodeType == 3 ) {
+			return;
+		}
+
 		// "usertext cloneable" is the whole reply-to-comment section
 		if( e.target.className == "usertext cloneable" ) {
 			var buttonMLE = e.target.querySelector( ".mle-open-btn" );
@@ -1651,7 +1656,6 @@
 		modifyAllOnPageEmotes: function() {
 			var d = document,
 			    cfg = GLOBAL.config;
-			var emote, text;
 
 			// If we ain't gonna modify anything, then there's no reason
 			// to iterate through all the links, now is there?
@@ -1659,34 +1663,111 @@
 				return;
 			}
 
+			var MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
+
+			// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
+			if( MutationObserver ) {
+				var observer = new MutationObserver( this.modifyEmotesMutationObserver.bind( this ) ),
+				    observerConfig = {
+				    	attributes: false,
+				    	childList: true,
+				    	characterData: false
+				    };
+				var targetsSitetable = d.querySelectorAll( ".sitetable" ),
+				    targetsExpando = d.querySelectorAll( ".expando" );
+
+				for( var i = 0; i < targetsSitetable.length; i++ ) {
+					observer.observe( targetsSitetable[i], observerConfig );
+				}
+				for( var i = 0; i < targetsExpando.length; i++ ) {
+					observer.observe( targetsExpando[i], observerConfig );
+				}
+			}
+			// ... but not in Opera, so we have to do this the deprecated way
+			else {
+				d.addEventListener( "DOMNodeInserted", this.modifyEmotesDOMEvent.bind( this ), false );
+			}
+
 			// Iterate all the links
 			for( var i = 0; i < d.links.length; i++ ) {
-				emote = d.links[i];
+				this.modifyEmote( d.links[i] );
+			}
+		},
 
-				if( isEmote( emote ) ) {
-					// Prevent following of the link (what an emote basically is)
-					if( cfg.stopEmoteLinkFollowing ) {
-						emote.addEventListener( "click", stopEvent, false );
-					}
 
-					// Display title text
-					if( cfg.showEmoteTitleText ) {
-						this.emoteShowTitleText( emote );
-					}
+		/**
+		 * Modify an emote: Stop link following, show title, reveal unknown ones.
+		 * @param {DOMElement} emote
+		 */
+		modifyEmote: function( emote ) {
+			if( !isEmote( emote ) ) {
+				return;
+			}
 
-					// Reveal unknown emotes
-					if( cfg.revealUnknownEmotes ) {
-						// Special emote, nevermind
-						if( emote.pathname.indexOf( "/sp" ) == 0 ) {
-							continue;
-						}
+			var cfg = GLOBAL.config;
 
-						var emoteStyle = window.getComputedStyle( emote );
+			// Prevent following of the link (what an emote basically is)
+			if( cfg.stopEmoteLinkFollowing ) {
+				emote.addEventListener( "click", stopEvent, false );
+			}
 
-						if( emoteStyle.width == "0px" && emoteStyle.height == "0px" ) {
-							emote.className += " mle-revealemote";
-							emote.textContent = emote.pathname;
-						}
+			// Display title text
+			if( cfg.showEmoteTitleText ) {
+				this.emoteShowTitleText( emote );
+			}
+
+			// Reveal unknown emotes
+			if( cfg.revealUnknownEmotes ) {
+				this.revealUnknownEmote( emote );
+			}
+		},
+
+
+		/**
+		 * Modify emotes: Stop link following, show title, reveal unknown ones.
+		 * Callback function for the DOMNodeInserted event.
+		 */
+		modifyEmotesDOMEvent: function( e ) {
+			// nodeType = 3 = TEXT_NODE
+			if( e.target.nodeType == 3 ) {
+				return;
+			}
+
+			if( e.target.tagName.toLowerCase() == "a" ) {
+				this.modifyEmote( e.target );
+				return;
+			}
+
+			// Not a link and no child nodes, so there can't be any emotes
+			if( e.target.children.length == 0 ) {
+				return;
+			}
+
+			var links = e.target.querySelectorAll( "a[href]" );
+
+			for( var i = 0; i < links.length; i++ ) {
+				this.modifyEmote( links[i] );
+			}
+		},
+
+
+		/**
+		 * Modify emotes: Stop link following, show title, reveal unknown ones.
+		 * Callback function for the MutationObserver.
+		 * @param {MutationRecord} mutations
+		 */
+		modifyEmotesMutationObserver: function( mutations ) {
+			var links, mutation, node;
+
+			for( var i = 0; i < mutations.length; i++ ) {
+				mutation = mutations[i];
+
+				for( var j = 0; j < mutation.addedNodes.length; j++ ) {
+					node = mutation.addedNodes[j];
+					links = node.querySelectorAll( "a[href]" );
+
+					for( var k = 0; k < links.length; k++ ) {
+						this.modifyEmote( links[k] );
 					}
 				}
 			}
@@ -1935,6 +2016,26 @@
 
 			// Remove context menus. Will be rebuild when needed.
 			ContextMenu.destroyMenus();
+		},
+
+
+		/**
+		 * Reveal an unknown emote.
+		 * @param {DOMElement} emote
+		 */
+		revealUnknownEmote: function( emote ) {
+			// Special emote, nevermind
+			if( emote.pathname.indexOf( "/sp" ) == 0 ) {
+				return;
+			}
+
+			var emoteStyle = window.getComputedStyle( emote );
+
+			if( ( emoteStyle.width == "auto" || emoteStyle.width == "0px" )
+					&& ( emoteStyle.height == "0px" || emoteStyle.height == "auto" ) ) {
+				emote.className += " mle-revealemote";
+				emote.textContent = emote.pathname;
+			}
 		},
 
 
