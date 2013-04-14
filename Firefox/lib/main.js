@@ -185,7 +185,15 @@ var DEFAULT_CONFIG = {
 	msgPosition: "top", // "top" or "bottom"
 	msgTimeout: 7000, // [ms] // How long a popup message is displayed.
 	revealUnknownEmotes: true,
+	revealStyleBgColor: "#ffffff",
+	revealStyleBorderColor: "#e0e0e0",
+	revealStyleColor: "#808080",
+	searchGroupEmotes: true, // Group emotes by table/subreddit
 	showEmoteTitleText: false,
+	showTitleStyleBgColor: "#f4f4f4",
+	showTitleStyleBorderColor: "#e0e0e0",
+	showTitleStyleColor: "#606060",
+	showTitleStyleDisplay: "float", // "float" or "block"
 	stopEmoteLinkFollowing: true
 };
 

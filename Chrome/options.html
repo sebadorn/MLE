@@ -68,6 +68,12 @@
 				<label for="stopEmoteLinkFollowing">Stop emote link following</label>
 				<p class="explain">Emotes are basically just links. Left-clicking them normally opens the link. This option stops that.</p>
 			</li>
+			<li>
+				<input type="checkbox" id="searchGroupEmotes" value="true" />
+				<label for="searchGroupEmotes">Group search results</label>
+				<p class="explain">Group the search results by subreddit – or table in case of r/mylittlepony.</p>
+			</li>
+
 			<li class="headline">
 				<h2>Emotes Out-of-Sub</h2>
 			</li>
@@ -161,6 +167,52 @@
 				<label>Border color around emotes</label>
 				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
 			</li>
+
+			<li class="headline">
+				<h2>Reveal unknown emotes</h2>
+			</li>
+			<li>
+				<input type="text" class="color" id="revealStyleBgColor" value="" />
+				<label>Background color</label>
+				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
+			</li>
+			<li>
+				<input type="text" class="color" id="revealStyleBorderColor" value="" />
+				<label>Border color</label>
+			</li>
+			<li>
+				<input type="text" class="color" id="revealStyleColor" value="" />
+				<label>Text color</label>
+			</li>
+
+			<li class="headline">
+				<h2>Show emote title text</h2>
+			</li>
+			<li>
+				<select id="showTitleStyleDisplay">
+					<option value="float">float</option>
+					<option value="block">block</option>
+				</select>
+				<label for="showTitleStyleDisplay">Type of the text container</label>
+				<p class="explain">
+					<strong>float</strong> – Following emotes and text will stay in the same line, if possible.<br />
+					<strong>block</strong> – The text will fill the whole line and following text or emotes will be forced into the next line. Setting the border and background color to transparent (<code>rgba(0,0,0,0.0)</code>) may look best with the <em>block</em> setting.
+				</p>
+			</li>
+			<li>
+				<input type="text" class="color" id="showTitleStyleBgColor" value="" />
+				<label>Background color</label>
+				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
+			</li>
+			<li>
+				<input type="text" class="color" id="showTitleStyleBorderColor" value="" />
+				<label>Border color</label>
+			</li>
+			<li>
+				<input type="text" class="color" id="showTitleStyleColor" value="" />
+				<label>Text color</label>
+			</li>
+
 			<li class="headline">
 				<h2>Notifier</h2>
 			</li>

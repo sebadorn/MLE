@@ -1132,12 +1132,18 @@
 						"max-height: " + ContextMenu.CONFIG.menuMaxHeight + "px; overflow: auto; width: " + ContextMenu.CONFIG.menuWidth + "px; z-index: 50000010;";
 			}
 			if( cfg.showEmoteTitleText ) {
+				var display = "float: left;";
+
+				if( cfg.showTitleStyleDisplay == "block" ) {
+					display = "display: block;";
+				}
+
 				css[".mle-titletext"] =
-						"background-color: #f0f0f0; border-radius: 2px; color: #808080; padding: 0 4px; text-shadow: 1px 1px 0 #ffffff;";
+						"background-color: " + cfg.showTitleStyleBgColor + "; border: 1px solid " + cfg.showTitleStyleBorderColor + "; border-radius: 2px; color: " + cfg.showTitleStyleColor + "; margin-right: 4px; padding: 0 4px; " + display;
 			}
 			if( cfg.revealUnknownEmotes ) {
 				css[".mle-revealemote"] =
-						"border: 1px solid #e0e0e0; border-radius: 2px; color: #808080; display: inline-block; float: left; margin-right: 6px; padding: 2px 6px;";
+						"background-color: " + cfg.revealStyleBgColor + "; border: 1px solid " + cfg.revealStyleBorderColor + "; border-radius: 2px; color: " + cfg.revealStyleColor + "; display: inline-block; float: left; margin-right: 4px; padding: 2px 6px;" ;
 			}
 
 			styleNode.type = "text/css";
@@ -2853,7 +2859,7 @@
 					emote = list[i];
 
 					if( searchFunc( emote, term ) ) {
-						if( !header ) {
+						if( !header && g.config.searchGroupEmotes ) {
 							header = Builder.createHeaderForSearch( listName );
 							searchPage.appendChild( header );
 						}
@@ -2872,15 +2878,19 @@
 		 * @param  {String} term
 		 */
 		routineForTagMode: function( term ) {
-			var searchPage = GLOBAL.REF.searchPage,
+			var g = GLOBAL,
+			    searchPage = g.REF.searchPage,
 			    taggedEmotes = this.searchTag( term );
 			var adjustedListName, buildEmote, group, header;
 
 			for( var listName in taggedEmotes ) {
 				group = taggedEmotes[listName];
 				adjustedListName = convertListNameToConfigName( listName );
-				header = Builder.createHeaderForSearch( adjustedListName );
-				searchPage.appendChild( header );
+
+				if( g.config.searchGroupEmotes ) {
+					header = Builder.createHeaderForSearch( adjustedListName );
+					searchPage.appendChild( header );
+				}
 
 				for( var i = 0; i < group.length; i++ ) {
 					buildEmote = Builder.createEmote( "/" + group[i], false );
@@ -3236,33 +3246,14 @@
 			"Plounge": ["smooze", "ohnoes"]
 		},
 		// pony names
-		"twilight": {
-			"A": ["twipride", "twiright", "twibeam", "twicrazy"],
-			"B": ["facehoof", "twisquint", "twirage"],
-			"C": ["twistare", "twismug", "twismile", "twidaw"],
-			"E": ["twiponder"],
-			"Plounge": ["twidurr"]
+		"applebloom": {
+			"A": ["abbored", "abmeh"],
+			"B": ["abwut"],
+			"E": ["absmile", "abhuh"],
+			"Plounge": ["abdance"]
 		},
-		"pinkie": {
-			"A": ["ppfear", "ppcute", "pinkieawe"],
-			"B": ["ppseesyou", "ppshrug", "ppboring"],
-			"C": ["ohhi", "party", "hahaha", "joy", "pinkamina"],
-			"E": ["huhhuh"],
-			"Plounge": ["pinkiedance"]
-		},
-		"rarity": {
-			"A": ["raritypaper", "raritydaww", "rarityreally", "rarishock"],
-			"B": ["rarityyell", "raritywhine", "raritydress", "rarityannoyed", "raritywut", "raritywhy", "rarityjudge", "rarityprimp"],
-			"C": ["raritysad", "fabulous"],
-			"E": ["wahaha"],
-			"Plounge": ["fillyrarity", "raritydance"]
-		},
-		"rainbow": {
-			"A": ["rdcry"],
-			"B": ["rdcool", "rdsmile", "soawesome", "rdwut"],
-			"C": ["rdsitting", "rdhappy", "rdannoyed", "gross", "louder", "rdscared"],
-			"E": ["rdhuh", "rdsalute", "awwyeah"],
-			"Plounge": ["dashdance"]
+		"angel": {
+			"C": ["angel"]
 		},
 		"applejack": {
 			"A": ["ajhappy", "ajsup", "applegasp", "applederp", "ajlie"],
@@ -3271,20 +3262,57 @@
 			"E": ["ajconfused"],
 			"Plounge": ["ajdance"]
 		},
+		"berrypunch": {
+			"E": ["berry"]
+		},
+		"bonbon": {
+			"E": ["bonbon"]
+		},
+		"cadence": {
+			"A": ["cadence"]
+		},
+		"celestia": {
+			"A": ["celestiawut", "celestiamad"],
+			"C": ["celestia"]
+		},
+		"changeling": {
+			"A": ["chrysalis"],
+			"C": ["changeling"]
+		},
+		"cheerilee": {
+			"E": ["cheerilee"]
+		},
+		"colgate": {
+			"E": ["colgate"]
+		},
+		"derpy": {
+			"A": ["paperbagderpy"],
+			"C": ["derpyhappy", "derp", "derpyshock"]
+		},
+		"discentia": {
+			"E": ["discentia"],
+			"Plounge": ["dishappy"]
+		},
+		"discord": {
+			"A": ["priceless"]
+		},
 		"fluttershy": {
 			"A": ["flutterwhoa", "flutterroll", "flutterjerk"],
 			"B": ["fluttershh", "fluttershy", "fluttersrs", "flutterfear", "flutterwink", "flutteryay"],
 			"C": ["flutterblush", "loveme", "whattheflut"]
 		},
-		"spike": {
-			"A": ["spikemeh"],
-			"B": ["spikenervous", "takealetter", "noooo", "spikepushy", "manspike"],
-			"C": ["allmybits"],
-			"E": ["spikewtf"]
+		"gilda": {
+			"E": ["gilda"]
 		},
-		"celestia": {
-			"A": ["celestiawut", "celestiamad"],
-			"C": ["celestia"]
+		"grannysmith": {
+			"A": ["grannysmith"]
+		},
+		"karma": {
+			"E": ["dealwithit"],
+			"Plounge": ["karmasalute", "karmastare"]
+		},
+		"lily": {
+			"E": ["lily"]
 		},
 		"luna": {
 			"A": ["lunateehee", "lunawait"],
@@ -3292,15 +3320,40 @@
 			"E": ["happyluna", "nmm"],
 			"Plounge": ["lunadance"]
 		},
-		"derpy": {
-			"A": ["paperbagderpy"],
-			"C": ["derpyhappy", "derp", "derpyshock"]
+		"lyra": {
+			"E": ["lyra"]
 		},
-		"applebloom": {
-			"A": ["abbored", "abmeh"],
-			"B": ["abwut"],
-			"E": ["absmile", "abhuh"],
-			"Plounge": ["abdance"]
+		"macintosh": {
+			"A": ["swagintosh"],
+			"B": ["eeyup"],
+			"E": ["macintears"]
+		},
+		"octavia": {
+			"E": ["octavia"]
+		},
+		"photofinish": {
+			"C": ["photofinish"]
+		},
+		"pinkie": {
+			"A": ["ppfear", "ppcute", "pinkieawe"],
+			"B": ["ppseesyou", "ppshrug", "ppboring"],
+			"C": ["ohhi", "party", "hahaha", "joy", "pinkamina"],
+			"E": ["huhhuh"],
+			"Plounge": ["pinkiedance"]
+		},
+		"rainbow": {
+			"A": ["rdcry"],
+			"B": ["rdcool", "rdsmile", "soawesome", "rdwut"],
+			"C": ["rdsitting", "rdhappy", "rdannoyed", "gross", "louder", "rdscared"],
+			"E": ["rdhuh", "rdsalute", "awwyeah"],
+			"Plounge": ["dashdance"]
+		},
+		"rarity": {
+			"A": ["raritypaper", "raritydaww", "rarityreally", "rarishock"],
+			"B": ["rarityyell", "raritywhine", "raritydress", "rarityannoyed", "raritywut", "raritywhy", "rarityjudge", "rarityprimp"],
+			"C": ["raritysad", "fabulous"],
+			"E": ["wahaha"],
+			"Plounge": ["fillyrarity", "raritydance"]
 		},
 		"scootaloo": {
 			"A": ["scootaderp", "scootaplease", "scootacheer"],
@@ -3308,16 +3361,32 @@
 			"E": ["cutealoo"],
 			"Plounge": ["scootadance"]
 		},
+		"shiningarmor": {
+			"A": ["shiningarmor"]
+		},
+		"silverspoon": {
+			"A": ["silverspoon"]
+		},
+		"snails": {
+			"E": ["snails"]
+		},
+		"spike": {
+			"A": ["spikemeh"],
+			"B": ["spikenervous", "takealetter", "noooo", "spikepushy", "manspike"],
+			"C": ["allmybits"],
+			"E": ["spikewtf"]
+		},
+		"spitfire": {
+			"E": ["spitfire"]
+		},
+		"stevenmagnet": {
+			"E": ["sotrue"]
+		},
 		"sweetie": {
 			"A": ["ohcomeon", "sbbook"],
 			"B": ["dumbfabric"],
 			"E": ["sbstare"],
 			"Plounge": ["sweetiedance"]
-		},
-		"macintosh": {
-			"A": ["swagintosh"],
-			"B": ["eeyup"],
-			"E": ["macintears"]
 		},
 		"trixie": {
 			"B": ["trixiesmug"],
@@ -3325,11 +3394,21 @@
 			"E": ["fillytgap"],
 			"Plounge": ["amazingmagic", "trixiedance"]
 		},
+		"twilight": {
+			"A": ["twipride", "twiright", "twibeam", "twicrazy"],
+			"B": ["facehoof", "twisquint", "twirage"],
+			"C": ["twistare", "twismug", "twismile", "twidaw"],
+			"E": ["twiponder"],
+			"Plounge": ["twidurr"]
+		},
 		"vinyl": {
 			"B": ["dj"]
 		},
-		"lyra": {
-			"E": ["lyra"]
+		"whooves": {
+			"E": ["whooves"]
+		},
+		"zecora": {
+			"C": ["zecora"]
 		}
 	};
 
@@ -3339,10 +3418,18 @@
 	TAGS["smug"] = TAGS["sarcastic"];
 
 	// Alternative names for certain ponies
+	TAGS["ab"] = TAGS["applebloom"];
 	TAGS["aj"] = TAGS["applejack"];
+	TAGS["berry"] = TAGS["berrypunch"];
+	TAGS["bon-bon"] = TAGS["bonbon"];
 	TAGS["tia"] = TAGS["celestia"];
+	TAGS["chrysalis"] = TAGS["changeling"];
+	TAGS["minuette"] = TAGS["colgate"];
+	TAGS["derpyhooves"] = TAGS["derpy"];
 	TAGS["ditzy"] = TAGS["derpy"];
 	TAGS["fs"] = TAGS["fluttershy"];
+	TAGS["griffin"] = TAGS["gilda"];
+	TAGS["heartstrings"] = TAGS["lyra"];
 	TAGS["bigmac"] = TAGS["macintosh"];
 	TAGS["bigmacintosh"] = TAGS["macintosh"];
 	TAGS["pinkiepie"] = TAGS["pinkie"];
@@ -3350,13 +3437,20 @@
 	TAGS["dash"] = TAGS["rainbow"];
 	TAGS["rainbowdash"] = TAGS["rainbow"];
 	TAGS["rd"] = TAGS["rainbow"];
+	TAGS["sc"] = TAGS["scootaloo"];
+	TAGS["steven"] = TAGS["stevenmagnet"];
+	TAGS["sb"] = TAGS["sweetie"];
 	TAGS["sweetiebelle"] = TAGS["sweetie"];
 	TAGS["tgap"] = TAGS["trixie"];
 	TAGS["ts"] = TAGS["twilight"];
+	TAGS["twi"] = TAGS["twilight"];
 	TAGS["twilightsparkle"] = TAGS["twilight"];
 	TAGS["djpon3"] = TAGS["vinyl"];
 	TAGS["djpon-3"] = TAGS["vinyl"];
 	TAGS["vinylscratch"] = TAGS["vinyl"];
+	TAGS["vs"] = TAGS["vinyl"];
+	TAGS["doctor"] = TAGS["whooves"];
+	TAGS["doctorwhooves"] = TAGS["whooves"];
 
 	TAGS["bestpony"] = TAGS["lyra"];
 
