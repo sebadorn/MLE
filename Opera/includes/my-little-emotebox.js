@@ -349,7 +349,7 @@
 		mainContainerHide( e );
 		if( !ta ) { return; }
 
-		var emoteLink = e.target.href.split( "/" );
+		var emote = e.target.href.split( "/" );
 		var selStart = ta.selectionStart,
 		    selEnd = ta.selectionEnd,
 		    taLen = ta.value.length,
@@ -357,34 +357,41 @@
 		    inputEvent;
 
 		// Emote name
-		emoteLink = emoteLink[emoteLink.length - 1];
+		emote = emote[emote.length - 1];
 		// Insert reversed emote version
-		emoteLink = e.ctrlKey ? emoteLink + "-r" : emoteLink;
+		if( e.ctrlKey ) {
+			if( isFromDefaultSub( emote ) ) {
+				emote = "r" + emote;
+			}
+			else {
+				emote += "-r";
+			}
+		}
 
 		// Nothing selected, just insert at position
 		if( selStart == selEnd ) {
-			emoteLink = "[](/" + emoteLink + ")";
+			emote = "[](/" + emote + ")";
 		}
 		// Text marked, use for alt text
 		else {
 			altText = ta.value.substring( selStart, selEnd );
-			emoteLink = '[](/' + emoteLink + ' "' + altText + '")';
+			emote = '[](/' + emote + ' "' + altText + '")';
 		}
 
 		// Add a blank after the emote
 		if( GLOBAL.config.addBlankAfterInsert ) {
-			emoteLink += " ";
+			emote += " ";
 		}
 
 		ta.value = ta.value.substring( 0, selStart )
-				+ emoteLink
+				+ emote
 				+ ta.value.substring( selEnd, taLen );
 
 		// Focus to the textarea
 		ta.focus();
 		ta.setSelectionRange(
-			selStart + emoteLink.length,
-			selStart + emoteLink.length
+			selStart + emote.length,
+			selStart + emote.length
 		);
 
 		// Fire input event, so that RedditEnhancementSuite updates the preview
@@ -433,6 +440,34 @@
 		}
 
 		return true;
+	};
+
+
+	/**
+	 * Check if for the given emote is from a default
+	 * pony sub (r/mylittlepony or r/MLPLounge).
+	 * @param  {String}  emote Emote name.
+	 * @return {Boolean}       True if the emote is from a default sub, false otherwise.
+	 */
+	function isFromDefaultSub( emote ) {
+		var g = GLOBAL,
+		    cfg = g.config;
+		var list;
+		var keys = [
+				cfg.listNameTableA, cfg.listNameTableB,
+				cfg.listNameTableC, cfg.listNameTableE,
+				cfg.listNamePlounge
+			];
+
+		for( var i = 0; i < keys.length; i++ ) {
+			list = g.emotes[keys[i]];
+
+			if( list.indexOf( emote ) >= 0 ) {
+				return true;
+			}
+		}
+
+		return false;
 	};
 
 
