@@ -269,9 +269,29 @@ var BrowserOpera = {
 	 * @param {Object} msg
 	 */
 	broadcast: function( source, msg ) {
+		var remove = [];
+		var idx;
+
 		for( var i = 0; i < this.tabSources.length; i++ ) {
 			if( this.tabSources[i] != source ) {
-				this.tabSources[i].postMessage( msg );
+				try {
+					this.tabSources[i].postMessage( msg );
+				}
+				// Using the ondisconnect event didn't work as expected.
+				// If it doesn't work (because the tab has been closed)
+				// catch the error and remove the source from the list.
+				catch( err ) {
+					remove.push( this.tabSources[i] );
+				}
+			}
+		}
+
+		// Remove failed sources
+		for( var i = 0; i < remove.length; i++ ) {
+			idx = this.tabSources.indexOf( remove[i] );
+
+			if( idx >= 0 ) {
+				this.tabSources.splice( idx, 1 );
 			}
 		}
 	},
@@ -395,20 +415,6 @@ var BrowserOpera = {
 		xhr.setRequestHeader( "User-Agent", userAgent );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
-	},
-
-
-	/**
-	 * Register onconnect and ondisconnect events of content scripts.
-	 */
-	setup: function() {
-		opera.extension.ondisconnect = function( e ) {
-			var idx = this.tabSources.indexOf( e.source );
-
-			if( idx >= 0 ) {
-				this.tabSources.splice( idx, 1 );
-			}
-		}.bind( this );
 	}
 
 
@@ -602,14 +608,6 @@ var BrowserChrome = {
 		xhr.open( method, url, async );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
-	},
-
-
-	/**
-	 * THIS IS JUST A DUMMY FUNCTION.
-	 */
-	setup: function() {
-		// pass
 	}
 
 
@@ -771,14 +769,6 @@ var BrowserFirefox = {
 		} );
 
 		req.get();
-	},
-
-
-	/**
-	 * THIS IS JUST A DUMMY FUNCTION.
-	 */
-	setup: function() {
-		// pass
 	}
 
 
@@ -1409,6 +1399,12 @@ function handleMessage( e, sender, sendResponse ) {
 			break;
 
 		case BG_TASK.SAVE_EMOTES:
+			// Currently we have more than 1 list, but the update is empty.
+			// This is too suspicious and shouldn't happen. Don't do it.
+			if( CURRENT_EMOTES.length >= 2 && data.emotes.length <= 0 ) {
+				response.success = false;
+				break;
+			}
 			response = saveToStorage( PREF.EMOTES, data.emotes );
 			break;
 
@@ -1607,5 +1603,4 @@ function updateObject( current, defaultValues, storageKey ) {
 };
 
 
-MyBrowser.setup();
 MyBrowser.registerMessageHandler( handleMessage );

@@ -36,7 +36,7 @@
 					<option value="float">float</option>
 					<option value="button">button</option>
 				</select>
-				<label>Page integration when minimized</label>
+				<label for="boxTrigger">Page integration when minimized</label>
 				<p class="explain">
 					<strong>float</strong> – A little box at the side, that stays on top of other elements and scrolls with the view.<br />
 					<strong>button</strong> – A button next to every textarea.
@@ -47,7 +47,7 @@
 					<option value="true">enabled</option>
 					<option value="false">disabled</option>
 				</select>
-				<label>Context menu for emotes</label>
+				<label for="ctxMenu">Context menu for emotes</label>
 			</li>
 			<li>
 				<input type="checkbox" id="boxUnderHeader" value="true" />
@@ -67,6 +67,10 @@
 				<input type="checkbox" id="stopEmoteLinkFollowing" value="true" />
 				<label for="stopEmoteLinkFollowing">Stop emote link following</label>
 				<p class="explain">Emotes are basically just links. Left-clicking them normally opens the link. This option stops that.</p>
+			</li>
+
+			<li class="headline">
+				<h2>Search</h2>
 			</li>
 			<li>
 				<input type="checkbox" id="searchGroupEmotes" value="true" />
@@ -93,6 +97,7 @@
 			<li>
 				<input type="checkbox" id="revealUnknownEmotes" value="true" />
 				<label for="revealUnknownEmotes">Reveal unknown emotes</label>
+				<p class="explain">Show a placeholder for emotes that cannot be displayed – most likely for emotes that are from another subreddit.</p>
 			</li>
 		</ul>
 	</fieldset>
@@ -109,7 +114,7 @@
 					<option value="left">left</option>
 					<option value="right">right</option>
 				</select>
-				<label>X axis orientation on page</label>
+				<label for="boxAlign">X axis orientation on page</label>
 				<p class="explain">
 					<strong>left</strong> – Origin of X ordinates is on the left.<br />
 					<strong>right</strong> – Origin of X ordinates is on the right.
@@ -118,53 +123,53 @@
 			<li>
 				<input type="number" id="boxPosX" value="" />
 				<span class="unit">px</span>
-				<label>Box margin from the side</label>
+				<label for="boxPosX">Box margin from the side</label>
 				<p class="explain">If it is the left or right side is specified in the <em>X axis orientation</em> setting.</p>
 			</li>
 			<li>
 				<input type="number" id="boxPosTop" value="" />
 				<span class="unit">px</span>
-				<label>Box margin from top</label>
+				<label for="boxPosTop">Box margin from top</label>
 			</li>
 			<li>
 				<select id="boxScrollbar">
 					<option value="left">left</option>
 					<option value="right">right</option>
 				</select>
-				<label>Side the list scrollbar is on</label>
+				<label for="boxScrollbar">Side the list scrollbar is on</label>
 			</li>
 			<li>
 				<input type="text" id="boxLabelMinimized" value="" />
-				<label>Box label when minimized</label>
+				<label for="boxLabelMinimized">Box label when minimized</label>
 			</li>
 			<li>
 				<input type="number" id="boxWidthMinimized" value="" />
 				<span class="unit">px</span>
-				<label>Box width when minimized</label>
+				<label for="boxWidthMinimized">Box width when minimized</label>
 			</li>
 			<li>
 				<input type="number" id="boxWidth" value="" />
 				<span class="unit">px</span>
-				<label>Box width</label>
+				<label for="boxWidth">Box width</label>
 			</li>
 			<li>
 				<input type="number" id="boxHeight" value="" />
 				<span class="unit">px</span>
-				<label>Box height</label>
+				<label for="boxHeight">Box height</label>
 			</li>
 			<li>
 				<input type="number" id="boxAnimationSpeed" value="" />
 				<span class="unit">ms</span>
-				<label>Time needed for the box to open</label>
+				<label for="boxAnimationSpeed">Time needed for the box to open</label>
 			</li>
 			<li>
 				<input type="text" class="color" id="boxBgColor" value="" />
-				<label>Box background color</label>
+				<label for="boxBgColor">Box background color</label>
 				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
 			</li>
 			<li>
 				<input type="text" class="color" id="boxEmoteBorder" value="" />
-				<label>Border color around emotes</label>
+				<label for="boxEmoteBorder">Border color around emotes</label>
 				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
 			</li>
 
@@ -173,16 +178,16 @@
 			</li>
 			<li>
 				<input type="text" class="color" id="revealStyleBgColor" value="" />
-				<label>Background color</label>
+				<label for="revealStyleBgColor">Background color</label>
 				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
 			</li>
 			<li>
 				<input type="text" class="color" id="revealStyleBorderColor" value="" />
-				<label>Border color</label>
+				<label for="revealStyleBorderColor">Border color</label>
 			</li>
 			<li>
 				<input type="text" class="color" id="revealStyleColor" value="" />
-				<label>Text color</label>
+				<label for="revealStyleColor">Text color</label>
 			</li>
 
 			<li class="headline">
@@ -201,16 +206,16 @@
 			</li>
 			<li>
 				<input type="text" class="color" id="showTitleStyleBgColor" value="" />
-				<label>Background color</label>
+				<label for="showTitleStyleBgColor">Background color</label>
 				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
 			</li>
 			<li>
 				<input type="text" class="color" id="showTitleStyleBorderColor" value="" />
-				<label>Border color</label>
+				<label for="showTitleStyleBorderColor">Border color</label>
 			</li>
 			<li>
 				<input type="text" class="color" id="showTitleStyleColor" value="" />
-				<label>Text color</label>
+				<label for="showTitleStyleColor">Text color</label>
 			</li>
 
 			<li class="headline">
@@ -221,17 +226,17 @@
 					<option value="top">top</option>
 					<option value="bottom">bottom</option>
 				</select>
-				<label>Message position on page</label>
+				<label for="msgPosition">Message position on page</label>
 			</li>
 			<li>
 				<input type="number" id="msgAnimationSpeed" value="" />
 				<span class="unit">ms</span>
-				<label>Time needed for a message to slide in/out</label>
+				<label for="msgAnimationSpeed">Time needed for a message to slide in/out</label>
 			</li>
 			<li>
 				<input type="number" id="msgTimeout" value="" />
 				<span class="unit">ms</span>
-				<label>How long a message stays</label>
+				<label for="msgTimeout">How long a message stays</label>
 			</li>
 		</ul>
 	</fieldset>
@@ -259,6 +264,7 @@
 				<input type="submit" id="reset-emotes" class="reset" value="reset emotes" />
 				<p class="explain">Turns the lists and emotes back to the default.</p>
 			</li>
+
 			<li class="headline">
 				<h2>Emote settings for auto-updates</h2>
 				<p class="explain">The emotes we get from the subreddit stylesheet are merged with certain emote lists of the extension. Here you can set, which lists you want the emotes to be automatically be put into. If a list with the provided name doesn't exist, it will be created.</p>
@@ -312,12 +318,13 @@
 					<option value="172800000">2 days</option>
 					<option value="604800000">1 week</option>
 				</select>
-				<label>Interval to check the subreddit stylesheets for changes</label>
+				<label for="intervalToCheckCSS">Interval to check the subreddit stylesheets for changes</label>
 				<p class="explain">
 					Update checks occur every time you visit reddit or this options page.<br />
 					If equal or more time than set here has passed since the last check, an update is started.
 				</p>
 			</li>
+
 			<li class="headline">
 				<h2>Compatibility</h2>
 			</li>
@@ -331,6 +338,7 @@
 				<label for="adjustForGrEmB">Adjust for GrEmB</label>
 				<p class="explain"><em>(Please note that GrEmB is discontinued.)</em> If you use <a href="http://nallar.me/scripts/">GrEmB</a> to display out-of-sub emotes, an extra CSS class has to be added to the emotes inside of the MLE box.</p>
 			</li>
+
 			<li class="headline">
 				<h2>Backup</h2>
 			</li>
