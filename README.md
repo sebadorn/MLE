@@ -5,10 +5,8 @@
 
 ## ToDo
 
-* `[Feature]` Add easy way to use modifiers (-combine, -i, -in, -r, -shift, -slide, -spin)
 * `[Feature]` Add option for a context menu per browser API (not HTML, but actually extending it)
 * `[Feature]` Options to style context menu
-* `[Bug]` Use "r" prefix instead of "-r" suffix for default emotes
 * `[Bug]` Context sub menu taking its time on first opening
 * `[Bug]` Quotation marks for list names are bad and break things. There is a reeeaaally weird bug, where a variable suddenly becomes unusable and I have no idea what's going on. Seriously. Do yourself a favor and don't use quotation marks for the time being.
 
@@ -27,3 +25,4 @@
 * `[Bug]` Renaming a list per right-click doesn't work on the whole area.
 * `[Bug]` Emote count of a list doesn't update when adding an emote (only after a page reload)
 * `[Bug]` Context menu being positioned partly out of view
+* `[Bug]` Use "r" prefix instead of "-r" suffix for default emotes

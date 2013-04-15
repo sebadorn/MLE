@@ -1113,6 +1113,8 @@
 						"display: inline-block !important; float: none !important; border: 1px solid " + cfg.boxEmoteBorder + "; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;",
 				".mle-block% a:hover":
 						"border-color: #96BFE9;",
+				".mle-warning":
+						"color: #808080; margin-bottom: 10px; text-align: center; text-shadow: 1px 1px 0 #ffffff;",
 				// Notifier
 				".mle-msg%":
 						"background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; " + cfg.msgPosition + ": -200px; padding: 19px 0; text-align: center; width: 100%; z-index: 10100; -moz-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -webkit-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -o-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms;",
@@ -1408,12 +1410,11 @@
 		createEmoteBlocksAndNav: function() {
 			var d = document,
 			    g = GLOBAL;
-			var fragmentNode = d.createDocumentFragment(),
-			    listNav = d.createElement( "ul" ),
-			    listLink,
-			    emoteBlock;
-			var emoteList,
-			    countBlocks = 0;
+			var countBlocks = 0,
+			    fragmentNode = d.createDocumentFragment(),
+			    here = window.location.pathname.toLowerCase(),
+			    listNav = d.createElement( "ul" );
+			var emoteBlock, emoteList, listLink, warn;
 
 			// Add navigation
 			this.preventOverScrolling( listNav );
@@ -1430,6 +1431,16 @@
 				emoteBlock = d.createElement( "div" );
 				emoteBlock.className = "mle-block" + g.noise;
 				this.preventOverScrolling( emoteBlock );
+
+				// Display a little warning for the Plounge emote list, if opened in
+				// r/mylittlepony since those emotes won't be visible for not-pony-script-users.
+				if( here.indexOf( "/r/mylittlepony/" ) == 0
+						&& listName == g.config.listNamePlounge ) {
+					warn = document.createElement( "p" );
+					warn.className = "mle-warning";
+					warn.textContent = "Please remember that the emotes of this list won't be visible to people without an extension like MLE or BPM in this subreddit.";
+					emoteBlock.appendChild( warn );
+				}
 
 				// Add the emotes to the block
 				emoteBlock.appendChild( this.createEmotesOfList( emoteList ) );
