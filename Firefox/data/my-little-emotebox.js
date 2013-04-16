@@ -431,10 +431,11 @@
 				|| nodeHTML.indexOf( 'href="//' ) > -1
 				|| nodeHTML.indexOf( 'href="/http://' ) > -1
 				|| node.pathname == "/"
-				|| ( node.pathname.indexOf( "/gold" ) == 0 && node.search.length > 0 )
 				|| node.pathname.indexOf( "/r/" ) == 0
 				|| node.pathname.indexOf( "/user/" ) == 0
 				|| node.pathname.indexOf( "/message/" ) == 0
+				|| node.pathname.indexOf( "/gold" ) == 0
+				|| node.pathname.indexOf( "/prefs" ) == 0
 				|| node.pathname == "/account-activity" ) {
 			return false;
 		}
