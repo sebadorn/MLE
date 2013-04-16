@@ -173,6 +173,10 @@ var DEFAULT_CONFIG = {
 	boxWidthMinimized: 70, // [px]
 	boxUnderHeader: true,
 	ctxMenu: true,
+	ctxStyleBgColor: "#ffffff",
+	ctxStyleBorderColor: "#d0d0d0",
+	ctxStyleColor: "#101010",
+	ctxStyleHoverColor: "#cee3f8",
 	displayEmotesOutOfSub: true,
 	injectEmoteCSS: true,
 	intervalToCheckCSS: 43200000, // [ms] // Default is 12 hours.
@@ -190,10 +194,10 @@ var DEFAULT_CONFIG = {
 	revealStyleColor: "#808080",
 	searchGroupEmotes: true, // Group emotes by table/subreddit
 	showEmoteTitleText: false,
-	showTitleStyleBgColor: "#f4f4f4",
-	showTitleStyleBorderColor: "#e0e0e0",
-	showTitleStyleColor: "#606060",
-	showTitleStyleDisplay: "float", // "float" or "block"
+	showTitleStyleBgColor: "rgba(255,255,255,0.0)",
+	showTitleStyleBorderColor: "rgba(255,255,255,0.0)",
+	showTitleStyleColor: "#808080",
+	showTitleStyleDisplay: "block", // "block" or "float"
 	stopEmoteLinkFollowing: true
 };
 

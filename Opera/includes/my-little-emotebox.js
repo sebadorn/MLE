@@ -1153,7 +1153,7 @@
 			if( cfg.ctxMenu ) {
 				css["#mle-ctxmenu%,\
 				     .diag"] =
-						"cursor: default; display: none; position: fixed; z-index: 50000000; white-space: nowrap; background-color: #ffffff; border: 1px solid #d0d0d0; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;";
+						"color: " + cfg.ctxStyleColor + "; cursor: default; display: none; position: fixed; z-index: 50000000; white-space: nowrap; background-color: " + cfg.ctxStyleBgColor + "; border: 1px solid " + cfg.ctxStyleBorderColor + "; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;";
 				css["#mle-ctxmenu% li"] =
 						"display: none;";
 				css["#mle-ctxmenu% li,\
@@ -1161,7 +1161,7 @@
 						"margin: 2px 0; padding: 5px 14px;";
 				css["#mle-ctxmenu% li:hover,\
 				     .diag li:hover"] =
-						"background-color: #cee3f8;";
+						"background-color: " + cfg.ctxStyleHoverColor + ";";
 				css["#mle-ctxmenu%.in-box .in,\
 				     #mle-ctxmenu%.out-of-box .out"] =
 						"display: block;";

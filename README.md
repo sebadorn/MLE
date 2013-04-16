@@ -6,13 +6,13 @@
 ## ToDo
 
 * `[Feature]` Add option for a context menu per browser API (not HTML, but actually extending it)
-* `[Feature]` Options to style context menu
 * `[Bug]` Context sub menu taking its time on first opening
 * `[Bug]` Quotation marks for list names are bad and break things. There is a reeeaaally weird bug, where a variable suddenly becomes unusable and I have no idea what's going on. Seriously. Do yourself a favor and don't use quotation marks for the time being.
 
 
 ## Done
 
+* `[Feature]` Options to style context menu
 * `[Feature]` Emote click-blocker
 * `[Feature]` Alt text displayer
 * `[Feature]` MLE ctx menu active inside the BPM emote search

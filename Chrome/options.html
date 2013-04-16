@@ -195,13 +195,13 @@
 			</li>
 			<li>
 				<select id="showTitleStyleDisplay">
-					<option value="float">float</option>
 					<option value="block">block</option>
+					<option value="float">float</option>
 				</select>
 				<label for="showTitleStyleDisplay">Type of the text container</label>
 				<p class="explain">
-					<strong>float</strong> – Following emotes and text will stay in the same line, if possible.<br />
-					<strong>block</strong> – The text will fill the whole line and following text or emotes will be forced into the next line. Setting the border and background color to transparent (<code>rgba(0,0,0,0.0)</code>) may look best with the <em>block</em> setting.
+					<strong>block</strong> – The text will fill the whole line and following text or emotes will be forced into the next line. Setting the border and background color to transparent (<code>rgba(0,0,0,0.0)</code>) may look best with the <em>block</em> setting.<br />
+					<strong>float</strong> – Following emotes and text will stay in the same line, if possible.
 				</p>
 			</li>
 			<li>
@@ -216,6 +216,27 @@
 			<li>
 				<input type="text" class="color" id="showTitleStyleColor" value="" />
 				<label for="showTitleStyleColor">Text color</label>
+			</li>
+
+			<li class="headline">
+				<h2>Context menu</h2>
+			</li>
+			<li>
+				<input type="text" class="color" id="ctxStyleBgColor" value="" />
+				<label for="ctxStyleBgColor">Background color</label>
+				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
+			</li>
+			<li>
+				<input type="text" class="color" id="ctxStyleBorderColor" value="" />
+				<label for="ctxStyleBorderColor">Border color</label>
+			</li>
+			<li>
+				<input type="text" class="color" id="ctxStyleColor" value="" />
+				<label for="ctxStyleColor">Text color</label>
+			</li>
+			<li>
+				<input type="text" class="color" id="ctxStyleHoverColor" value="" />
+				<label for="ctxStyleHoverColor">Highlight color</label>
 			</li>
 
 			<li class="headline">
