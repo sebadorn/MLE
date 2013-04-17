@@ -436,6 +436,7 @@
 				|| node.pathname.indexOf( "/message/" ) == 0
 				|| node.pathname.indexOf( "/gold" ) == 0
 				|| node.pathname.indexOf( "/prefs" ) == 0
+				|| node.pathname.indexOf( "/password" ) == 0
 				|| node.pathname == "/account-activity" ) {
 			return false;
 		}
@@ -2082,9 +2083,13 @@
 				return;
 			}
 
+			if( emote.offsetWidth > 0 && emote.offsetHeight > 0 ) {
+				return;
+			}
+
 			var emoteStyle = window.getComputedStyle( emote );
 
-			if( ( emoteStyle.width == "auto" || emoteStyle.width == "0px" )
+			if( ( emoteStyle.width == "0px" || emoteStyle.width == "auto" )
 					&& ( emoteStyle.height == "0px" || emoteStyle.height == "auto" ) ) {
 				emote.className += " mle-revealemote";
 				emote.textContent = emote.pathname;
