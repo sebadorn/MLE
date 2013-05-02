@@ -1025,7 +1025,8 @@
 	 * adjust the window size.
 	 */
 	function trackMouseDownEnd_Resize( e ) {
-		var g = GLOBAL,
+		var d = document,
+		    g = GLOBAL,
 		    m = g.MOUSE,
 		    mc = g.REF.mainCont,
 		    posX = mc.offsetLeft,
@@ -1040,8 +1041,8 @@
 		m.lastX = null;
 		m.lastY = null;
 
-		document.removeEventListener( "mousemove", resizeMLE, false );
-		document.removeEventListener( "mouseup", trackMouseDownEnd_Resize, false );
+		d.removeEventListener( "mousemove", resizeMLE, false );
+		d.removeEventListener( "mouseup", trackMouseDownEnd_Resize, false );
 
 		// Update config in this tab – part 1
 		g.config.boxWidth = boxWidth;
@@ -1063,6 +1064,21 @@
 		};
 
 		saveChangesToStorage( BG_TASK.SAVE_CONFIG, update );
+
+		// Adjust CSS just until the next page reload
+		var tempStyle = d.getElementById( "MLE-temp" + g.noise );
+
+		if( !tempStyle ) {
+			tempStyle = d.createElement( "style" );
+			tempStyle.type = "text/css";
+			tempStyle.id = "MLE-temp" + g.noise;
+		}
+
+		tempStyle.textContent = "#mle" + g.noise + ".show { width: " + boxWidth + "px !important; height: " + boxHeight + "px !important; }";
+		d.getElementsByTagName( "head" )[0].appendChild( tempStyle );
+
+		mc.style.width = "";
+		mc.style.height = "";
 	};
 
 
@@ -1072,24 +1088,30 @@
 	 * @param {String} direction "sw" or "se".
 	 */
 	function trackMouseDownStart_Resize( e, direction ) {
-		var g = GLOBAL,
+		var d = document,
+		    g = GLOBAL,
 		    m = g.MOUSE,
-		    mc = g.REF.mainCont;
+		    mc = g.REF.mainCont,
+		    tempStyle = d.getElementById( "MLE-temp" + g.noise );
+
+		if( tempStyle ) {
+			tempStyle.textContent = "";
+		}
 
 		mc.style.MozTransition = "none !important";
 		mc.style.OTransition = "none !important";
 		mc.style.webkitTransition = "none !important";
 		mc.style.transition = "none !important";
 
-		mc.style.width = mc.offsetWidth + "px";
-		mc.style.height = mc.offsetHeight + "px";
+		mc.style.width = g.config.boxWidth + "px";
+		mc.style.height = g.config.boxHeight + "px";
 
 		m.lastX = e.clientX;
 		m.lastY = e.clientY;
 		m.resizeDirection = direction;
 
-		document.addEventListener( "mousemove", resizeMLE, false );
-		document.addEventListener( "mouseup", trackMouseDownEnd_Resize, false );
+		d.addEventListener( "mousemove", resizeMLE, false );
+		d.addEventListener( "mouseup", trackMouseDownEnd_Resize, false );
 	};
 
 
