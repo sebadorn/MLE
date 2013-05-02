@@ -11,7 +11,10 @@
 		// Keep track of mouse stats
 		MOUSE: {
 			lastX: null,
-			lastY: null
+			lastY: null,
+			resizeDirection: null,
+			resizeLimitWidth: 400,
+			resizeLimitHeight: 200
 		},
 		// Reference to the timeout object for the notifier
 		msgTimeout: null,
@@ -632,35 +635,6 @@
 
 
 	/**
-	 * Reorder emote list. (Not the emotes, but the lists itself.)
-	 * @param  {String} moving    Name of list to insert before "inFrontOf".
-	 * @param  {String} inFrontOf Name of list, that "moving" will be inserted in front of.
-	 * @return {Object} Reordered list.
-	 */
-	function reorderList( moving, inFrontOf ) {
-		var g = GLOBAL;
-		var reordered = {},
-		    block;
-
-		if( moving == inFrontOf ) {
-			return g.emotes;
-		}
-
-		for( block in g.emotes ) {
-			if( block == moving ) {
-				continue;
-			}
-			if( block == inFrontOf ) {
-				reordered[moving] = g.emotes[moving];
-			}
-			reordered[block] = g.emotes[block];
-		}
-
-		return reordered;
-	};
-
-
-	/**
 	 * Remember the currently focused/active textarea
 	 * (if there is one) as input for the emotes.
 	 */
@@ -691,6 +665,83 @@
 		else if( g.REF.searchPage.parentNode == g.REF.mainCont ) {
 			g.REF.mainCont.removeChild( g.REF.searchPage );
 		}
+	};
+
+
+	/**
+	 * Reorder emote list. (Not the emotes, but the lists itself.)
+	 * @param  {String} moving    Name of list to insert before "inFrontOf".
+	 * @param  {String} inFrontOf Name of list, that "moving" will be inserted in front of.
+	 * @return {Object} Reordered list.
+	 */
+	function reorderList( moving, inFrontOf ) {
+		var g = GLOBAL;
+		var reordered = {},
+		    block;
+
+		if( moving == inFrontOf ) {
+			return g.emotes;
+		}
+
+		for( block in g.emotes ) {
+			if( block == moving ) {
+				continue;
+			}
+			if( block == inFrontOf ) {
+				reordered[moving] = g.emotes[moving];
+			}
+			reordered[block] = g.emotes[block];
+		}
+
+		return reordered;
+	};
+
+
+	/**
+	 * Resize the MLE window.
+	 * @param {MouseEvent} e MouseEvent from a "mousemove".
+	 */
+	function resizeMLE( e ) {
+		e.preventDefault();
+
+		var g = GLOBAL,
+		    m = g.MOUSE,
+		    mainCont = g.REF.mainCont,
+		    moveX = e.clientX - m.lastX,
+		    moveY = e.clientY - m.lastY,
+		    newHeight = mainCont.offsetHeight + moveY,
+		    newWidth = mainCont.offsetWidth,
+		    adjustPosX = true;
+
+		newWidth += ( m.resizeDirection == "sw" ) ? -moveX : moveX;
+
+		// Limits
+		if( newWidth < m.resizeLimitWidth ) {
+			newWidth = m.resizeLimitWidth;
+			adjustPosX = false;
+		}
+		if( newHeight < m.resizeLimitHeight ) {
+			newHeight = m.resizeLimitHeight;
+		}
+
+		// Move window only if width limit has not been reached
+		if( adjustPosX ) {
+			// X axis orientates to the left
+			if( g.config.boxAlign == "left" && m.resizeDirection == "sw" ) {
+				mainCont.style.left = ( mainCont.offsetLeft + moveX ) + "px";
+			}
+			// X axis oritentates to the right
+			else if( g.config.boxAlign == "right" && m.resizeDirection == "se" ) {
+				var mcRight = parseInt( mainCont.style.right.replace( "px", "" ), 10 );
+				mainCont.style.right = ( mcRight - moveX ) + "px";
+			}
+		}
+
+		mainCont.style.width = newWidth + "px";
+		mainCont.style.height = newHeight + "px";
+
+		m.lastX = e.clientX;
+		m.lastY = e.clientY;
 	};
 
 
@@ -882,27 +933,49 @@
 	function trackMouseDown( e ) {
 		e.preventDefault();
 
-		if( e.which == 1 && e.type == "mousedown" ) {
-			trackMouseDownStart( e );
+		// Move (drag) or Resize
+		var cn = e.target.className,
+		    hasCase;
+
+		if( cn.indexOf( "mle-dragbar" ) >= 0 ) {
+			hasCase = "MOVE";
 		}
-		else {
-			trackMouseDownEnd( e );
+		else if( cn.indexOf( "mle-resizer" ) >= 0 ) {
+			hasCase = "RESIZE";
+		}
+
+		// In case of mouse down
+		if( e.which == 1 && e.type == "mousedown" ) {
+			switch( hasCase ) {
+				case "MOVE":
+					trackMouseDownStart_Move( e );
+					break;
+				case "RESIZE":
+					var direction = "se";
+					if( cn.indexOf( "mle-resizer0" ) >= 0 ) {
+						direction = "sw";
+					}
+					trackMouseDownStart_Resize( e, direction );
+					break;
+			}
 		}
 	};
 
 
 	/**
-	 * Start tracking the mouse movement.
+	 * Start tracking the mouse movement and
+	 * adjust the window position.
 	 */
-	function trackMouseDownEnd( e ) {
+	function trackMouseDownEnd_Move( e ) {
 		var g = GLOBAL,
 		    m = g.MOUSE;
-		var posX = g.REF.mainCont.offsetLeft,
-		    update = {};
+		var posX = g.REF.mainCont.offsetLeft;
 
 		m.lastX = null;
 		m.lastY = null;
+
 		document.removeEventListener( "mousemove", moveMLE, false );
+		document.removeEventListener( "mouseup", trackMouseDownEnd_Move, false );
 
 		if( g.config.boxAlign == "right" ) {
 			posX = convertMainContLTR( posX, true );
@@ -910,10 +983,15 @@
 			g.REF.mainCont.style.left = "";
 		}
 
-		update = {
+		// Update config in this tab
+		g.config.boxPosTop = g.REF.mainCont.offsetTop;
+		g.config.boxPosX = posX;
+
+		var update = {
 			boxPosTop: g.REF.mainCont.offsetTop,
 			boxPosX: posX
 		};
+
 		saveChangesToStorage( BG_TASK.SAVE_CONFIG, update );
 	};
 
@@ -922,7 +1000,7 @@
 	 * Stop tracking the mouse movement and
 	 * save the window position.
 	 */
-	function trackMouseDownStart( e ) {
+	function trackMouseDownStart_Move( e ) {
 		var g = GLOBAL,
 		    m = g.MOUSE;
 
@@ -936,7 +1014,82 @@
 
 		m.lastX = e.clientX;
 		m.lastY = e.clientY;
+
 		document.addEventListener( "mousemove", moveMLE, false );
+		document.addEventListener( "mouseup", trackMouseDownEnd_Move, false );
+	};
+
+
+	/**
+	 * Start tracking the mouse movement and
+	 * adjust the window size.
+	 */
+	function trackMouseDownEnd_Resize( e ) {
+		var g = GLOBAL,
+		    m = g.MOUSE,
+		    mc = g.REF.mainCont,
+		    posX = mc.offsetLeft,
+		    boxWidth = mc.style.width.replace( "px", "" ),
+		    boxHeight = mc.style.height.replace( "px", "" );
+
+		mc.style.MozTransition = "";
+		mc.style.OTransition = "";
+		mc.style.webkitTransition = "";
+		mc.style.transition = "";
+
+		m.lastX = null;
+		m.lastY = null;
+
+		document.removeEventListener( "mousemove", resizeMLE, false );
+		document.removeEventListener( "mouseup", trackMouseDownEnd_Resize, false );
+
+		// Update config in this tab – part 1
+		g.config.boxWidth = boxWidth;
+		g.config.boxHeight = boxHeight;
+
+		if( g.config.boxAlign == "right" ) {
+			posX = convertMainContLTR( posX, true );
+			g.REF.mainCont.style.right = posX + "px";
+			g.REF.mainCont.style.left = "";
+		}
+
+		// Update config in this tab – part 2
+		g.config.boxPosX = posX;
+
+		var update = {
+			boxWidth: boxWidth,
+			boxHeight: boxHeight,
+			boxPosX: posX
+		};
+
+		saveChangesToStorage( BG_TASK.SAVE_CONFIG, update );
+	};
+
+
+	/**
+	 * Stop tracking the mouse movement and
+	 * save the window size.
+	 * @param {String} direction "sw" or "se".
+	 */
+	function trackMouseDownStart_Resize( e, direction ) {
+		var g = GLOBAL,
+		    m = g.MOUSE,
+		    mc = g.REF.mainCont;
+
+		mc.style.MozTransition = "none !important";
+		mc.style.OTransition = "none !important";
+		mc.style.webkitTransition = "none !important";
+		mc.style.transition = "none !important";
+
+		mc.style.width = mc.offsetWidth + "px";
+		mc.style.height = mc.offsetHeight + "px";
+
+		m.lastX = e.clientX;
+		m.lastY = e.clientY;
+		m.resizeDirection = direction;
+
+		document.addEventListener( "mousemove", resizeMLE, false );
+		document.addEventListener( "mouseup", trackMouseDownEnd_Resize, false );
 	};
 
 
@@ -1057,6 +1210,15 @@
 						"bottom: 0; height: 10px; left: 0; width: 100%;",
 				".mle-dragbar3": // top
 						"height: 32px; left: 0; top: 0; width: 100%;",
+				// Resize handles
+				".mle-resizer":
+						"bottom: 0; display: none; height: 10px; position: absolute; width: 10px;",
+				".mle-resizer:hover":
+						"background-color: rgba( 10, 10, 10, 0.1 );",
+				".mle-resizer0":
+						"border-top-right-radius: 2px; cursor: sw-resize; left: 0;",
+				".mle-resizer1":
+						"border-top-left-radius: 2px; cursor: se-resize; right: 0;",
 				// Header
 				"#mle% .mle-header":
 						"display: block; color: #303030; font-weight: bold; padding: 6px 0; text-align: center;",
@@ -1210,28 +1372,26 @@
 			var d = document,
 			    g = GLOBAL;
 			var fragmentNode = d.createDocumentFragment();
-			var close, dragbar, labelMain, mngPage, mngTrigger,
-			    msg, optTrigger, searchTrigger, searchPage;
 
 			// Add headline
-			labelMain = d.createElement( "strong" );
+			var labelMain = d.createElement( "strong" );
 			labelMain.className = "mle-header";
 			labelMain.textContent = g.config.boxLabelMinimized;
 
 			// Add close button
-			close = d.createElement( "span" );
+			var close = d.createElement( "span" );
 			close.className = "mle-close mle-btn";
 			close.textContent = "x";
 			close.addEventListener( "click", mainContainerHide, false );
 
 			// Add manage link
-			mngTrigger = d.createElement( "span" );
+			var mngTrigger = d.createElement( "span" );
 			mngTrigger.className = "mle-mng-link mle-btn";
 			mngTrigger.textContent = "Manage";
 			mngTrigger.addEventListener( "click", showManagePage, false );
 
 			// Add options link
-			optTrigger = d.createElement( "span" );
+			var optTrigger = d.createElement( "span" );
 			optTrigger.className = "mle-opt-link mle-btn";
 			optTrigger.textContent = "Options";
 			optTrigger.title = "Opens the options page";
@@ -1240,27 +1400,28 @@
 			}, false );
 
 			// Add search field
-			searchTrigger = d.createElement( "input" );
+			var searchTrigger = d.createElement( "input" );
 			searchTrigger.className = "mle-search";
 			searchTrigger.value = "search";
 			searchTrigger.addEventListener( "click", Search.activate, false );
 			searchTrigger.addEventListener( "keyup", Search.submit.bind( Search ), false );
 
 			// Add search page
-			searchPage = d.createElement( "div" );
+			var searchPage = d.createElement( "div" );
 			searchPage.className = "mle-block" + g.noise;
 			this.preventOverScrolling( searchPage );
 
 			// Add manage page
-			mngPage = d.createElement( "div" );
+			var mngPage = d.createElement( "div" );
 			mngPage.className = "mle-manage" + g.noise;
 
 			// Add most-of-the-time-hidden message block
 			// (NOT a part of the main container)
-			msg = d.createElement( "p" );
+			var msg = d.createElement( "p" );
 			msg.className = "mle-msg" + g.noise;
 
-			// Add invisible dragging bars
+			// Add dragging bars
+			var dragbar;
 			for( var i = 0; i < 4; i++ ) {
 				dragbar = d.createElement( "div" );
 				dragbar.className = "mle-dragbar mle-dragbar" + i;
@@ -1268,6 +1429,17 @@
 				dragbar.addEventListener( "mouseup", trackMouseDown, false );
 
 				fragmentNode.appendChild( dragbar );
+			}
+
+			// Add resize handles
+			var resizer;
+			for( var i = 0; i < 2; i++ ) {
+				resizer = d.createElement( "div" );
+				resizer.className = "mle-resizer mle-resizer" + i;
+				resizer.addEventListener( "mousedown", trackMouseDown, false );
+				resizer.addEventListener( "mouseup", trackMouseDown, false );
+
+				fragmentNode.appendChild( resizer );
 			}
 
 			// Append all the above to the DOM fragment
@@ -1670,7 +1842,6 @@
 			var frag = appendChildren( document.createDocumentFragment(), areas );
 
 			this.preventOverScrolling( form );
-
 			form.appendChild( frag );
 		},
 
