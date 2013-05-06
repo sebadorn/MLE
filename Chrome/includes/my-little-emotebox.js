@@ -497,16 +497,15 @@
 	 * Minimize main container.
 	 */
 	function mainContainerHide( e ) {
-		var g = GLOBAL;
+		var g = GLOBAL,
+		    mc = g.REF.mainCont;
 
 		e.preventDefault();
 
-		// While box closes, remove mouse event for opening.
-		// Afterwards add it again.
+		// Wait with adding the event listener.
 		// Prevents the box from opening again, if mouse cursor hovers
 		// over the closing (CSS3 transition) box.
-		g.REF.mainCont.removeEventListener( "mouseover", mainContainerShow, false );
-		g.REF.mainCont.className = "";
+		mc.className = mc.className.replace( " show", "" );
 
 		setTimeout( function() {
 			GLOBAL.REF.mainCont.addEventListener( "mouseover", mainContainerShow, false );
@@ -518,7 +517,12 @@
 	 * Fully display main container.
 	 */
 	function mainContainerShow( e ) {
-		GLOBAL.REF.mainCont.className = "show";
+		var mc = GLOBAL.REF.mainCont;
+
+		if( mc.className.indexOf( " show" ) < 0 ) {
+			mc.className += " show";
+			mc.removeEventListener( "mouseover", mainContainerShow, false );
+		}
 	};
 
 
@@ -1033,10 +1037,7 @@
 		    boxWidth = mc.style.width.replace( "px", "" ),
 		    boxHeight = mc.style.height.replace( "px", "" );
 
-		mc.style.MozTransition = "";
-		mc.style.OTransition = "";
-		mc.style.webkitTransition = "";
-		mc.style.transition = "";
+		mc.className += " transition";
 
 		m.lastX = null;
 		m.lastY = null;
@@ -1098,10 +1099,7 @@
 			tempStyle.textContent = "";
 		}
 
-		mc.style.MozTransition = "none !important";
-		mc.style.OTransition = "none !important";
-		mc.style.webkitTransition = "none !important";
-		mc.style.transition = "none !important";
+		mc.className = mc.className.replace( " transition", "" );
 
 		mc.style.width = g.config.boxWidth + "px";
 		mc.style.height = g.config.boxHeight + "px";
@@ -1217,7 +1215,9 @@
 						"background-color: #404040;",
 				// Inactive state
 				"#mle%":
-						"background-color: " + cfg.boxBgColor + "; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px; -moz-transition: width " + cfg.boxAnimationSpeed + "ms; -webkit-transition: width " + cfg.boxAnimationSpeed + "ms; -o-transition: width " + cfg.boxAnimationSpeed + "ms; transition: width " + cfg.boxAnimationSpeed + "ms;",
+						"background-color: " + cfg.boxBgColor + "; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px;",
+				"#mle%.transition":
+						"-moz-transition: width " + cfg.boxAnimationSpeed + "ms; -webkit-transition: width " + cfg.boxAnimationSpeed + "ms; -o-transition: width " + cfg.boxAnimationSpeed + "ms; transition: width " + cfg.boxAnimationSpeed + "ms;",
 				// Active state
 				"#mle%.show":
 						"width: " + cfg.boxWidth + "px; height: " + cfg.boxHeight + "px; padding: 36px 10px 10px; z-index: 10000;",
@@ -1234,13 +1234,13 @@
 						"height: 32px; left: 0; top: 0; width: 100%;",
 				// Resize handles
 				".mle-resizer":
-						"bottom: 0; display: none; height: 10px; position: absolute; width: 10px;",
+						"background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAG0lEQVQY02NgIBFoEKuQf+AUaxCrmH9wKMYKALBdAnfp7Ex1AAAAAElFTkSuQmCC'); bottom: 0; display: none; height: 10px; position: absolute; width: 10px;",
 				".mle-resizer:hover":
 						"background-color: rgba( 10, 10, 10, 0.1 );",
 				".mle-resizer0":
 						"border-top-right-radius: 2px; cursor: sw-resize; left: 0;",
 				".mle-resizer1":
-						"border-top-left-radius: 2px; cursor: se-resize; right: 0;",
+						"border-top-left-radius: 2px; cursor: se-resize; right: 0; -o-transform: scaleX( -1 ); -webkit-transform: scaleX( -1 ); transform: scaleX( -1 );",
 				// Header
 				"#mle% .mle-header":
 						"display: block; color: #303030; font-weight: bold; padding: 6px 0; text-align: center;",
@@ -1803,6 +1803,7 @@
 			var main = d.createElement( "div" );
 
 			main.id = "mle" + GLOBAL.noise;
+			main.className = " transition";
 			main.addEventListener( "mouseover", rememberActiveTextarea, false );
 			main.addEventListener( "mouseover", mainContainerShow, false );
 
