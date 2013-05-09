@@ -508,8 +508,8 @@
 		mc.className = mc.className.replace( " show", "" );
 
 		setTimeout( function() {
-			GLOBAL.REF.mainCont.addEventListener( "mouseover", mainContainerShow, false );
-		}, g.config.boxAnimationSpeed + 100 );
+			this.addEventListener( "mouseover", mainContainerShow, false );
+		}.bind( mc ), g.config.boxAnimationSpeed + 100 );
 	};
 
 
@@ -2746,10 +2746,9 @@
 		createDialogSaveEmote: function( x, y ) {
 			if( !this.REF.dialogSaveEmote ) {
 				var d = document,
-				    emotes = GLOBAL.emotes;
-				var cont = d.createElement( "ul" ),
-				    list;
-				var listName;
+				    emotes = GLOBAL.emotes,
+				    cont = d.createElement( "ul" );
+				var list, listName;
 
 				// Add available lists
 				for( listName in emotes ) {
