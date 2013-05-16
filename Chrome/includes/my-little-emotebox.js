@@ -434,13 +434,16 @@
 				|| nodeHTML.indexOf( 'href="//' ) > -1
 				|| nodeHTML.indexOf( 'href="/http://' ) > -1
 				|| node.pathname == "/"
-				|| node.pathname.indexOf( "/r/" ) == 0
-				|| node.pathname.indexOf( "/user/" ) == 0
-				|| node.pathname.indexOf( "/message/" ) == 0
 				|| node.pathname.indexOf( "/gold" ) == 0
+				|| node.pathname.indexOf( "/account-activity" ) == 0
 				|| node.pathname.indexOf( "/prefs" ) == 0
 				|| node.pathname.indexOf( "/password" ) == 0
-				|| node.pathname == "/account-activity" ) {
+				|| node.pathname.indexOf( "/about" ) == 0
+				|| node.pathname.indexOf( "/ad_inq" ) == 0
+				|| node.pathname.indexOf( "/bookmarklets" ) == 0
+				|| node.pathname.indexOf( "/buttons" ) == 0
+				|| node.pathname.indexOf( "/feedback" ) == 0
+				|| node.pathname.indexOf( "/widget" ) == 0 ) {
 			return false;
 		}
 
@@ -769,9 +772,19 @@
 			emote = emote.substring( 1 );
 		}
 
+		// Remove modifier flags
+		if( emote.indexOf( "-" ) > -1 ) {
+			emote = emote.split( "-" )[0];
+		}
+
 		// Only save if not already in list
 		if( g.emotes[list].indexOf( emote ) > -1 ) {
 			showMsg( "This emote is already in the list." );
+			return;
+		}
+		// Don't save mirrored ones either
+		if( emote[0] == "r" && g.emotes[list].indexOf( emote.substring( 1 ) ) > -1 ) {
+			showMsg( "This emote is a mirrored version of one already in the list." );
 			return;
 		}
 
