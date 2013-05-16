@@ -180,6 +180,7 @@ var DEFAULT_CONFIG = {
 	displayEmotesOutOfSub: true,
 	injectEmoteCSS: true,
 	intervalToCheckCSS: 43200000, // [ms] // Default is 12 hours.
+	keyReverse: 17, // ctrl
 	listNameTableA: "A", // Name of the list for the emotes of table A
 	listNameTableB: "B", // Name of the list for the emotes of table B
 	listNameTableC: "C", // Name of the list for the emotes of table C

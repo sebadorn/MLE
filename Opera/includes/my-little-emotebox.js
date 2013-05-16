@@ -347,7 +347,8 @@
 	 */
 	function insertEmote( e ) {
 		e.preventDefault(); // Don't follow emote link
-		var ta = GLOBAL.REF.focusedInput;
+		var g = GLOBAL,
+		    ta = g.REF.focusedInput;
 
 		mainContainerHide( e );
 		if( !ta ) { return; }
@@ -361,8 +362,11 @@
 
 		// Emote name
 		emote = emote[emote.length - 1];
+
 		// Insert reversed emote version
-		if( e.ctrlKey ) {
+		if( ( g.config.keyReverse == 16 && e.shiftKey )
+				|| ( g.config.keyReverse == 17 && e.ctrlKey )
+				|| ( g.config.keyReverse == 18 && e.altKey ) ) {
 			if( isFromDefaultSub( emote ) ) {
 				emote = "r" + emote;
 			}
@@ -382,7 +386,7 @@
 		}
 
 		// Add a blank after the emote
-		if( GLOBAL.config.addBlankAfterInsert ) {
+		if( g.config.addBlankAfterInsert ) {
 			emote += " ";
 		}
 
