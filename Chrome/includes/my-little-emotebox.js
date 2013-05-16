@@ -1874,7 +1874,7 @@
 		 * @param {DOMElement} emote
 		 */
 		emoteShowTitleText: function( emote ) {
-			if( emote.title == "" ) {
+			if( emote.title == "" || emote.pathname.indexOf( "/spoiler" ) == 0 ) {
 				return;
 			}
 
