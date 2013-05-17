@@ -1894,6 +1894,10 @@
 			if( emote.title == "" || emote.pathname.indexOf( "/spoiler" ) == 0 ) {
 				return;
 			}
+			// Don't reveal title text if it's some emote info put there by BPM
+			if( emote.title.match( / from r\/[a-z0-9-_]+$/i ) ) {
+				return;
+			}
 
 			var text = document.createElement( "span" );
 
