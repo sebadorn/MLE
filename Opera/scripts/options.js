@@ -18,7 +18,7 @@ function exportConfig( e ) {
 	var ta = document.getElementById( "export-config-ta" );
 
 	ta.value = JSON.stringify( CONFIG );
-};
+}
 
 
 /**
@@ -29,7 +29,7 @@ function exportEmotes( e ) {
 
 	ta.value = JSON.stringify( EMOTES );
 	showMsg( ta.value.length + " bytes", "info" );
-};
+}
 
 
 /**
@@ -42,7 +42,7 @@ function forceUpdate( e ) {
 	e.target.setAttribute( "readonly", "readonly" );
 
 	postMessage( { task: BG_TASK.UPDATE_CSS } );
-};
+}
 
 
 /**
@@ -50,7 +50,7 @@ function forceUpdate( e ) {
  */
 function getOptionValue( select ) {
 	return select.options[select.selectedIndex].value;
-};
+}
 
 
 /**
@@ -78,7 +78,7 @@ function handleBackgroundMessages( e ) {
 			}
 			break;
 	}
-};
+}
 
 
 /**
@@ -88,7 +88,7 @@ function hideMsg() {
 	var msg_box = document.getElementById( "msgbox" );
 
 	msg_box.className = "";
-};
+}
 
 
 /**
@@ -117,7 +117,7 @@ function importConfig( e ) {
 	postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
 	ta.value = "";
 	showMsg( "Import (probably) successful.<br />Changes show after next page load.", "info" );
-};
+}
 
 
 /**
@@ -166,7 +166,7 @@ function importEmotes( e ) {
 
 	showMsg( "Import (probably) successful.<br />Changes show after next page load.", "info" );
 	importField.value = "";
-};
+}
 
 
 /**
@@ -186,7 +186,7 @@ function insertMetaData() {
 	if( minutes < 10 ) { minutes = "0" + minutes; }
 
 	lastCheck.value = date.getFullYear() + "-" + month + "-" + day + " " + hours + ":" + minutes;
-};
+}
 
 
 /**
@@ -208,7 +208,7 @@ function isColor( color ) {
 		return true;
 	}
 	return false;
-};
+}
 
 
 /**
@@ -216,7 +216,7 @@ function isColor( color ) {
  */
 function loadConfig() {
 	postMessage( { task: BG_TASK.LOAD, loadMeta: true } );
-};
+}
 
 
 /**
@@ -235,7 +235,7 @@ function postMessage( msg ) {
 	else {
 		self.postMessage( msg );
 	}
-};
+}
 
 
 /**
@@ -316,7 +316,7 @@ function registerEventSettingChanged() {
 	exportCfg.addEventListener( "click", exportConfig, false );
 	importCfg.addEventListener( "click", importConfig, false );
 	resetCfg.addEventListener( "click", resetConfig, false );
-};
+}
 
 
 /**
@@ -329,7 +329,7 @@ function registerEventToggleNav() {
 	for( i = 0; i < nav.length; i++ ) {
 		nav[i].addEventListener( "click", toggleNav, false );
 	}
-};
+}
 
 
 /**
@@ -348,7 +348,7 @@ function registerForBackgroundMessages() {
 	else {
 	    self.on( "message", handleBackgroundMessages );
 	}
-};
+}
 
 
 /**
@@ -365,7 +365,7 @@ function resetConfig( e ) {
 			"info"
 		);
 	}
-};
+}
 
 
 /**
@@ -382,7 +382,7 @@ function resetEmotes( e ) {
 			"info"
 		);
 	}
-};
+}
 
 
 /**
@@ -391,7 +391,7 @@ function resetEmotes( e ) {
  */
 function saveEmotes( emotes ) {
 	postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
-};
+}
 
 
 /**
@@ -429,7 +429,7 @@ function saveHandleInput( e ) {
 	}
 
 	return val;
-};
+}
 
 
 /**
@@ -443,7 +443,7 @@ function saveHandleSelect( e ) {
 		val = ( val == "true" );
 	}
 	return val;
-};
+}
 
 
 /**
@@ -472,7 +472,7 @@ function saveSetting( e ) {
 		cfg[cfgName] = val;
 		postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
 	}
-};
+}
 
 
 /**
@@ -487,7 +487,7 @@ function showMsg( msg, mtype ) {
 	msg_paragraph.className = mtype;
 	msg_paragraph.parentNode.className = "show";
 	window.setTimeout( hideMsg, OPT_CFG.MSG_TIMEOUT );
-};
+}
 
 
 /**
@@ -504,7 +504,7 @@ function toggleNav( e ) {
 	}
 
 	e.target.className = "active";
-};
+}
 
 
 
@@ -516,7 +516,7 @@ function init() {
 	registerForBackgroundMessages();
 	loadConfig();
 	registerEventToggleNav();
-};
+}
 
 
 /**
@@ -525,7 +525,7 @@ function init() {
 function init2() {
 	registerEventSettingChanged();
 	insertMetaData();
-};
+}
 
 
 if( document.body ) {

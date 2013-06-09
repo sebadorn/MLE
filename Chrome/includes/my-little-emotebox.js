@@ -57,7 +57,7 @@
 			parent.appendChild( children[i] );
 		}
 		return parent;
-	};
+	}
 
 
 	/**
@@ -76,7 +76,7 @@
 			buttonMLE.addEventListener( "mouseover", rememberActiveTextarea, false );
 			buttonMLE.addEventListener( "click", mainContainerShow, false );
 		}
-	};
+	}
 
 
 	/**
@@ -103,7 +103,7 @@
 				}
 			}
 		}
-	};
+	}
 
 
 	/**
@@ -131,7 +131,7 @@
 		else {
 			document.addEventListener( "DOMNodeInserted", buttonObserverDOMEvent, false );
 		}
-	};
+	}
 
 
 	/**
@@ -152,7 +152,7 @@
 			case "Plounge": return cfg.listNamePlounge;
 			default: return listName;
 		}
-	};
+	}
 
 
 	/**
@@ -167,7 +167,7 @@
 		var w = isMax ? cfg.boxWidth : cfg.boxWidthMinimized;
 
 		return document.body.offsetWidth - left - w;
-	};
+	}
 
 
 	/**
@@ -182,7 +182,7 @@
 		var w = isMax ? cfg.boxWidth : cfg.boxWidthMinimized;
 
 		return document.body.offsetWidth - right - w;
-	};
+	}
 
 
 	/**
@@ -233,7 +233,7 @@
 
 		// Update list counter
 		Builder.updateEmoteCount( list, g.emotes[list].length );
-	};
+	}
 
 
 	/**
@@ -276,7 +276,7 @@
 
 		// Remove context menus. Will be rebuild when needed.
 		ContextMenu.destroyMenus();
-	};
+	}
 
 
 	/**
@@ -284,7 +284,7 @@
 	 */
 	function getOptionValue( select ) {
 		return select.options[select.selectedIndex].value;
-	};
+	}
 
 
 	/**
@@ -339,7 +339,7 @@
 				Builder.removeList( data.deleteList );
 				break;
 		}
-	};
+	}
 
 
 	/**
@@ -405,7 +405,7 @@
 		inputEvent = document.createEvent( "Events" );
 		inputEvent.initEvent( "input", true, true );
 		ta.dispatchEvent( inputEvent );
-	};
+	}
 
 
 	/**
@@ -452,7 +452,7 @@
 		}
 
 		return true;
-	};
+	}
 
 
 	/**
@@ -480,7 +480,7 @@
 		}
 
 		return false;
-	};
+	}
 
 
 	/**
@@ -497,7 +497,7 @@
 		}
 
 		return true;
-	};
+	}
 
 
 	/**
@@ -517,7 +517,7 @@
 		setTimeout( function() {
 			this.addEventListener( "mouseover", mainContainerShow, false );
 		}.bind( mc ), g.config.boxAnimationSpeed + 100 );
-	};
+	}
 
 
 	/**
@@ -530,7 +530,7 @@
 			mc.className += " show";
 			mc.removeEventListener( "mouseover", mainContainerShow, false );
 		}
-	};
+	}
 
 
 	/**
@@ -541,7 +541,7 @@
 		for( var key in emotes ) {
 			GLOBAL.emotes[key] = emotes[key];
 		}
-	};
+	}
 
 
 	/**
@@ -561,7 +561,7 @@
 
 		m.lastX = e.clientX;
 		m.lastY = e.clientY;
-	};
+	}
 
 
 	/**
@@ -580,7 +580,7 @@
 		else {
 			self.postMessage( msg );
 		}
-	};
+	}
 
 
 	/**
@@ -594,7 +594,7 @@
 		}
 
 		return node;
-	};
+	}
 
 
 	/**
@@ -642,7 +642,7 @@
 			name.removeAttribute( "hidden" );
 			list.removeChild( e.target );
 		}
-	};
+	}
 
 
 	/**
@@ -655,7 +655,7 @@
 		if( ae && ae.tagName && ae.tagName.toLowerCase() == "textarea" ) {
 			GLOBAL.REF.focusedInput = ae;
 		}
-	};
+	}
 
 
 	/**
@@ -676,7 +676,7 @@
 		else if( g.REF.searchPage.parentNode == g.REF.mainCont ) {
 			g.REF.mainCont.removeChild( g.REF.searchPage );
 		}
-	};
+	}
 
 
 	/**
@@ -705,7 +705,7 @@
 		}
 
 		return reordered;
-	};
+	}
 
 
 	/**
@@ -753,7 +753,7 @@
 
 		m.lastX = e.clientX;
 		m.lastY = e.clientY;
-	};
+	}
 
 
 	/**
@@ -801,7 +801,7 @@
 
 		// Update emote count of list
 		Builder.updateEmoteCount( list, g.emotes[list].length );
-	};
+	}
 
 
 	/**
@@ -811,7 +811,7 @@
 	 */
 	function saveChangesToStorage( task, update ) {
 		postMessage( { task: task, update: update } );
-	};
+	}
 
 
 	/**
@@ -828,7 +828,7 @@
 		saveEmote( emote, list );
 		inputEmote.value = "";
 		inputEmote.focus();
-	};
+	}
 
 
 	/**
@@ -858,7 +858,7 @@
 
 		inputField.value = "";
 		Builder.updateListsAddNew( listName );
-	};
+	}
 
 
 	/**
@@ -877,7 +877,7 @@
 		}
 
 		gr.mainCont.appendChild( gr.mngPage );
-	};
+	}
 
 
 	/**
@@ -895,7 +895,7 @@
 		g.msgTimeout = setTimeout( function() {
 			GLOBAL.REF.msg.className = "mle-msg" + GLOBAL.noise;
 		}, g.config.msgTimeout );
-	};
+	}
 
 
 	/**
@@ -904,7 +904,7 @@
 	 */
 	function stopEvent( e ) {
 		e.preventDefault();
-	};
+	}
 
 
 	/**
@@ -945,7 +945,7 @@
 				}
 			}
 		}
-	};
+	}
 
 
 	/**
@@ -980,7 +980,7 @@
 					break;
 			}
 		}
-	};
+	}
 
 
 	/**
@@ -1014,7 +1014,7 @@
 		};
 
 		saveChangesToStorage( BG_TASK.SAVE_CONFIG, update );
-	};
+	}
 
 
 	/**
@@ -1038,7 +1038,7 @@
 
 		document.addEventListener( "mousemove", moveMLE, false );
 		document.addEventListener( "mouseup", trackMouseDownEnd_Move, false );
-	};
+	}
 
 
 	/**
@@ -1097,7 +1097,7 @@
 
 		mc.style.width = "";
 		mc.style.height = "";
-	};
+	}
 
 
 	/**
@@ -1127,7 +1127,7 @@
 
 		d.addEventListener( "mousemove", resizeMLE, false );
 		d.addEventListener( "mouseup", trackMouseDownEnd_Resize, false );
-	};
+	}
 
 
 	/**
@@ -1148,7 +1148,7 @@
 		preview.href = emoteLink;
 		preview.className = ""; // reset old classes
 		preview = Builder.addClassesForEmote( preview );
-	};
+	}
 
 
 
@@ -1891,7 +1891,9 @@
 		 * @param {DOMElement} emote
 		 */
 		emoteShowTitleText: function( emote ) {
-			if( emote.title == "" || emote.pathname.indexOf( "/spoiler" ) == 0 ) {
+			if( emote.title == ""
+					|| emote.pathname.indexOf( "/spoiler" ) == 0
+					|| emote.pathname.indexOf( "/s" ) == 0 ) {
 				return;
 			}
 			// Don't reveal title text if it's some emote info put there by BPM

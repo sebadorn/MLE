@@ -17,24 +17,24 @@ else if( typeof chrome != "undefined" ) {
 // Include content scripts, handle messaging and add options page.
 if( I_AM == BROWSER.FIREFOX ) {
 
-	var self = require( "self" );
 	var pageMod = require( "page-mod" );
+	var Request = require( "request" ).Request;
+	var self = require( "self" );
 	var sprefs = require( "simple-prefs" );
 	var ss = require( "simple-storage" );
 	var tabs = require( "tabs" );
-	var Request = require( "request" ).Request;
 	var Timer = require( "timers" );
 
 	var workers = [];
 
 	var csfWebpage = [
-	    	self.data.url( "mle-codes.js" ),
-	    	self.data.url( "my-little-emotebox.js" )
-	    ],
-	    csfOptionsPage = [
-	    	self.data.url( "mle-codes.js" ),
-	    	self.data.url( "options.js" )
-	    ];
+		self.data.url( "mle-codes.js" ),
+		self.data.url( "my-little-emotebox.js" )
+	];
+	var csfOptionsPage = [
+		self.data.url( "mle-codes.js" ),
+		self.data.url( "options.js" )
+	];
 
 
 	/**
@@ -47,7 +47,7 @@ if( I_AM == BROWSER.FIREFOX ) {
 		if( idx >= 0 ) {
 			workers.splice( idx, 1 );
 		}
-	};
+	}
 
 
 	/**
@@ -62,7 +62,7 @@ if( I_AM == BROWSER.FIREFOX ) {
 		worker.on( "detach", function() {
 			forgetWorker( this );
 		} );
-	};
+	}
 
 
 	// Add content scripts to web pages
@@ -292,8 +292,8 @@ var BrowserOpera = {
 		}
 
 		// Remove failed sources
-		for( var i = 0; i < remove.length; i++ ) {
-			idx = this.tabSources.indexOf( remove[i] );
+		for( var j = 0; j < remove.length; j++ ) {
+			idx = this.tabSources.indexOf( remove[j] );
 
 			if( idx >= 0 ) {
 				this.tabSources.splice( idx, 1 );
@@ -1452,7 +1452,7 @@ function handleMessage( e, sender, sendResponse ) {
 	else {
 		MyBrowser.respond( source, response );
 	}
-};
+}
 
 
 /**
@@ -1473,7 +1473,7 @@ function changeListName( oldName, newName ) {
 	}
 
 	CURRENT_EMOTES = emotesNew;
-};
+}
 
 
 /**
@@ -1497,7 +1497,7 @@ function loadConfigAndEmotes( response, sender, loadMeta ) {
 	}
 
 	return response;
-};
+}
 
 
 /**
@@ -1509,7 +1509,7 @@ function mergeEmotesWithUpdate( emotes ) {
 	for( var key in emotes ) {
 		CURRENT_EMOTES[key] = emotes[key];
 	}
-};
+}
 
 
 /**
@@ -1541,7 +1541,7 @@ function mergeWithConfig( obj ) {
 	}
 
 	return obj_new;
-};
+}
 
 
 /**
@@ -1559,7 +1559,7 @@ function saveDefaultToStorage( key, obj ) {
 	MyBrowser.logError( msg );
 
 	return obj;
-};
+}
 
 
 /**
@@ -1586,7 +1586,7 @@ function saveToStorage( key, obj ) {
 	MyBrowser.save( key, obj_json );
 
 	return { success: true };
-};
+}
 
 
 /**
@@ -1605,7 +1605,7 @@ function updateObject( current, defaultValues, storageKey ) {
 	saveToStorage( storageKey, current );
 
 	return current;
-};
+}
 
 
 MyBrowser.registerMessageHandler( handleMessage );
