@@ -1897,7 +1897,7 @@
 				return;
 			}
 			// Don't reveal title text if it's some emote info put there by BPM
-			if( emote.title.match( / from r\/[a-z0-9-_]+$/i ) ) {
+			if( emote.title.match( /( from r\/[a-z0-9-_]+$)|(Unknown emote )/i ) ) {
 				return;
 			}
 
@@ -1944,14 +1944,10 @@
 				    	childList: true,
 				    	characterData: false
 				    };
-				var targetsSitetable = d.querySelectorAll( ".sitetable" ),
-				    targetsExpando = d.querySelectorAll( ".expando" );
+				var targets = d.querySelectorAll( ".sitetable, .expando, .livePreview .md" );
 
-				for( var i = 0; i < targetsSitetable.length; i++ ) {
-					observer.observe( targetsSitetable[i], observerConfig );
-				}
-				for( var i = 0; i < targetsExpando.length; i++ ) {
-					observer.observe( targetsExpando[i], observerConfig );
+				for( var i = 0; i < targets.length; i++ ) {
+					observer.observe( targets[i], observerConfig );
 				}
 			}
 			// ... but not in Opera, so we have to do this the deprecated way
@@ -2035,6 +2031,12 @@
 
 				for( var j = 0; j < mutation.addedNodes.length; j++ ) {
 					node = mutation.addedNodes[j];
+
+					// nodeType = 3 = TEXT_NODE
+					if( node.nodeType == 3 ) {
+						continue;
+					}
+
 					links = node.querySelectorAll( "a[href]" );
 
 					for( var k = 0; k < links.length; k++ ) {
