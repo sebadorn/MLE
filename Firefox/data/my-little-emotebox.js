@@ -156,36 +156,6 @@
 
 
 	/**
-	 * Convert the fixed position from a value for "left"
-	 * to a value for "right" of the main container.
-	 * @param  {Integer} left  Pixel position from the left.
-	 * @param  {Boolean} isMax If the main container is maximized.
-	 * @return {Integer}       Pixel position from the right.
-	 */
-	function convertMainContLTR( left, isMax ) {
-		var cfg = GLOBAL.config;
-		var w = isMax ? cfg.boxWidth : cfg.boxWidthMinimized;
-
-		return document.body.offsetWidth - left - w;
-	}
-
-
-	/**
-	 * Convert the fixed position from a value for "right"
-	 * to a value for "left" of the main container.
-	 * @param  {Integer} right Pixel position from the right.
-	 * @param  {Boolean} isMax If the main container is maximized.
-	 * @return {Integer}       Pixel position from the left.
-	 */
-	function convertMainContRTL( right, isMax ) {
-		var cfg = GLOBAL.config;
-		var w = isMax ? cfg.boxWidth : cfg.boxWidthMinimized;
-
-		return document.body.offsetWidth - right - w;
-	}
-
-
-	/**
 	 * Delete an emote from a list.
 	 * @param {String} emote
 	 * @param {String} list
@@ -556,7 +526,12 @@
 		    moveX = e.clientX - m.lastX,
 		    moveY = e.clientY - m.lastY;
 
-		mainCont.style.left = ( mainCont.offsetLeft + moveX ) + "px";
+		if( GLOBAL.config.boxAlign == "right" ) {
+			mainCont.style.right = ( parseInt( mainCont.style.right, 10 ) - moveX ) + "px";
+		}
+		else {
+			mainCont.style.left = ( mainCont.offsetLeft + moveX ) + "px";
+		}
 		mainCont.style.top = ( mainCont.offsetTop + moveY ) + "px";
 
 		m.lastX = e.clientX;
@@ -743,8 +718,7 @@
 			}
 			// X axis oritentates to the right
 			else if( g.config.boxAlign == "right" && m.resizeDirection == "se" ) {
-				var mcRight = parseInt( mainCont.style.right.replace( "px", "" ), 10 );
-				mainCont.style.right = ( mcRight - moveX ) + "px";
+				mainCont.style.right = ( parseInt( mainCont.style.right, 10 ) - moveX ) + "px";
 			}
 		}
 
@@ -990,7 +964,7 @@
 	function trackMouseDownEnd_Move( e ) {
 		var g = GLOBAL,
 		    m = g.MOUSE;
-		var posX = g.REF.mainCont.offsetLeft;
+		var posX;
 
 		m.lastX = null;
 		m.lastY = null;
@@ -999,9 +973,15 @@
 		document.removeEventListener( "mouseup", trackMouseDownEnd_Move, false );
 
 		if( g.config.boxAlign == "right" ) {
-			posX = convertMainContLTR( posX, true );
-			g.REF.mainCont.style.right = posX + "px";
-			g.REF.mainCont.style.left = "";
+			posX = parseInt( g.REF.mainCont.style.right, 10 );
+
+			// Workaround for Firefox: Troubles with scrollbar width.
+			if( typeof chrome == "undefined" && typeof opera == "undefined" ) {
+				posX -= window.innerWidth - document.body.offsetWidth;
+			}
+		}
+		else {
+			posX = g.REF.mainCont.offsetLeft;
 		}
 
 		// Update config in this tab
@@ -1025,14 +1005,6 @@
 		var g = GLOBAL,
 		    m = g.MOUSE;
 
-		if( g.config.boxAlign == "right" ) {
-			var posX = g.REF.mainCont.style.right.replace( "px", "" );
-			posX = parseInt( posX, 10 );
-
-			g.REF.mainCont.style.right = "";
-			g.REF.mainCont.style.left = convertMainContRTL( posX, true ) + "px";
-		}
-
 		m.lastX = e.clientX;
 		m.lastY = e.clientY;
 
@@ -1051,8 +1023,8 @@
 		    m = g.MOUSE,
 		    mc = g.REF.mainCont,
 		    posX = mc.offsetLeft,
-		    boxWidth = mc.style.width.replace( "px", "" ),
-		    boxHeight = mc.style.height.replace( "px", "" );
+		    boxWidth = parseInt( mc.style.width, 10 ),
+		    boxHeight = parseInt( mc.style.height, 10 );
 
 		mc.className += " transition";
 
@@ -1067,9 +1039,10 @@
 		g.config.boxHeight = boxHeight;
 
 		if( g.config.boxAlign == "right" ) {
-			posX = convertMainContLTR( posX, true );
-			g.REF.mainCont.style.right = posX + "px";
-			g.REF.mainCont.style.left = "";
+			posX = parseInt( mc.style.right, 10 );
+		}
+		else {
+			posX = mc.offsetLeft;
 		}
 
 		// Update config in this tab – part 2
@@ -1891,9 +1864,11 @@
 		 * @param {DOMElement} emote
 		 */
 		emoteShowTitleText: function( emote ) {
+			var pathNoFlags = emote.pathname.split( "-" )[0];
+
 			if( emote.title == ""
-					|| emote.pathname.indexOf( "/spoiler" ) == 0
-					|| emote.pathname.indexOf( "/s" ) == 0 ) {
+					|| pathNoFlags == "/spoiler"
+					|| pathNoFlags == "/s" ) {
 				return;
 			}
 			// Don't reveal title text if it's some emote info put there by BPM

@@ -40,7 +40,7 @@
 				<a href="mle.xpi" id="link_firefox" class="install_link firefox">Install MLE in Firefox</a>
 			</li>
 			<li>
-				<h2>Opera</h2>
+				<h2>Opera 12</h2>
 				<a href="mle.oex" id="link_opera" class="install_link opera">Install MLE in Opera</a>
 				<p class="explain">
 					You have to add this domain (http://sebadorn.de) to the list of trusted websites.<br />
@@ -86,7 +86,7 @@
 				</p>
 			</li>
 			<li>
-				<h2>Opera</h2>
+				<h2>Opera 12</h2>
 				<ol>
 					<li>Open <code>Settings &gt; Preferences…</code>.</li>
 					<li>In the <code>Advanced</code> tab, select <code>Security</code>.</li>
@@ -97,6 +97,20 @@
 					<li>You can click the “Install MLE in Opera” link now.</li>
 				</ol>
 			</li>
+			<li>
+				<h2>Opera 15+</h2>
+				<ol>
+					<li>
+						Download the extension (mle.crx).<br />
+						(Right-click and “Save Link As…”.)
+					</li>
+					<li>
+						Drag&amp;drop the downloaded file into Opera.</a>
+					</li>
+					<li>You may have to open the extensions overview and enable MLE first.</li>
+					<li>You can delete the mle.crx file now.</li>
+				</ol>
+			</li>
 		</ul>
 	</section>
 
@@ -105,7 +119,7 @@
 		<input type="radio" name="page" id="features" hidden />
 		<ul class="form">
 			<li>
-				<img src="mle_box_2.6.png" style="width: 754px; height: 433px;" alt="MLE – opened box." />
+				<img src="mle_box_2.6.png" style="width: 700px; height: 354px;" alt="MLE – opened box." />
 				<p class="explain">Opened emotebox with more than the default lists.</p>
 			</li>
 			<li>
@@ -151,6 +165,8 @@
 				<ul>
 					<li><code>Bugfix</code> Adjust emotes from the MLPLounge in /r/friends/comments as well.</li>
 					<li><code>Bugfix</code> Scroll stop not working in Firefox.</li>
+					<li><code>Bugfix</code> Emotes that start with "/s" not having their title text revealed. (Of course "/spoiler" and "/s" will still not be revealed.)</li>
+					<li><code>Bugfix</code> In Firefox, if box alignment is to the right, moving the box results in a little jump in position upon release. <em>This still isn't fixed.</em> But the position before the little jump will be the saved one, so reloading the page will show the wanted position. If you want pixel perfect settings, you will have to use the options page.</li>
 				</ul>
 			</li>
 			<li>
