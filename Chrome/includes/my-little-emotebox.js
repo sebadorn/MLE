@@ -1590,7 +1590,7 @@
 			if( !/^\/r\/mlplounge\//i.test( here ) ) {
 				// On the user/message page we know from which subreddit a
 				// comment comes from, therefore we can use the right emote.
-				if( /^\/(user|message)\//i.test( here ) ) {
+				if( /^\/(user\/|message\/|r\/friends\/comments)/i.test( here ) ) {
 					subCSS = g.sub_css["r/mlplounge"] + "\n\n";
 					subCSS = subCSS.replace(
 						/a\[href\|="(\/[a-zA-Z0-9-]+)"]/g,
@@ -1914,8 +1914,29 @@
 		 */
 		findAndaddClassToPloungeEmotes: function() {
 			if( GLOBAL.config.adjustEmotesInInbox ) {
-				this.ploungeEmotesInbox();
-				this.ploungeEmotesOverview();
+				var targets = document.querySelectorAll( ".comment, .message" );
+				var emotes, from, subjectLink, subreddit, target;
+
+				for( var i = 0; i < targets.length; i++ ) {
+					target = targets[i];
+					subreddit = target.querySelector( ".parent a.subreddit" );
+					subjectLink = target.querySelector( ".subject a" );
+
+					if( subreddit ) {
+						from = subreddit.pathname.toLowerCase();
+					}
+					else if( subjectLink ) {
+						from = subjectLink.pathname.toLowerCase();
+					}
+					else {
+						continue;
+					}
+
+					if( from.indexOf( "/r/mlplounge/" ) == 0 ) {
+						emotes = target.querySelectorAll( ".md a" );
+						this.ploungeEmotesAddClass( emotes );
+					}
+				}
 			}
 		},
 
@@ -2176,56 +2197,6 @@
 
 
 		/**
-		 * Add an additional CSS class to the Plounge emotes in the inbox.
-		 */
-		ploungeEmotesInbox: function() {
-			var messages = document.querySelectorAll( ".message" );
-			var emotes, from, message, subjectLink;
-
-			for( var i = 0; i < messages.length; i++ ) {
-				message = messages[i];
-				subjectLink = message.querySelector( ".subject a" );
-
-				if( !subjectLink ) {
-					continue;
-				}
-
-				from = subjectLink.pathname.toLowerCase();
-
-				if( from.indexOf( "/r/mlplounge/" ) == 0 ) {
-					emotes = message.querySelectorAll( ".md a" );
-					this.ploungeEmotesAddClass( emotes );
-				}
-			}
-		},
-
-
-		/**
-		 * Add an additional CSS class to the Plounge emotes in the overview.
-		 */
-		ploungeEmotesOverview: function() {
-			var comments = document.querySelectorAll( ".comment" );
-			var comment, emotes, from, subreddit;
-
-			for( var i = 0; i < comments.length; i++ ) {
-				comment = comments[i];
-				subreddit = comment.querySelector( ".parent a.subreddit" );
-
-				if( !subreddit ) {
-					continue;
-				}
-
-				from = subreddit.pathname.toLowerCase();
-
-				if( from.indexOf( "/r/mlplounge/" ) == 0 ) {
-					emotes = comment.querySelectorAll( ".md a" );
-					this.ploungeEmotesAddClass( emotes );
-				}
-			}
-		},
-
-
-		/**
 		 * When scrolled to the end of a node,
 		 * prevent the main window from scrolling.
 		 * @param {DOMElement} node
@@ -2323,11 +2294,12 @@
 		stopScrolling: function( e ) {
 			var scrolledToBottom = ( this.scrollHeight - this.scrollTop == this.clientHeight );
 			var scrolledToTop = ( this.scrollTop == 0 );
+			var wheelDeltaY = ( e.wheelDeltaY || -e.deltaY );
 
-			if( scrolledToBottom && e.wheelDeltaY < 0 ) {
+			if( scrolledToBottom && wheelDeltaY < 0 ) {
 				e.preventDefault();
 			}
-			else if( scrolledToTop && e.wheelDeltaY > 0 ) {
+			else if( scrolledToTop && wheelDeltaY > 0 ) {
 				e.preventDefault();
 			}
 		},
