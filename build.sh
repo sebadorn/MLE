@@ -5,6 +5,7 @@ MCCOY=~/.mccoy/mccoy
 CHROME=google-chrome
 
 PROJECT_URL="http://sebadorn.de/mlp/mle"
+ABSOLUTE_PATH="/home/seba/programming/My Little Emotebox"
 
 
 function set_version_and_url {
@@ -32,7 +33,7 @@ function build_chrome {
 	cp Chrome/manifest.json manifest_tmp.json
 
 	set_version_and_url Chrome/manifest.json
-	$CHROME --pack-extension=Chrome/ --pack-extension-key=build/chrome-private-key-mle.pem
+	$CHROME --pack-extension="$ABSOLUTE_PATH/Chrome/" --pack-extension-key="$ABSOLUTE_PATH/build/chrome-private-key-mle.pem"
 
 	mv manifest_tmp.json Chrome/manifest.json
 	mv Chrome.crx build/mle.crx
