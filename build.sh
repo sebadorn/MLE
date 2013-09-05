@@ -49,7 +49,7 @@ function build_firefox {
 
 	# Generate addon install file (XPI)
 	set_version_and_url package.json
-	$CFX xpi --update-url $PROJECT_URL/updates-firefox.rdf
+	$CFX xpi --update-url $PROJECT_URL/updates-firefox.rdf --force-mobile
 
 	# Insert our public key into the generated install.rdf
 	unzip mle.xpi install.rdf

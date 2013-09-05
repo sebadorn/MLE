@@ -1840,7 +1840,9 @@
 						"There are additional search modes. Set one of the following as prefix:<table>"
 						+ "<tr><th><code>regex:</code></th><td>Use regular expressions.</td></tr>"
 						+ "<tr><th><code>alt:</code></th><td>Include alternative names learned from the subreddit stylesheets. For example \"a00\" will find \"ajlie\".</td></tr>"
-						+ "<tr><th><code>tag:</code></th><td>Get all emotes with the given tag, for example \"happy\" or \"pinkie\".</td></tr>"
+						+ "<tr><th><code>tag:</code></th><td>Get all emotes with the given tag.<br />"
+						+ "<b>Moods:</b> angry, bashful, blank, crazed (derped), evil (malicious), determined, distraught, happy, incredulous, misc, sad, sarcastic (smug), scared, shocked, thoughtful.<br />"
+						+ "<b>Ponies:</b> Just use the name (without blanks) or try initials like <code>\"ts\"</code> for Twilight.</td></tr>"
 						+ "</table>"
 					),
 					this.mngAreaForNote(
@@ -1876,10 +1878,16 @@
 				return;
 			}
 
-			var text = document.createElement( "span" );
+			var text = document.createElement( "span" ),
+			    evaluated = this.linkifyURLs( emote.title );
 
 			text.className = "mle-titletext";
-			text.textContent = emote.title;
+			if( emote.title == evaluated ) {
+				text.textContent = evaluated;
+			}
+			else {
+				text.innerHTML = evaluated;
+			}
 			emote.parentNode.insertBefore( text, emote.nextSibling );
 		},
 
@@ -1913,6 +1921,21 @@
 					}
 				}
 			}
+		},
+
+
+		/**
+		 * Convert URLs and Markdown link code to actual HTML links.
+		 * @param  {String} text String to evaluate.
+		 * @return {String}      Evaluated String.
+		 */
+		linkifyURLs: function( text ) {
+			// Markdown
+			text = text.replace( /\[(.*)\]\((.+)\)/g, "<a href=\"$2\">$1</a>" );
+			// URL only
+			text = text.replace( /([^=][^"])((http|ftp)[s]?:\/\/[^ "']+)/gi, "$1<a href=\"$2\">$2</a>" );
+
+			return text;
 		},
 
 
