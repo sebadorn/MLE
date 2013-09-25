@@ -701,7 +701,7 @@ var BrowserFirefox = {
 
 	/**
 	 * Post an error to the error console.
-	 * @param  {String} msg
+	 * @param {String} msg
 	 */
 	logError: function( msg ) {
 		console.error( msg );
@@ -766,7 +766,7 @@ var BrowserFirefox = {
 				    contentType = response.headers["Content-Type"];
 
 				lastModified = Date.parse( lastModified );
-				Updater.handleCSS( response.text, lastModified, contentType );
+				callback( true, response.text, lastModified, contentType );
 			},
 			headers: {
 				"User-Agent": userAgent
@@ -822,11 +822,14 @@ var Updater = {
 
 	xhrCurrentTarget: null,
 	xhrProgress: 0,
+	xhrTargetsCSS: [],
 
 	// If true, the Last-Modified header will be ignored.
 	// Will be reset to false at the end of the update process.
 	// @see Updater.wrapUp()
 	forceUpdate: false,
+	// Option page to respond to
+	forceSource: null,
 
 	linkStart: 'a[href|="/',
 	tableCodeRegex: /^[abce][0-9]{2}$/i,
@@ -847,90 +850,7 @@ var Updater = {
 		if( Date.now() - META.lastSubredditCheck >= CURRENT_CONFIG.intervalToCheckCSS ) {
 			this.emoteCSS = SUBREDDIT_CSS;
 			this.emotes = SUBREDDIT_EMOTES;
-			this.getCSS();
-		}
-	},
-
-
-	/**
-	 * Get the sub-reddit stylesheet per XHR.
-	 */
-	getCSS: function() {
-		if( this.isProgressFinished() ) {
-			this.wrapUp();
-			return;
-		}
-
-		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
-
-		if( !this.emoteCSS.hasOwnProperty( this.xhrCurrentTarget ) ) {
-			this.emoteCSS[this.xhrCurrentTarget] = [];
-		}
-		if( !this.emotes.hasOwnProperty( this.xhrCurrentTarget ) ) {
-			this.emotes[this.xhrCurrentTarget] = [];
-		}
-
-		this.xhrProgress++;
-
-		var url = "http://www.reddit.com/" + this.xhrCurrentTarget + "/stylesheet";
-
-		MyBrowser.sendRequest(
-			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.handleCSSCallback
-		);
-	},
-
-
-	/**
-	 * After receiving the stylesheet, start extracting the emotes.
-	 * @param {String}  responseText Response to the request.
-	 * @param {Integer} lastModified A timestamp when the stylesheet has been last modified.
-	 *                               (At least according to what the server tells us.)
-	 * @param {String}  contentType  Content-Type of the received resource. We need "text/css".
-	 */
-	handleCSS: function( responseText, lastModified, contentType ) {
-		// Don't process if it isn't CSS.
-		if( contentType == "text/css" ) {
-			// Only process the stylesheet if something changed since the last check
-			// or it is a forced update.
-			if( this.forceUpdate || lastModified >= META.lastSubredditCheck ) {
-				this.extractEmotesStep1( responseText );
-				this.extractEmotesStep2();
-				this.removeReverseEmotes();
-				this.groupSameEmotes();
-			}
-		}
-
-		// Get next subreddit CSS.
-		// The reddit API guidelines say:
-		// Not more than 1 request every 2 seconds.
-		if( !this.isProgressFinished() ) {
-			// Firefox doesn't know window.setTimeout in main.js.
-			// Great. But it has require( "timers" ).setTimeout which
-			// does EXACTLY THE SAME. Go figure.
-			if( typeof setTimeout != "undefined" ) {
-				setTimeout( this.getCSS.bind( this ), this.xhrWait );
-			}
-			else {
-				Timer.setTimeout( this.getCSS.bind( this ), this.xhrWait );
-			}
-		}
-		else {
-			this.getCSS();
-		}
-	},
-
-
-	/**
-	 * After receiving the stylesheet, start extracting the emotes.
-	 * (Callback function for browser who use XMLHttpRequest.)
-	 */
-	handleCSSCallback: function() {
-		if( this.readyState == 4 ) {
-			var lastModified = this.getResponseHeader( "Last-Modified" ),
-			    contentType = this.getResponseHeader( "Content-Type" );
-
-			lastModified = Date.parse( lastModified );
-			Updater.handleCSS( this.responseText, lastModified, contentType );
+			this.getCSSURLs();
 		}
 	},
 
@@ -1011,28 +931,6 @@ var Updater = {
 
 
 	/**
-	 * Get the rest of the relevant CSS part starting from
-	 * the found needle position to the end of the rule.
-	 * @param  {String}  cssCopy Current part of the CSS.
-	 * @param  {Integer} idx     Index of the found needle.
-	 * @return {String}          Extracted CSS.
-	 */
-	getRestOfCSS: function( cssCopy, idx ) {
-		var css = "";
-
-		for( var i = idx + 1; i < cssCopy.length; i++ ) {
-			css += cssCopy[i];
-
-			if( cssCopy[i] == "}" ) {
-				break;
-			}
-		}
-
-		return css;
-	},
-
-
-	/**
 	 * Extract the emote names.
 	 */
 	extractEmotesStep2: function() {
@@ -1074,6 +972,121 @@ var Updater = {
 
 		this.emoteCSS[this.xhrCurrentTarget] = this.removeNonEmoteCSS( cssCurrent );
 		this.emotes[this.xhrCurrentTarget] = emotes;
+	},
+
+
+	/**
+	 * Get the sub-reddit stylesheet per XHR.
+	 */
+	getCSS: function() {
+		if( this.isProgressFinished() ) {
+			this.wrapUp();
+			return;
+		}
+
+		var url = this.xhrTargetsCSS[this.xhrProgress];
+
+		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
+		this.xhrProgress++;
+
+		MyBrowser.sendRequest(
+			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.handleCSSCallback
+		);
+	},
+
+
+	/**
+	 * Get the URLs to the CSS files.
+	 */
+	getCSSURLs: function() {
+		// Just getting started. Prepare list for CSS URLs.
+		if( this.xhrProgress == 0 ) {
+			this.xhrTargetsCSS = [];
+		}
+		// We have all CSS URLs. Proceed with requesting the CSS files.
+		else if( this.xhrProgress == this.xhrTargets.length ) {
+			this.xhrProgress = 0;
+			this.getCSS();
+			return;
+		}
+
+		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
+		this.xhrProgress++;
+
+		if( !this.emoteCSS.hasOwnProperty( this.xhrCurrentTarget ) ) {
+			this.emoteCSS[this.xhrCurrentTarget] = [];
+		}
+		if( !this.emotes.hasOwnProperty( this.xhrCurrentTarget ) ) {
+			this.emotes[this.xhrCurrentTarget] = [];
+		}
+
+		// Fetch a small page which uses the subreddit CSS.
+		var url = "http://www.reddit.com/" + this.xhrCurrentTarget + "/submit";
+
+		MyBrowser.sendRequest(
+			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.getCSSURLsCallback
+		);
+	},
+
+
+	/**
+	 * Handle the XHR callback for the request for a page from
+	 * which we can extract the CSS URL.
+	 * @param {boolean} hasReadyState4 Workaround for Firefox.
+	 * @param {String}  responseText   Workaround for Firefox.
+	 */
+	getCSSURLsCallback: function( hasReadyState4, responseText ) {
+		if( hasReadyState4 === true ) {
+			var responseContent = responseText;
+		}
+		else if( this.readyState == 4 ) {
+			var responseContent = this.responseText;
+		}
+
+		if( hasReadyState4 === true || this.readyState == 4 ) {
+			var url = responseContent.match( /href="[a-zA-Z0-9\/.:-_+]+" title="applied_subreddit_stylesheet"/ );
+
+			if( !url ) {
+				MyBrowser.logError( "No CSS URL found." );
+				return;
+			}
+
+			url = url[0];
+			url = url.substr( 6 );
+			url = url.replace( '" title="applied_subreddit_stylesheet"', "" );
+
+			Updater.xhrTargetsCSS.push( url );
+
+			// Get the next CSS URL.
+			if( typeof setTimeout != "undefined" ) {
+				setTimeout( Updater.getCSSURLs.bind( Updater ), Updater.xhrWait );
+			}
+			else {
+				Timer.setTimeout( Updater.getCSSURLs.bind( Updater ), Updater.xhrWait );
+			}
+		}
+	},
+
+
+	/**
+	 * Get the rest of the relevant CSS part starting from
+	 * the found needle position to the end of the rule.
+	 * @param  {String}  cssCopy Current part of the CSS.
+	 * @param  {Integer} idx     Index of the found needle.
+	 * @return {String}          Extracted CSS.
+	 */
+	getRestOfCSS: function( cssCopy, idx ) {
+		var css = "";
+
+		for( var i = idx + 1; i < cssCopy.length; i++ ) {
+			css += cssCopy[i];
+
+			if( cssCopy[i] == "}" ) {
+				break;
+			}
+		}
+
+		return css;
 	},
 
 
@@ -1123,6 +1136,66 @@ var Updater = {
 		}
 
 		this.emotes[this.xhrCurrentTarget] = newEmoteList;
+	},
+
+
+	/**
+	 * After receiving the stylesheet, start extracting the emotes.
+	 * @param {String}  responseText Response to the request.
+	 * @param {Integer} lastModified A timestamp when the stylesheet has been last modified.
+	 *                               (At least according to what the server tells us.)
+	 * @param {String}  contentType  Content-Type of the received resource. We need "text/css".
+	 */
+	handleCSS: function( responseText, lastModified, contentType ) {
+		// Don't process if it isn't CSS.
+		if( contentType == "text/css" ) {
+			// Only process the stylesheet if something changed since the last check
+			// or it is a forced update.
+			if( this.forceUpdate || lastModified >= META.lastSubredditCheck ) {
+				this.extractEmotesStep1( responseText );
+				this.extractEmotesStep2();
+				this.removeReverseEmotes();
+				this.groupSameEmotes();
+			}
+		}
+
+		// Get next subreddit CSS.
+		// The reddit API guidelines say:
+		// Not more than 1 request every 2 seconds.
+		if( !this.isProgressFinished() ) {
+			// Firefox doesn't know window.setTimeout in main.js.
+			// Great. But it has require( "timers" ).setTimeout which
+			// does EXACTLY THE SAME. Go figure.
+			if( typeof setTimeout != "undefined" ) {
+				setTimeout( this.getCSS.bind( this ), this.xhrWait );
+			}
+			else {
+				Timer.setTimeout( this.getCSS.bind( this ), this.xhrWait );
+			}
+		}
+		else {
+			this.getCSS();
+		}
+	},
+
+
+	/**
+	 * After receiving the stylesheet, start extracting the emotes.
+	 * (Callback function for browser who use XMLHttpRequest.)
+	 */
+	handleCSSCallback: function( hasReadyState4, responseText, lastModified, contentType ) {
+		// Firefox
+		if( hasReadyState4 === true ) {
+			Updater.handleCSS( responseText, lastModified, contentType );
+		}
+		// The rest
+		else if( this.readyState == 4 ) {
+			var lastModified = this.getResponseHeader( "Last-Modified" ),
+			    contentType = this.getResponseHeader( "Content-Type" );
+
+			lastModified = Date.parse( lastModified );
+			Updater.handleCSS( this.responseText, lastModified, contentType );
+		}
 	},
 
 
@@ -1335,7 +1408,19 @@ var Updater = {
 		this.mergeSubredditEmotesIntoLists();
 		saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
 
+		if( this.forceUpdate ) {
+			var response = { task: BG_TASK.UPDATE_CSS };
+
+			if( I_AM == BROWSER.CHROME ) {
+				chrome.tabs.sendMessage( this.forceSource.tab.id, response, null );
+			}
+			else {
+				MyBrowser.respond( this.forceSource, response );
+			}
+		}
+
 		this.forceUpdate = false;
+		this.forceSource = null;
 		this.emoteCSS = {};
 		this.emotes = {};
 		this.xhrProgress = 0;
@@ -1432,12 +1517,13 @@ function handleMessage( e, sender, sendResponse ) {
 
 		case BG_TASK.OPEN_OPTIONS:
 			MyBrowser.openOptions();
-			break;
+			return;
 
 		case BG_TASK.UPDATE_CSS:
 			Updater.forceUpdate = true;
-			Updater.getCSS();
-			break;
+			Updater.forceSource = source;
+			Updater.getCSSURLs();
+			return;
 
 		default:
 			MyBrowser.logError( "Background process: Unknown task given - \"" + data.task + "\"." );

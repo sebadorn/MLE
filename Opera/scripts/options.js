@@ -77,6 +77,10 @@ function handleBackgroundMessages( e ) {
 				CONFIG = data.config;
 			}
 			break;
+
+		case BG_TASK.UPDATE_CSS:
+			showMsg( "Force update finished.", "info" );
+			break;
 	}
 }
 
