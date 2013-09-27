@@ -1013,15 +1013,8 @@ var Updater = {
 		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
 		this.xhrProgress++;
 
-		if( !this.emoteCSS.hasOwnProperty( this.xhrCurrentTarget ) ) {
-			this.emoteCSS[this.xhrCurrentTarget] = [];
-		}
-		if( !this.emotes.hasOwnProperty( this.xhrCurrentTarget ) ) {
-			this.emotes[this.xhrCurrentTarget] = [];
-		}
-
 		// Fetch a small page which uses the subreddit CSS.
-		var url = "http://www.reddit.com/" + this.xhrCurrentTarget + "/submit";
+		var url = "http://www.reddit.com/" + this.xhrCurrentTarget;
 
 		MyBrowser.sendRequest(
 			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.getCSSURLsCallback
@@ -1152,6 +1145,15 @@ var Updater = {
 			// Only process the stylesheet if something changed since the last check
 			// or it is a forced update.
 			if( this.forceUpdate || lastModified >= META.lastSubredditCheck ) {
+				// Create key for subreddit, if not already existent
+				if( !this.emoteCSS.hasOwnProperty( this.xhrCurrentTarget ) ) {
+					this.emoteCSS[this.xhrCurrentTarget] = [];
+				}
+				if( !this.emotes.hasOwnProperty( this.xhrCurrentTarget ) ) {
+					this.emotes[this.xhrCurrentTarget] = [];
+				}
+
+				// Process CSS to emotes
 				this.extractEmotesStep1( responseText );
 				this.extractEmotesStep2();
 				this.removeReverseEmotes();

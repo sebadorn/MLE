@@ -10,6 +10,8 @@
 
 	<access origin="http://reddit.com" subdomains="true" />
 	<access origin="http://www.redditstatic.com" subdomains="true" />
+	<access origin="http://redditmedia.com" subdomains="true" />
+
 	<feature name="opera:contextmenus" />
 
 </widget>
