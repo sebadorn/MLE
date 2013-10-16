@@ -817,7 +817,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "My Little Emotebox v2.8 by /u/meinstuhlknarrt",
+	xhrUserAgent: "My Little Emotebox v2.8.4 by /u/meinstuhlknarrt",
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -1037,7 +1037,7 @@ var Updater = {
 		}
 
 		if( hasReadyState4 === true || this.readyState == 4 ) {
-			var url = responseContent.match( /href="[a-zA-Z0-9\/.:-_+]+" title="applied_subreddit_stylesheet"/ );
+			var url = responseContent.match( /href="[a-zA-Z0-9\/.:\-_+]+" title="applied_subreddit_stylesheet"/ );
 
 			if( !url ) {
 				MyBrowser.logError( "No CSS URL found." );
