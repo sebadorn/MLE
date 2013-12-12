@@ -209,11 +209,11 @@ var DEFAULT_EMOTES = {
 		"twipride", "twicrazy", "twiright", "twibeam", "spikemeh",
 		"celestiawut", "celestiamad", "lunateehee", "lunawait", "paperbagderpy",
 		"ppfear", "ppcute", "pinkieawe", "ajhappy", "ajsup",
-		"ajlie", "abbored", "abmeh", "swagintosh", "grannysmith",
-		"flutterwhoa", "flutterroll", "flutterjerk", "rdcry", "scootaderp",
-		"scootaplease", "scootacheer", "ohcomeon", "sbbook", "raritypaper",
-		"raritydaww", "shiningarmor", "cadence", "chrysalis", "priceless",
-		"silverspoon", "rarityreally", "applegasp", "rarishock", "applederp"
+		"applegasp", "applederp", "ajlie", "abbored", "abmeh",
+		"swagintosh", "grannysmith", "flutterwhoa", "flutterroll", "flutterjerk",
+		"rdcry", "scootaderp", "scootaplease", "scootacheer", "ohcomeon",
+		"sbbook", "raritypaper", "raritydaww", "rarityreally", "rarishock",
+		"shiningarmor", "cadence", "chrysalis", "priceless", "silverspoon"
 	],
 	"B": [
 		"ppseesyou", "ppshrug", "ppboring", "rdcool", "rdsmile",
@@ -227,20 +227,22 @@ var DEFAULT_EMOTES = {
 	],
 	"C": [
 		"rdsitting", "rdhappy", "rdannoyed", "gross", "louder",
-		"twistare", "twismug", "twismile", "ohhi", "party",
-		"hahaha", "joy", "pinkamina", "ajfrown", "hmmm",
-		"raritysad", "fabulous", "derpyhappy", "derp", "derpyshock",
-		"flutterblush", "loveme", "lunasad", "lunagasp", "celestia",
-		"scootaloo", "angel", "allmybits", "zecora", "photofinish",
-		"trixiesad", "changeling", "rdscared", "twidaw", "whattheflut"
+		"rdscared", "twistare", "twismug", "twismile", "twidaw",
+		"ohhi", "party", "hahaha", "joy", "pinkamina",
+		"ppreally", "ajfrown", "hmmm", "flutterblush", "loveme",
+		"whattheflut", "fluttercry", "raritysad", "fabulous", "sneakybelle",
+		"scootaloo", "derpyhappy", "derp", "derpyshock", "lunasad",
+		"lunagasp", "celestia", "cadencesmile", "shiningpride", "angel",
+		"allmybits", "zecora", "photofinish", "trixiesad", "changeling"
 	],
 	"E": [
 		"fillytgap", "rdhuh", "rdsalute", "awwyeah", "twiponder",
-		"spikewtf", "huhhuh", "wahaha", "sbstare", "cutealoo",
-		"ajconfused", "absmile", "abhuh", "macintears", "lyra",
-		"bonbon", "spitfire", "happyluna", "sotrue", "nmm",
-		"berry", "whooves", "octavia", "colgate", "cheerilee",
-		"lily", "gilda", "snails", "dealwithit", "discentia"
+		"twisad", "spikewtf", "huhhuh", "wahaha", "sbstare",
+		"cutealoo", "ajconfused", "absmile", "abhuh", "macintears",
+		"lyra", "bonbon", "spitfire", "happyluna", "sotrue",
+		"nmm", "berry", "whooves", "octavia", "colgate",
+		"cheerilee", "lily", "gilda", "snails", "dealwithit",
+		"discentia"
 	],
 	"Plounge": [
 		"ajdance", "pinkiedance", "sweetiedance", "dashdance", "scootadance",
@@ -817,7 +819,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "My Little Emotebox v2.8.4 by /u/meinstuhlknarrt",
+	xhrUserAgent: "My Little Emotebox v2.8.5 by /u/meinstuhlknarrt",
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -1092,26 +1094,96 @@ var Updater = {
 		var newEmoteList = [],
 		    nonTableEmotes = [],
 		    noDoubles = [];
-		var emote, group, newEmoteSubList;
+		var belongsToTable, ecCopy, emote, emote2, emote2Found,
+		    group, newEmoteSubList, originalFound;
 
+
+		// Get a list of lists with all the emotes that share the same background position
+		var emotesCurrentCSS = this.emoteCSS[this.xhrCurrentTarget].split( "\n" );
+		var line;
+		var lineEmotes = [];
+
+		for( var i = 0; i < emotesCurrentCSS.length; i++ ) {
+			line = emotesCurrentCSS[i];
+
+			if( line.indexOf( "background-position:" ) == -1 ) {
+				continue;
+			}
+
+			line = line.substr( 0, line.indexOf( "{" ) ) + ",";
+			line = line.replace( /a\[href\|="\/([a-zA-Z0-9-_]+)"\],/g, "$1::" );
+			line = line.substr( 0, line.length - 2 );
+			lineEmotes.push( line.split( "::" ) );
+		}
+
+
+		// Iterate over (presumably) emote tables
 		for( var i = 0; i < emotesCurrent.length; i++ ) {
 			newEmoteSubList = [];
-			group = [];
+			ecCopy = emotesCurrent[i].slice( 0 );
 
+			// Iterate over emotes of a table
 			for( var j = 0; j < emotesCurrent[i].length; j++ ) {
 				emote = emotesCurrent[i][j];
-				group.push( emote );
 
-				// Start new group if table code has been reached.
-				if( this.isTableCode( emote ) ) {
+				// Emote has already been checked and was an alternate name for another one
+				if( ecCopy.indexOf( emote ) == -1 ) {
+					continue;
+				}
+
+				group = [emote];
+
+				for( var k = 0; k < ecCopy.length; k++ ) {
+					emote2 = ecCopy[k];
+					originalFound = false;
+					emote2Found = false;
+
+					if( emote2 == emote ) {
+						continue;
+					}
+
+					// Iterate over list of lists of emotes with same background position
+					for( var l = 0; l < lineEmotes.length; l++ ) {
+
+						// Find bg pos list of current emote
+						if( lineEmotes[l].indexOf( emote ) >= 0 ) {
+							originalFound = true;
+
+							// Is compared emote in same list? Yes -> is an alternate name
+							if( lineEmotes[l].indexOf( emote2 ) >= 0 ) {
+								group.push( emote2 );
+							}
+							break;
+						}
+						if( lineEmotes[l].indexOf( emote2 ) >= 0 ) {
+							emote2Found = true;
+							break;
+						}
+					}
+
+					if( !originalFound && !emote2Found ) {
+						group.push( emote2 );
+					}
+				}
+
+				// Remove already grouped emotes
+				belongsToTable = false;
+
+				for( var rem = 0; rem < group.length; rem++ ) {
+					if( !belongsToTable && this.isTableCode( group[rem] ) ) {
+						belongsToTable = true;
+					}
+					ecCopy.splice( ecCopy.indexOf( group[rem] ), 1 );
+				}
+
+				if( belongsToTable ) {
 					newEmoteSubList.push( group );
-					group = [];
+				}
+				else {
+					nonTableEmotes = nonTableEmotes.concat( group );
 				}
 			}
 
-			if( group.length > 0 ) {
-				nonTableEmotes = nonTableEmotes.concat( group );
-			}
 			if( newEmoteSubList.length > 0 ) {
 				newEmoteList.push( newEmoteSubList );
 			}
@@ -1209,8 +1281,8 @@ var Updater = {
 	identifyTableOfEmoteGroup: function( group ) {
 		var emote, table;
 
-		for( var i = group.length - 1; i > 0; i-- ) {
-			if( group[i].match( this.tableCodeRegex ) ) {
+		for( var i = group.length - 1; i >= 0; i-- ) {
+			if( this.isTableCode( group[i] ) ) {
 				return group[i][0].toUpperCase();
 			}
 		}
@@ -1244,7 +1316,7 @@ var Updater = {
 	 */
 	mergeSubredditEmotesIntoLists: function() {
 		var cfg = CURRENT_CONFIG;
-		var emoteCluster, group, table;
+		var add, emoteCluster, group, table;
 		var r_mlp = this.emotes["r/mylittlepony"],
 		    r_plounge = this.emotes["r/mlplounge"];
 
@@ -1280,9 +1352,24 @@ var Updater = {
 				if( !CURRENT_EMOTES.hasOwnProperty( table ) ) {
 					CURRENT_EMOTES[table] = [];
 				}
+
 				// Add emote to the table if not in there already
-				if( CURRENT_EMOTES[table].indexOf( group[0] ) < 0 ) {
-					CURRENT_EMOTES[table].push( group[0] );
+				add = false;
+
+				for( var k = 0; k < group.length; k++ ) {
+					if( group.length > 1 && this.isTableCode( group[k] ) ) {
+						continue;
+					}
+					if( CURRENT_EMOTES[table].indexOf( group[k] ) >= 0 ) {
+						add = false;
+						break;
+					}
+					if( add === false ) {
+						add = group[k];
+					}
+				}
+				if( add !== false ) {
+					CURRENT_EMOTES[table].push( add );
 				}
 			}
 		}

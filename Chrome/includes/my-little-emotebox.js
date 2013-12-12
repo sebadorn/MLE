@@ -3402,14 +3402,14 @@
 		"happy": {
 			"A": ["twipride", "twibeam", "raritydaww", "ajhappy", "lunateehee", "scootacheer"],
 			"B": ["rdsmile", "soawesome", "dj", "dumbfabric", "flutterwink", "flutteryay", "spikenervous", "raritydress"],
-			"C": ["joy", "hahaha", "ohhi", "party", "celestia", "zecora", "twismile", "derpyhappy", "scootaloo", "rdhappy", "rdsitting", "twidaw"],
+			"C": ["joy", "hahaha", "ohhi", "party", "celestia", "zecora", "twismile", "derpyhappy", "scootaloo", "rdhappy", "rdsitting", "twidaw", "cadencesmile"],
 			"E": ["awwyeah", "cheerilee", "dealwithit", "sotrue", "spitfire", "colgate", "absmile", "happyluna", "bonbon", "lyra", "cutealoo", "huhhuh", "wahaha"],
 			"Plounge": ["fillyrarity", "dishappy", "amazingmagic", "sweetiedance", "scootadance", "lunadance", "raritydance", "ajdance", "abdance", "trixiedance", "filly"]
 		},
 		"sad": {
 			"A": ["rdcry", "paperbagderpy", "lunawait"],
-			"C": ["trixiesad", "lunasad", "raritysad"],
-			"E": ["macintears"]
+			"C": ["trixiesad", "lunasad", "raritysad", "fluttercry"],
+			"E": ["macintears", "twisad"]
 		},
 		"angry": {
 			"A": ["silverspoon", "cadence", "grannysmith", "ohcomeon"],
@@ -3421,7 +3421,7 @@
 		"incredulous": {
 			"A": ["rarityreally", "raritypaper", "sbbook", "spikemeh", "celestiamad", "abmeh"],
 			"B": ["twisquint", "facehoof", "ajugh", "squintyjack", "rarityannoyed", "raritywut", "rarityjudge"],
-			"C": ["whattheflut"],
+			"C": ["whattheflut", "ppreally"],
 			"E": ["spikewtf", "abhuh", "rdhuh"],
 			"Plounge": ["twidurr"]
 		},
@@ -3434,7 +3434,7 @@
 		"shocked": {
 			"A": ["rarishock", "applegasp", "pinkieawe", "celestiawut", "flutterwhoa"],
 			"B": ["ajwut"],
-			"C": ["lunagasp", "derpyshock"],
+			"C": ["lunagasp", "derpyshock", "fluttercry"],
 			"E": ["ajconfused"]
 		},
 		"crazed": {
@@ -3462,6 +3462,7 @@
 		},
 		"determined": {
 			"A": ["swagintosh"],
+			"C": ["sneakybelle"],
 			"E": ["rdsalute", "fillytgap"],
 			"Plounge": ["karmasalute", "karmastare"]
 		},
@@ -3509,7 +3510,8 @@
 			"E": ["bonbon"]
 		},
 		"cadence": {
-			"A": ["cadence"]
+			"A": ["cadence"],
+			"C": ["cadencesmile"]
 		},
 		"celestia": {
 			"A": ["celestiawut", "celestiamad"],
@@ -3539,7 +3541,7 @@
 		"fluttershy": {
 			"A": ["flutterwhoa", "flutterroll", "flutterjerk"],
 			"B": ["fluttershh", "fluttershy", "fluttersrs", "flutterfear", "flutterwink", "flutteryay"],
-			"C": ["flutterblush", "loveme", "whattheflut"]
+			"C": ["flutterblush", "loveme", "whattheflut", "fluttercry"]
 		},
 		"gilda": {
 			"E": ["gilda"]
@@ -3577,7 +3579,7 @@
 		"pinkie": {
 			"A": ["ppfear", "ppcute", "pinkieawe"],
 			"B": ["ppseesyou", "ppshrug", "ppboring"],
-			"C": ["ohhi", "party", "hahaha", "joy", "pinkamina"],
+			"C": ["ohhi", "party", "hahaha", "joy", "pinkamina", "ppreally"],
 			"E": ["huhhuh"],
 			"Plounge": ["pinkiedance"]
 		},
@@ -3602,7 +3604,8 @@
 			"Plounge": ["scootadance"]
 		},
 		"shiningarmor": {
-			"A": ["shiningarmor"]
+			"A": ["shiningarmor"],
+			"E": ["shiningpride"]
 		},
 		"silverspoon": {
 			"A": ["silverspoon"]
@@ -3625,6 +3628,7 @@
 		"sweetie": {
 			"A": ["ohcomeon", "sbbook"],
 			"B": ["dumbfabric"],
+			"C": ["sneakybelle"],
 			"E": ["sbstare"],
 			"Plounge": ["sweetiedance"]
 		},
@@ -3638,7 +3642,7 @@
 			"A": ["twipride", "twiright", "twibeam", "twicrazy"],
 			"B": ["facehoof", "twisquint", "twirage"],
 			"C": ["twistare", "twismug", "twismile", "twidaw"],
-			"E": ["twiponder"],
+			"E": ["twiponder", "twisad"],
 			"Plounge": ["twidurr"]
 		},
 		"vinyl": {
