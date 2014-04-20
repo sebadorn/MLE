@@ -17,13 +17,13 @@ else if( typeof chrome != "undefined" ) {
 // Include content scripts, handle messaging and add options page.
 if( I_AM == BROWSER.FIREFOX ) {
 
-	var pageMod = require( "page-mod" );
-	var Request = require( "request" ).Request;
-	var self = require( "self" );
-	var sprefs = require( "simple-prefs" );
-	var ss = require( "simple-storage" );
-	var tabs = require( "tabs" );
-	var Timer = require( "timers" );
+	var pageMod = require( "sdk/page-mod" );
+	var Request = require( "sdk/request" ).Request;
+	var self = require( "sdk/self" );
+	var sprefs = require( "sdk/simple-prefs" );
+	var ss = require( "sdk/simple-storage" );
+	var tabs = require( "sdk/tabs" );
+	var Timer = require( "sdk/timers" );
 
 	var workers = [];
 
@@ -242,7 +242,7 @@ var DEFAULT_EMOTES = {
 		"lyra", "bonbon", "spitfire", "happyluna", "sotrue",
 		"nmm", "berry", "whooves", "octavia", "colgate",
 		"cheerilee", "lily", "gilda", "snails", "dealwithit",
-		"discentia"
+		"discentia", "maud", "discordsad", "lunamad", "pinkiepout"
 	],
 	"Plounge": [
 		"ajdance", "pinkiedance", "sweetiedance", "dashdance", "scootadance",
@@ -819,7 +819,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "My Little Emotebox v2.8.5 by /u/meinstuhlknarrt",
+	xhrUserAgent: "My Little Emotebox v2.8.6 by /u/meinstuhlknarrt",
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,

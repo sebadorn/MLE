@@ -1324,7 +1324,7 @@
 				css["#mle%"] += " display: none;";
 			}
 			if( cfg.boxTrigger == "button" ) {
-				css[".mle-open-btn"] = "margin: 0 0 0 4px !important;";
+				css[".mle-open-btn"] = "margin: 0 0 0 4px !important; vertical-align: top;";
 			}
 			if( cfg.ctxMenu ) {
 				css["#mle-ctxmenu%,\
@@ -3403,39 +3403,39 @@
 			"A": ["twipride", "twibeam", "raritydaww", "ajhappy", "lunateehee", "scootacheer"],
 			"B": ["rdsmile", "soawesome", "dj", "dumbfabric", "flutterwink", "flutteryay", "spikenervous", "raritydress"],
 			"C": ["joy", "hahaha", "ohhi", "party", "celestia", "zecora", "twismile", "derpyhappy", "scootaloo", "rdhappy", "rdsitting", "twidaw", "cadencesmile"],
-			"E": ["awwyeah", "cheerilee", "dealwithit", "sotrue", "spitfire", "colgate", "absmile", "happyluna", "bonbon", "lyra", "cutealoo", "huhhuh", "wahaha"],
+			"E": ["awwyeah", "cheerilee", "dealwithit", "sotrue", "spitfire", "colgate", "absmile", "happyluna", "bonbon", "lyra", "cutealoo", "huhhuh", "wahaha", "maud"],
 			"Plounge": ["fillyrarity", "dishappy", "amazingmagic", "sweetiedance", "scootadance", "lunadance", "raritydance", "ajdance", "abdance", "trixiedance", "filly"]
 		},
 		"sad": {
 			"A": ["rdcry", "paperbagderpy", "lunawait"],
 			"C": ["trixiesad", "lunasad", "raritysad", "fluttercry"],
-			"E": ["macintears", "twisad"]
+			"E": ["macintears", "twisad", "discordsad", "maud"]
 		},
 		"angry": {
 			"A": ["silverspoon", "cadence", "grannysmith", "ohcomeon"],
 			"B": ["rdcool", "twirage", "cockatrice", "fluttersrs"],
 			"C": ["angel", "rdannoyed", "louder", "loveme"],
-			"E": ["snails", "discentia"],
+			"E": ["snails", "discentia", "lunamad", "maud"],
 			"Plounge": ["karmastare"]
 		},
 		"incredulous": {
 			"A": ["rarityreally", "raritypaper", "sbbook", "spikemeh", "celestiamad", "abmeh"],
 			"B": ["twisquint", "facehoof", "ajugh", "squintyjack", "rarityannoyed", "raritywut", "rarityjudge"],
 			"C": ["whattheflut", "ppreally"],
-			"E": ["spikewtf", "abhuh", "rdhuh"],
+			"E": ["spikewtf", "abhuh", "rdhuh", "pinkiepout", "maud"],
 			"Plounge": ["twidurr"]
 		},
 		"scared": {
 			"A": ["ppfear"],
 			"B": ["abwut", "ajcower", "flutterfear"],
 			"C": ["rdscared"],
-			"E": ["lily"]
+			"E": ["lily", "maud"]
 		},
 		"shocked": {
 			"A": ["rarishock", "applegasp", "pinkieawe", "celestiawut", "flutterwhoa"],
 			"B": ["ajwut"],
 			"C": ["lunagasp", "derpyshock", "fluttercry"],
-			"E": ["ajconfused"]
+			"E": ["ajconfused", "maud"]
 		},
 		"crazed": {
 			"A": ["applederp", "scootaderp", "twicrazy"],
@@ -3446,38 +3446,39 @@
 		"thoughtful": {
 			"A": ["scootaplease"],
 			"C": ["hmmm"],
-			"E": ["twiponder"]
+			"E": ["twiponder", "pinkiepout", "maud"]
 		},
 		"sarcastic": {
 			"A": ["flutterroll", "flutterjerk", "ppcute", "twiright", "ajsup", "ajlie"],
 			"B": ["ajsly", "ppboring", "trixiesmug", "rarityprimp"],
 			"C": ["twismug"],
-			"E": ["octavia"]
+			"E": ["octavia", "maud"]
 		},
 		"bashful": {
 			"A": ["shiningarmor"],
 			"B": ["fluttershy", "fluttershh"],
 			"C": ["flutterblush", "derp"],
-			"E": ["whooves"]
+			"E": ["whooves", "maud"]
 		},
 		"determined": {
 			"A": ["swagintosh"],
 			"C": ["sneakybelle"],
-			"E": ["rdsalute", "fillytgap"],
+			"E": ["rdsalute", "fillytgap", "lunamad", "maud"],
 			"Plounge": ["karmasalute", "karmastare"]
 		},
 		"evil": {
 			"A": ["chrysalis", "priceless"],
 			"C": ["changeling"],
-			"E": ["gilda", "nmm"]
+			"E": ["gilda", "nmm", "maud"]
 		},
 		"distraught": {
-			"B": ["rarityyell", "raritywhine", "raritywhy", "noooo"]
+			"B": ["rarityyell", "raritywhine", "raritywhy", "noooo"],
+			"E": ["maud"]
 		},
 		"blank": {
 			"B": ["ppseesyou", "eeyup"],
 			"C": ["twistare", "photofinish", "ajfrown"],
-			"E": ["sbstare"]
+			"E": ["sbstare", "maud"]
 		},
 		"misc": {
 			"A": ["abbored"],
@@ -3536,7 +3537,8 @@
 			"Plounge": ["dishappy"]
 		},
 		"discord": {
-			"A": ["priceless"]
+			"A": ["priceless"],
+			"E": ["discordsad"]
 		},
 		"fluttershy": {
 			"A": ["flutterwhoa", "flutterroll", "flutterjerk"],
@@ -3559,7 +3561,7 @@
 		"luna": {
 			"A": ["lunateehee", "lunawait"],
 			"C": ["lunasad", "lunagasp"],
-			"E": ["happyluna", "nmm"],
+			"E": ["happyluna", "nmm", "lunamad"],
 			"Plounge": ["lunadance"]
 		},
 		"lyra": {
@@ -3569,6 +3571,9 @@
 			"A": ["swagintosh"],
 			"B": ["eeyup"],
 			"E": ["macintears"]
+		},
+		"maud": {
+			"E": ["maud"]
 		},
 		"octavia": {
 			"E": ["octavia"]
@@ -3580,7 +3585,7 @@
 			"A": ["ppfear", "ppcute", "pinkieawe"],
 			"B": ["ppseesyou", "ppshrug", "ppboring"],
 			"C": ["ohhi", "party", "hahaha", "joy", "pinkamina", "ppreally"],
-			"E": ["huhhuh"],
+			"E": ["huhhuh", "pinkiepout"],
 			"Plounge": ["pinkiedance"]
 		},
 		"rainbow": {
@@ -3696,7 +3701,7 @@
 	TAGS["doctor"] = TAGS["whooves"];
 	TAGS["doctorwhooves"] = TAGS["whooves"];
 
-	TAGS["bestpony"] = TAGS["lyra"];
+	TAGS["bestpony"] = TAGS["applejack"];
 
 
 } )();
