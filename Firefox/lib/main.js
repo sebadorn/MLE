@@ -116,18 +116,31 @@ if( I_AM == BROWSER.FIREFOX ) {
 // Chrome only.
 else if( I_AM == BROWSER.CHROME ) {
 
-	// TODO: Uncomment when chrome.declarativeWebRequest finds
-	// its way into the stable channel. It's currently experimental.
+	// Set an individual User-Agent for our XMLHttpRequests.
+	chrome.webRequest.onBeforeSendHeaders.addListener(
+		// Modify user-agent
+		function( details ) {
+			var headers = details.requestHeaders;
+			var flagMLE = false;
 
-	// // Set an individual User-Agent for our XMLHttpRequests.
-	// chrome.declarativeWebRequest.onRequest.addRules( [ {
-	// 	priority: 100,
-	// 	actions: [
-	// 		new chrome.declarativeWebRequest.SetRequestHeader( {
-	// 			name: "User-Agent", value: Updater.xhrUserAgent
-	// 		} )
-	// 	]
-	// } ] );
+			for( var i = 0; i < headers.length; i++ ) {
+				if( headers[i].name == "MLE-Chrome" ) {
+					flagMLE = true;
+				}
+				else if( headers[i].name.toLowerCase() == "user-agent" ) {
+					headers[i].value = Updater.xhrUserAgent;
+				}
+			};
+
+			return { requestHeaders: flagMLE ? headers: details.requestHeaders };
+		},
+		// filter
+		{
+			urls: ["<all_urls>"],
+			types: ["xmlhttprequest"]
+		},
+		["requestHeaders", "blocking"]
+	);
 
 }
 
@@ -613,6 +626,7 @@ var BrowserChrome = {
 		var xhr = new XMLHttpRequest();
 
 		xhr.open( method, url, async );
+		xhr.setRequestHeader( "MLE-Chrome", "1" );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
 	}
@@ -819,7 +833,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "My Little Emotebox v2.8.6 by /u/meinstuhlknarrt",
+	xhrUserAgent: "MLE/2.9 (by meinstuhlknarrt)",
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -1491,11 +1505,24 @@ var Updater = {
 		META.lastSubredditCheck = Date.now();
 		saveToStorage( PREF.META, META );
 
-		saveToStorage( PREF.SUBREDDIT_CSS, this.emoteCSS );
-		saveToStorage( PREF.SUBREDDIT_EMOTES, this.emotes );
+		var flagUpdateSuccess = true;
 
-		this.mergeSubredditEmotesIntoLists();
-		saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
+		for( var i = 0; i < this.xhrTargets.length; i++ ) {
+			if(
+				!this.emotes.hasOwnProperty( this.xhrTargets[i] ) ||
+				this.emotes[this.xhrTargets[i]].length == 0
+			) {
+				flagUpdateSuccess = false;
+			}
+		}
+
+		if( flagUpdateSuccess ) {
+			saveToStorage( PREF.SUBREDDIT_CSS, this.emoteCSS );
+			saveToStorage( PREF.SUBREDDIT_EMOTES, this.emotes );
+
+			this.mergeSubredditEmotesIntoLists();
+			saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
+		}
 
 		if( this.forceUpdate ) {
 			var response = { task: BG_TASK.UPDATE_CSS };

@@ -1925,6 +1925,40 @@
 
 
 		/**
+		 * Get the base HTML object for the RES live preview.
+		 * @param  {DOMElement} ele
+		 * @return {DOMElement|Boolean}
+		 */
+		getBaseForLivePreview: function( ele ) {
+			var base = false;
+
+			// Textarea
+			if(
+				ele.tagName.toLowerCase() == "textarea"
+			) {
+				base = ele.parentNode.parentNode.parentNode;
+			}
+			// Reply
+			else if(
+				ele.tagName.toLowerCase() == "a" &&
+				ele.outerHTML.indexOf( 'onclick="return reply(this)"' ) >= 0
+			) {
+				// I'm sorry.
+				base = ele.parentNode.parentNode.parentNode.parentNode.parentNode.querySelector( ".child > form.usertext" );
+			}
+			// Edit
+			else if(
+				ele.tagName.toLowerCase() == "a" &&
+				ele.outerHTML.indexOf( 'onclick="return edit_usertext(this)"' ) >= 0
+			) {
+				base = ele.parentNode.parentNode.parentNode.querySelector( "form.usertext" );
+			}
+
+			return base;
+		},
+
+
+		/**
 		 * Convert URLs and Markdown link code to actual HTML links.
 		 * @param  {String} text String to evaluate.
 		 * @return {String}      Evaluated String.
@@ -1953,26 +1987,7 @@
 				return;
 			}
 
-			var MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
-
-			// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
-			if( MutationObserver ) {
-				var observer = new MutationObserver( this.modifyEmotesMutationObserver.bind( this ) ),
-				    observerConfig = {
-				    	attributes: false,
-				    	childList: true,
-				    	characterData: false
-				    };
-				var targets = d.querySelectorAll( ".sitetable, .expando, .livePreview .md" );
-
-				for( var i = 0; i < targets.length; i++ ) {
-					observer.observe( targets[i], observerConfig );
-				}
-			}
-			// ... but not in Opera, so we have to do this the deprecated way
-			else {
-				d.addEventListener( "DOMNodeInserted", this.modifyEmotesDOMEvent.bind( this ), false );
-			}
+			d.addEventListener( "click", this.scanForLivePreview );
 
 			// Iterate all the links
 			for( var i = 0; i < d.links.length; i++ ) {
@@ -2282,6 +2297,44 @@
 				emote.className += " mle-revealemote";
 				emote.textContent = emote.pathname;
 			}
+		},
+
+
+		/**
+		 * Add an observer to every RES live preview element that pops up.
+		 */
+		scanForLivePreview: function( e ) {
+			var base = Builder.getBaseForLivePreview( e.target );
+
+			if( !base ) {
+				return;
+			}
+
+			var previewBox = base.querySelector( ".livePreview .md" );
+
+			if( !previewBox || previewBox.className.indexOf( "mle-lp-" + base.id ) >= 0 ) {
+				return;
+			}
+
+			var MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
+
+			// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
+			if( MutationObserver ) {
+				var observer = new MutationObserver( Builder.modifyEmotesMutationObserver.bind( Builder ) ),
+				    observerConfig = {
+				    	attributes: false,
+				    	childList: true,
+				    	characterData: false
+				    };
+
+				observer.observe( previewBox, observerConfig );
+			}
+			// ... but not in Opera, so we have to do this the deprecated way
+			else {
+				previewBox.addEventListener( "DOMNodeInserted", Builder.modifyEmotesDOMEvent.bind( Builder ), false );
+			}
+
+			previewBox.className += " mle-lp-" + base.id;
 		},
 
 
@@ -3333,7 +3386,7 @@
 			sliceLen = ( hn.substr( hn.length - 6 ) == ".co.uk" ) ? -3 : -2;
 			hn = hn.split( "." ).slice( sliceLen ).join( "." );
 
-			return this.ALLOWED_HOSTNAMES.indexOf( hn ) > -1 ? true : false;
+			return ( this.ALLOWED_HOSTNAMES.indexOf( hn ) > -1 );
 		},
 
 

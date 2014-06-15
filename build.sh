@@ -7,6 +7,8 @@ CHROME=google-chrome
 PROJECT_URL="http://sebadorn.de/mlp/mle"
 ABSOLUTE_PATH="/home/seba/programming/My Little Emotebox"
 
+export LD_LIBRARY_PATH=/home/seba/.mccoy/xulrunner/
+
 
 function set_version_and_url {
 	sed -i "s;%MLE_VERSION%;$VERSION;g" $1
@@ -40,6 +42,19 @@ function build_chrome {
 	cp server/updates-chrome-template.xml build/updates-chrome.xml
 
 	set_version_and_url build/updates-chrome.xml
+}
+
+
+function build_chrome_store {
+	cd Chrome/
+	cp manifest.json ../manifest_tmp.json
+
+	set_version_and_url manifest.json
+	sed -i "s/\t\"update_url\".*\n//g" manifest.json
+	zip -r ../build/mle-chrome.zip *
+
+	mv ../manifest_tmp.json manifest.json
+	cd ../
 }
 
 
@@ -107,7 +122,7 @@ fi
 
 if [ $# -lt 2 ]; then
 	echo "Not enough arguments provided."
-	echo "First argument: all | opera | chrome | firefox | clean"
+	echo "First argument: all | opera | chrome | chrome_store | firefox | clean"
 	echo "Second argument: version"
 	exit
 fi
@@ -118,12 +133,15 @@ VERSION=$2
 if [ $BROWSER == "all" ]; then
 	build_opera
 	build_chrome
+	build_chrome_store
 	build_firefox
 	hint_firefox
 elif [ $BROWSER == "opera" ]; then
 	build_opera
 elif [ $BROWSER == "chrome" ]; then
 	build_chrome
+elif [ $BROWSER == "chrome_store" ]; then
+	build_chrome_store
 elif [ $BROWSER == "firefox" ]; then
 	build_firefox
 	hint_firefox

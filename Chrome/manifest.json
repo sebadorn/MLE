@@ -1,10 +1,10 @@
 {
 	"name": "My Little Emotebox",
-	"version": "%MLE_VERSION%",
+	"version": "0.9",
 	"manifest_version": 2,
 	"description": "An easy way to insert and manage emotes.",
-	"homepage_url": "%MLE_URL%/",
-	"update_url": "%MLE_URL%/updates-chrome.xml",
+	// "homepage_url": "%MLE_URL%/",
+	// "update_url": "%MLE_URL%/updates-chrome.xml",
 
 	"icons": {
 		"16": "icons/MLE_16.png",
@@ -32,7 +32,7 @@
 			"includes/mle-codes.js",
 			"scripts/background.js"
 		],
-		"persistent": false
+		"persistent": true
 	},
 
 	"options_page": "options.html",
@@ -40,10 +40,15 @@
 	"permissions": [
 		"storage",
 		"contextMenus",
-		//"declarativeWebRequest",
+		"webRequest",
+		"webRequestBlocking",
 		"http://reddit.com/",
 		"http://*.reddit.com/",
-		"http://www.redditstatic.com/",
-		"http://*.redditmedia.com/"
+		"https://reddit.com/",
+		"https://*.reddit.com/",
+		"http://*.redditmedia.com/",
+		"https://*.redditmedia.com/",
+		"http://*.amazonaws.com/",
+		"https://*.amazonaws.com/"
 	]
 }
