@@ -1,6 +1,7 @@
 "use strict";
 
 
+
 /**
  * Register click event on nav elements.
  */
@@ -11,28 +12,11 @@ function registerEventToggleNav() {
 	for( i = 0; i < nav.length; i++ ) {
 		nav[i].addEventListener( "click", toggleNav, false );
 	}
-};
+}
 
 
 /**
- * Changes the class of the chosen nav element to "active".
- */
-function toggleNav( e ) {
-	var nav = document.querySelectorAll( "nav label" );
-	var i;
-
-	for( i = 0; i < nav.length; i++ ) {
-		if( nav[i] != e.target ) {
-			nav[i].className = "";
-		}
-	}
-
-	e.target.className = "active";
-};
-
-
-/**
- * Addon install trigger for Firefox.
+ * Add-on install trigger for Firefox.
  */
 function setFirefoxInstallTrigger() {
 	if( typeof InstallTrigger != "undefined" ) {
@@ -53,7 +37,7 @@ function setFirefoxInstallTrigger() {
 			InstallTrigger.install( params );
 		}, false );
 	}
-};
+}
 
 
 /**
@@ -62,7 +46,24 @@ function setFirefoxInstallTrigger() {
 function setVersion() {
 	var v = document.getElementById( "version" );
 	v.textContent = "%MLE_VERSION%";
-};
+}
+
+
+/**
+ * Changes the class of the chosen nav element to "active".
+ */
+function toggleNav( e ) {
+	var nav = document.querySelectorAll( "nav label" );
+	var i;
+
+	for( i = 0; i < nav.length; i++ ) {
+		if( nav[i] != e.target ) {
+			nav[i].className = "";
+		}
+	}
+
+	e.target.className = "active";
+}
 
 
 /**

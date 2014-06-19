@@ -202,12 +202,13 @@ var DEFAULT_CONFIG = {
 	msgAnimationSpeed: 1000, // [ms]
 	msgPosition: "top", // "top" or "bottom"
 	msgTimeout: 7000, // [ms] // How long a popup message is displayed.
-	revealUnknownEmotes: true,
 	revealStyleBgColor: "#ffffff",
 	revealStyleBorderColor: "#e0e0e0",
 	revealStyleColor: "#808080",
+	revealUnknownEmotes: true,
 	searchGroupEmotes: true, // Group emotes by table/subreddit
 	showEmoteTitleText: false,
+	showTitleConvertURLs: true,
 	showTitleStyleBgColor: "rgba(255,255,255,0.0)",
 	showTitleStyleBorderColor: "rgba(255,255,255,0.0)",
 	showTitleStyleColor: "#808080",
@@ -833,7 +834,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "MLE/2.9 (by meinstuhlknarrt)",
+	xhrUserAgent: "MLE/2.9.1 (by meinstuhlknarrt)",
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,

@@ -1,6 +1,7 @@
 "use strict";
 
 
+
 /**
  * Register click event on nav elements.
  */
@@ -11,7 +12,41 @@ function registerEventToggleNav() {
 	for( i = 0; i < nav.length; i++ ) {
 		nav[i].addEventListener( "click", toggleNav, false );
 	}
-};
+}
+
+
+/**
+ * Add-on install trigger for Firefox.
+ */
+function setFirefoxInstallTrigger() {
+	if( typeof InstallTrigger != "undefined" ) {
+		var lff = document.getElementById( "link_firefox" );
+
+		lff.addEventListener( "click", function( e ) {
+			e.preventDefault();
+
+			var params = {
+				"MLE": {
+					URL: e.target.href,
+					IconURL: "http://sebadorn.de/mlp/mle/MLE_32.png",
+					Hash: "sha256:57a8a6dc8f37574bd3f16e2c83c6c166d5793aeadc34efa95a7f157e12c723bc",
+					toString: function() { return this.URL; }
+				}
+			};
+
+			InstallTrigger.install( params );
+		}, false );
+	}
+}
+
+
+/**
+ * Set current version of MLE in headline.
+ */
+function setVersion() {
+	var v = document.getElementById( "version" );
+	v.textContent = "2.9";
+}
 
 
 /**
@@ -28,41 +63,7 @@ function toggleNav( e ) {
 	}
 
 	e.target.className = "active";
-};
-
-
-/**
- * Addon install trigger for Firefox.
- */
-function setFirefoxInstallTrigger() {
-	if( typeof InstallTrigger != "undefined" ) {
-		var lff = document.getElementById( "link_firefox" );
-
-		lff.addEventListener( "click", function( e ) {
-			e.preventDefault();
-
-			var params = {
-				"MLE": {
-					URL: e.target.href,
-					IconURL: "http://sebadorn.de/mlp/mle/MLE_32.png",
-					Hash: "sha256:ff2e92890263393fbfc769dd6dbb97fd82491ecacb20dbe492829d4d12b17300",
-					toString: function() { return this.URL; }
-				}
-			};
-
-			InstallTrigger.install( params );
-		}, false );
-	}
-};
-
-
-/**
- * Set current version of MLE in headline.
- */
-function setVersion() {
-	var v = document.getElementById( "version" );
-	v.textContent = "2.9";
-};
+}
 
 
 /**

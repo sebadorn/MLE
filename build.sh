@@ -50,7 +50,7 @@ function build_chrome_store {
 	cp manifest.json ../manifest_tmp.json
 
 	set_version_and_url manifest.json
-	sed -i "s/\t\"update_url\".*\n//g" manifest.json
+	sed -i "s/\t\"update_url\".*//g" manifest.json
 	zip -r ../build/mle-chrome.zip *
 
 	mv ../manifest_tmp.json manifest.json

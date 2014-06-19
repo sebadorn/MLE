@@ -1959,15 +1959,21 @@
 
 
 		/**
-		 * Convert URLs and Markdown link code to actual HTML links.
+		 * Convert URLs to actual HTML links.
 		 * @param  {String} text String to evaluate.
 		 * @return {String}      Evaluated String.
 		 */
 		linkifyURLs: function( text ) {
-			// Markdown
-			text = text.replace( /\[(.*)\]\((.+)\)/g, "<a href=\"$2\">$1</a>" );
+			if( !GLOBAL.config.showTitleConvertURLs ) {
+				return text;
+			}
+
+			// // Markdown
+			// text = text.replace( /\[(.*)\]\((.+)\)/g, "<a href=\"$2\">$1</a>" );
+
 			// URL only
 			text = text.replace( /([^=][^"])((http|ftp)[s]?:\/\/[^ "']+)/gi, "$1<a href=\"$2\">$2</a>" );
+			text = text.replace( /^((http|ftp)[s]?:\/\/[^ "']+)/gi, "<a href=\"$1\">$1</a>" );
 
 			return text;
 		},
@@ -2281,22 +2287,30 @@
 		 * @param {DOMElement} emote
 		 */
 		revealUnknownEmote: function( emote ) {
-			// Special emote, nevermind
-			if( emote.pathname.indexOf( "/sp" ) == 0 ) {
-				return;
-			}
+			// Give other scripts (BPM) a little time to apply CSS to emotes.
+			// An attempt to reduce the false positive rate for unknown emotes.
+			window.setTimeout( function( e ) {
+				// Special emote, nevermind
+				if( emote.pathname.indexOf( "/sp" ) == 0 ) {
+					return;
+				}
 
-			if( emote.offsetWidth > 0 && emote.offsetHeight > 0 ) {
-				return;
-			}
+				// Has size
+				if( emote.offsetWidth > 0 && emote.offsetHeight > 0 ) {
+					return;
+				}
 
-			var emoteStyle = window.getComputedStyle( emote );
+				var emoteStyle = window.getComputedStyle( emote );
 
-			if( ( emoteStyle.width == "0px" || emoteStyle.width == "auto" )
-					&& ( emoteStyle.height == "0px" || emoteStyle.height == "auto" ) ) {
-				emote.className += " mle-revealemote";
-				emote.textContent = emote.pathname;
-			}
+				if(
+					( emoteStyle.width == "0px" || emoteStyle.width == "auto" ) &&
+					( emoteStyle.height == "0px" || emoteStyle.height == "auto" ) &&
+					emoteStyle.backgroundImage == "none"
+				) {
+					emote.className += " mle-revealemote";
+					emote.textContent = emote.pathname;
+				}
+			}, 250 );
 		},
 
 

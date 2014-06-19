@@ -1,3 +1,46 @@
+@font-face {
+	font-family: "OpenSans Web";
+	font-weight: normal;
+	font-style: normal;
+	src: url( "open-sans/OpenSans-Regular.ttf" ) format( "truetype" );
+}
+
+@font-face {
+	font-family: "OpenSans Web";
+	font-weight: normal;
+	font-style: italic;
+	src: url( "open-sans/OpenSans-Italic.ttf" ) format( "truetype" );
+}
+
+/*@font-face {
+	font-family: "OpenSans Web";
+	font-weight: bold;
+	font-style: italic;
+	src: url( "open-sans/OpenSans-BoldItalic.ttf" ) format( "truetype" );
+}*/
+
+@font-face {
+	font-family: "OpenSans Web";
+	font-weight: bold;
+	font-style: normal;
+	src: url( "open-sans/OpenSans-Bold.ttf" ) format( "truetype" );
+}
+
+/*@font-face {
+	font-family: "OpenSans Light Web";
+	font-weight: normal;
+	font-style: normal;
+	src: url( "open-sans/OpenSans-Light.ttf" ) format( "truetype" );
+}
+
+@font-face {
+	font-family: "OpenSans Light Web";
+	font-weight: normal;
+	font-style: italic;
+	src: url( "open-sans/OpenSans-LightItalic.ttf" ) format( "truetype" );
+}*/
+
+
 
 * {
 	margin: 0;
@@ -14,19 +57,20 @@ a:hover {
 }
 
 html {
-	background-color: #ffffff;
-	color: #000000;
-	font: 16px Arial, sans-serif;
+	background-color: #303030;
+	color: #f6f6f6;
+	font: 16px "OpenSans Web", Arial, sans-serif;
 	padding-bottom: 80px;
 }
 
 code {
 	background-color: #f4f4f4;
 	border: 1px solid #e0e0e0;
-	border-radius: 2px;
+	border-bottom-color: #c0c0c0;
+	border-radius: 1px;
 	color: #505050;
-	font: 15px Arial, sans-serif;
-	padding: 2px 4px;
+	font-size: 13px;
+	padding: 4px 6px;
 }
 
 h1 {
@@ -34,7 +78,7 @@ h1 {
 	font-weight: bold;
 	letter-spacing: -1px;
 	line-height: 30px;
-	margin: 72px auto 10px;
+	margin: 72px auto 10px !important;
 	position: relative;
 	text-transform: uppercase;
 }
@@ -57,120 +101,27 @@ h2 {
 	text-transform: uppercase;
 }
 
-input, select, textarea {
-	background-color: #ffffff;
-	border: 1px solid #e0e0e0;
-	border-radius: 1px;
-	box-sizing: border-box;
-	color: #000000;
-	font: 100% Arial, sans-serif;
-}
-
-input[type="text"] {
-	margin-right: 6px;
-	padding: 4px 2px;
-	width: 97px;
-}
-
-input[type="submit"] {
-	background-color: #9AB4D1;
-	border-width: 0;
-	color: #ffffff;
-	cursor: pointer;
-	min-width: 110px;
-	padding: 4px 0;
-}
-
-input[type="submit"]:hover {
-	background-color: #6189B5;
-}
-
-select {
-	margin-right: 6px;
-	min-width: 97px;
-	padding: 3px 6px;
-}
-
-textarea {
-	font-family: "DejaVu Sans Mono", "Courier New", monospace;
-	font-size: 13px;
-	height: 140px;
-	padding: 10px;
-	resize: vertical;
-	width: 500px;
-}
-
-textarea[readonly] {
-	background-color: #fafafa;
-	border-color: #d8d8d8;
-	color: #101010;
+hr {
+	border: 0;
+	border-bottom: 1px solid #e0e0e0;
+	margin: 24px 0 20px;
 }
 
 ul {
 	list-style-type: none;
 }
 
-ol {
-	margin-left: 26px;
+li {
+	line-height: 24px;
 }
-
-	ol li {
-		line-height: 24px;
-		margin-bottom: 14px;
-	}
-
-	ol li:last-child {
-		margin-bottom: 0;
-	}
 
 p {
 	line-height: 24px;
+	margin-bottom: 10px;
 }
 
-.features li, .lists li {
-	line-height: 24px;
-}
-
-.changelog li {
-	line-height: 26px;
-}
-
-.features li:first-child {
-	border-top: 0;
-	text-align: center;
-}
-
-.install_link {
-	background-color: #f0f0f0;
-	background-image: -webkit-linear-gradient( 270deg, rgba( 255, 255, 255, 0.3 ), rgba( 255, 255, 255, 0.0 ) );
-	background-image:         linear-gradient( 180deg, rgba( 255, 255, 255, 0.3 ), rgba( 255, 255, 255, 0.0 ) );
-	border: 1px solid transparent;
-	border-radius: 4px;
-	color: #ffffff;
-	display: inline-block;
-	padding: 7px 9px;
-	text-align: center;
-	text-shadow: 0 1px 0 rgba( 0, 0, 0, 0.3 );
-}
-
-.install_link:hover {
-	background-image: -webkit-linear-gradient( 90deg, rgba( 255, 255, 255, 0.3 ), rgba( 255, 255, 255, 0.0 ) );
-	background-image:         linear-gradient( 0deg, rgba( 255, 255, 255, 0.3 ), rgba( 255, 255, 255, 0.0 ) );
-}
-
-.install_link.chrome {
-	background-color: #0374ED;
-	border-color: #0374ED;
-}
-
-.install_link.firefox {
-	background-color: #D96A19;
-	border-color: #D96A19;
-}
-
-.install_link.opera {
-	background-color: #CB141A;
-	border-color: #CB141A;
+p:last-child {
+	margin-bottom: 0;
 }
 
 
@@ -178,79 +129,190 @@ p {
 /* Same width */
 /* ---------- */
 
-h1, nav, .options {
-	box-sizing: border-box;
+h1, nav, .main {
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	margin: 0 auto;
 	max-width: 720px;
 }
+
+.changelog,
+.features {
+	background-color: #ffffff;
+	color: #000000;
+	padding: 40px;
+}
+
 
 
 /* Navigation */
 /* ---------- */
 
-nav {
-	margin: 0 auto 48px;
+nav.main {
+	margin-bottom: 40px;
 }
 
-	nav label {
-		background-color: #f0f0f0;
-		border-radius: 1px;
-		color: #000000;
-		cursor: pointer;
-		display: inline-block;
+	nav.main a {
+		border: 0;
+		color: #88D434;
+		font-size: 140%;
 		margin-right: 10px;
-		min-width: 80px;
-		padding: 8px;
-		position: relative;
-		text-align: center;
 	}
 
-	nav label:hover {
-		background-color: #ffffff;
+	nav.main a:hover {
+		color: #a0a0a0;
 	}
 
-	nav .active {
-		background-color: #404040 !important;
+	nav.main a.active {
 		color: #ffffff;
 	}
 
-	nav .active:after {
-		border: 10px solid transparent;
-		border-top-color: #404040;
-		bottom: -20px;
-		content: "";
-		display: inline-block;
-		left: 40px;
-		position: absolute;
-	}
 
-.options {
-	margin: 0 auto;
+
+/* Features */
+/* -------- */
+
+.features li {
+	border-bottom: 1px solid #e0e0e0;
+	padding: 20px 0;
 }
 
-.form {
-	display: none;
+.features li:last-child {
+	border-bottom: 0;
+	padding-bottom: 0;
 }
 
-input[name="page"]:checked ~ .form {
+.features img {
+	background-color: #ffffff;
 	display: block;
+	margin: 10px auto 0;
 }
 
-	.form > li {
-		border-top: 1px solid #e0e0e0;
-		padding: 20px 0;
+.features .intro {
+	padding-top: 0;
+	text-align: center;
+}
+
+	.features .intro img {
+		border: 20px solid #ffffff;
+		border-radius: 2px;
+		box-shadow: 0 4px 20px rgba( 0, 0, 0, 0.2 );
+		left: -110px;
+		margin-top: 0;
+		position: relative;
 	}
 
-	.form > li:last-child {
-		border-bottom: 1px solid #e0e0e0;
+	.features .intro p {
+		color: #707070;
+		font-size: 14px;
+		line-height: 18px;
+		margin-top: 10px;
 	}
 
-		.form label {
-			display: inline-block;
-		}
 
-		.explain {
-			color: #808080;
-			font-size: 15px;
-			line-height: 20px;
-			margin-top: 10px;
-		}
+
+/* Install */
+/* ------- */
+
+nav.tabs label {
+	border-bottom: 4px solid transparent;
+	color: #a0a0a0;
+	cursor: pointer;
+	display: inline-block;
+	font-size: 120%;
+	margin-right: -4px;
+	min-width: 90px;
+	padding: 20px;
+	position: relative;
+	text-align: center;
+}
+
+nav.tabs label:hover {
+	border-bottom-color: #808080;
+}
+
+nav.tabs .active {
+	border-bottom-color: #ffffff !important;
+	color: #ffffff;
+}
+
+.browsers {
+	background-color: #ffffff;
+	box-shadow: 0 4px 40px 0 rgba( 255, 255, 255, 0.1 );
+}
+
+	.tab-content {
+		color: #000000;
+		display: none;
+		padding: 30px;
+	}
+
+	input[name="browser"]:checked + .tab-content {
+		display: block;
+	}
+
+
+.install_trigger {
+	background-color: #101010;
+	background-image: -webkit-linear-gradient( 270deg, rgba( 255, 255, 255, 0.3 ), rgba( 255, 255, 255, 0.0 ) );
+	background-image:         linear-gradient( 180deg, rgba( 255, 255, 255, 0.3 ), rgba( 255, 255, 255, 0.0 ) );
+	border: 1px solid transparent;
+	border-radius: 4px;
+	color: #ffffff;
+	display: inline-block;
+	font-family: "OpenSans Web", Arial, sans-serif;
+	font-size: 100%;
+	font-weight: bold;
+	margin-bottom: 16px;
+	padding: 9px 13px;
+	text-align: center;
+}
+
+.install_trigger:hover {
+	background-image: -webkit-linear-gradient( 90deg, rgba( 255, 255, 255, 0.3 ), rgba( 255, 255, 255, 0.0 ) );
+	background-image:         linear-gradient( 0deg, rgba( 255, 255, 255, 0.3 ), rgba( 255, 255, 255, 0.0 ) );
+}
+
+.install_trigger.chrome {
+	background-color: #0374ED;
+	border-color: #0374ED;
+}
+
+.install_trigger.firefox {
+	background-color: #D96A19;
+	border-color: #D96A19;
+}
+
+.install_trigger.opera {
+	background-color: #CB141A;
+	border-color: #CB141A;
+}
+
+
+
+/* Changelog */
+/* --------- */
+
+.changelog li {
+	border-bottom: 1px solid #e0e0e0;
+	padding: 20px 0;
+}
+
+.changelog li:first-child {
+	padding-top: 0;
+}
+
+.changelog li:last-child {
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+
+	.changelog li li {
+		border: 0;
+		padding: 6px 0;
+	}
+
+	.changelog code {
+		margin-right: 4px;
+		vertical-align: bottom;
+	}
