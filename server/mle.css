@@ -215,16 +215,16 @@ nav.main {
 /* ------- */
 
 nav.tabs label {
+	background-position: 20px center;
+	background-repeat: no-repeat;
 	border-bottom: 4px solid transparent;
 	color: #a0a0a0;
 	cursor: pointer;
 	display: inline-block;
 	font-size: 120%;
 	margin-right: -4px;
-	min-width: 90px;
-	padding: 20px;
+	padding: 20px 20px 20px 42px;
 	position: relative;
-	text-align: center;
 }
 
 nav.tabs label:hover {
@@ -234,6 +234,19 @@ nav.tabs label:hover {
 nav.tabs .active {
 	border-bottom-color: #ffffff !important;
 	color: #ffffff;
+}
+
+nav.tabs label[for="tab_chrome"] {
+	background-image: url( "./logo-chrome.png" );
+}
+
+nav.tabs label[for="tab_firefox"] {
+	background-image: url( "./logo-firefox.png" );
+}
+
+nav.tabs label[for="tab_opera"] {
+	background-image: url( "./logo-opera.png" );
+	padding-left: 40px;
 }
 
 .browsers {
