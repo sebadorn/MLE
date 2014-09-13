@@ -16,7 +16,9 @@
 		{
 			"matches": [
 				"http://*.reddit.com/*",
-				"http://reddit.com/*"
+				"http://reddit.com/*",
+				"https://*.reddit.com/*",
+				"https://reddit.com/*"
 			],
 			"run_at": "document_end",
 			"all_frames": false,
