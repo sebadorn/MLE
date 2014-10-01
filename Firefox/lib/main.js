@@ -834,7 +834,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "MLE/2.9.1 (by meinstuhlknarrt)",
+	xhrUserAgent: "MLE/2.9.2 (by meinstuhlknarrt)",
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -849,6 +849,7 @@ var Updater = {
 	forceSource: null,
 
 	linkStart: 'a[href|="/',
+	linkStartReverse: 'a[href^="/r"]',
 	tableCodeRegex: /^[abce][0-9]{2}$/i,
 
 	emoteCSS: {},
@@ -886,9 +887,19 @@ var Updater = {
 		    selectors = [];
 		var eCSS, foundBgPosition, idx, needleLength, record, selector;
 
+
+		// CSS code for reversing emotes
+
+		var rCSS = this.getReverseEmotesCSS( css );
+
+		if( rCSS != false ) {
+			emoteCSS.push( rCSS );
+		}
+
+
 		while( true ) {
-			idxImage = cssCopy.indexOf( needleImage );
-			idxPosition = cssCopy.indexOf( needlePosition );
+			var idxImage = cssCopy.indexOf( needleImage );
+			var idxPosition = cssCopy.indexOf( needlePosition );
 			foundBgPosition = false;
 
 			if( idxImage < 0 && idxPosition < 0 ) {
@@ -941,6 +952,7 @@ var Updater = {
 			// Remove the CSS part we just processed
 			cssCopy = cssCopy.substr( idx + needleLength );
 		}
+
 
 		this.emotes[this.xhrCurrentTarget] = selectors;
 		this.emoteCSS[this.xhrCurrentTarget] = emoteCSS;
@@ -1097,6 +1109,25 @@ var Updater = {
 		}
 
 		return css;
+	},
+
+
+	/**
+	 * Get CSS code for reversing emotes.
+	 * @param  {String}         css The CSS.
+	 * @return {String|boolean}     The relevant CSS part or false if nothing could be found.
+	 */
+	getReverseEmotesCSS: function( css ) {
+		var rCSS = false;
+		var idxReverse = css.indexOf( this.linkStartReverse );
+
+		if( idxReverse >= 0 ) {
+			rCSS = css.substr( idxReverse );
+			var idxEnd = rCSS.indexOf( "}" );
+			rCSS = rCSS.substr( 0, idxEnd + 1 );
+		}
+
+		return rCSS;
 	},
 
 
@@ -1429,6 +1460,7 @@ var Updater = {
 			purged = css[i];
 			idx = purged.indexOf( this.linkStart );
 			idxFilly = purged.indexOf( 'a[href="/filly"]' );
+			idxReverse = purged.indexOf( this.linkStartReverse );
 
 			// Alrighty, there is at least one emote selector in there
 			if( idx >= 0 || idxFilly >= 0 ) {
@@ -1450,6 +1482,9 @@ var Updater = {
 				}
 
 				purged = purged.substring( 1 ) + "{" + parts[1];
+				purgedCSS.push( purged );
+			}
+			else if( idxReverse >= 0 ) {
 				purgedCSS.push( purged );
 			}
 		}
