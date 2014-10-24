@@ -834,7 +834,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "MLE/2.9.2 (by meinstuhlknarrt)",
+	xhrUserAgent: "MLE/2.9.3 (by meinstuhlknarrt)",
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -884,8 +884,9 @@ var Updater = {
 		    emoteCSS = [],
 		    needleImage = "background-image",
 		    needlePosition = "background-position",
+		    needleTransform = "transform",
 		    selectors = [];
-		var eCSS, foundBgPosition, idx, needleLength, record, selector;
+		var eCSS, idx, needleLength, record, selector;
 
 
 		// CSS code for reversing emotes
@@ -900,22 +901,34 @@ var Updater = {
 		while( true ) {
 			var idxImage = cssCopy.indexOf( needleImage );
 			var idxPosition = cssCopy.indexOf( needlePosition );
-			foundBgPosition = false;
+			var idxTransform = cssCopy.indexOf( needleTransform );
+			var ignoreSelectors = false;
 
-			if( idxImage < 0 && idxPosition < 0 ) {
+			if( idxImage < 0 && idxPosition < 0 && idxTransform < 0 ) {
 				break;
 			}
 
-			// Is there "background-image" or "background-position"?
-			// If both: Which one is first?
-			if( idxPosition < 0 || ( idxImage >= 0 && idxPosition >= 0 && idxImage < idxPosition ) ) {
+			// Pick the index that appears first
+
+			idxImage = ( idxImage < 0 ) ? Infinity : idxImage;
+			idxPosition = ( idxPosition < 0 ) ? Infinity : idxPosition;
+			idxTransform = ( idxTransform < 0 ) ? Infinity : idxTransform;
+
+			var firstIdx = Math.min( idxImage, idxPosition, idxTransform );
+
+			if( firstIdx == idxImage ) {
 				idx = idxImage;
 				needleLength = needleImage.length;
 			}
-			else {
+			else if( firstIdx == idxPosition ) {
 				idx = idxPosition;
-				foundBgPosition = true;
 				needleLength = needlePosition.length;
+				ignoreSelectors = true;
+			}
+			else if( firstIdx == idxTransform ) {
+				idx = idxTransform;
+				needleLength = needleTransform.length;
+				ignoreSelectors = true;
 			}
 
 			selector = [];
@@ -927,9 +940,8 @@ var Updater = {
 				if( cssCopy[i] == "}" ) {
 					break;
 				}
-				// Ignore the selectors of a found "background-position",
-				// because this will only result in doubled selectors.
-				if( !foundBgPosition && record ) {
+				// Avoid doubled selectors by only collecting them once.
+				if( !ignoreSelectors && record ) {
 					selector.push( cssCopy[i] );
 				}
 				if( cssCopy[i] == "{" ) {
@@ -944,7 +956,7 @@ var Updater = {
 			eCSS += this.getRestOfCSS( cssCopy, idx );
 			emoteCSS.push( eCSS );
 
-			if( !foundBgPosition ) {
+			if( !ignoreSelectors ) {
 				selector = selector.reverse().join( "" );
 				selectors.push( selector );
 			}
@@ -1460,7 +1472,7 @@ var Updater = {
 			purged = css[i];
 			idx = purged.indexOf( this.linkStart );
 			idxFilly = purged.indexOf( 'a[href="/filly"]' );
-			idxReverse = purged.indexOf( this.linkStartReverse );
+			// idxReverse = purged.indexOf( this.linkStartReverse );
 
 			// Alrighty, there is at least one emote selector in there
 			if( idx >= 0 || idxFilly >= 0 ) {
@@ -1484,9 +1496,9 @@ var Updater = {
 				purged = purged.substring( 1 ) + "{" + parts[1];
 				purgedCSS.push( purged );
 			}
-			else if( idxReverse >= 0 ) {
-				purgedCSS.push( purged );
-			}
+			// else if( idxReverse >= 0 ) {
+			// 	purgedCSS.push( purged );
+			// }
 		}
 
 		return purgedCSS.join( "\n" );
