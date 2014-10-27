@@ -834,7 +834,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "MLE/2.9.3 (by meinstuhlknarrt)",
+	xhrUserAgent: "MLE/2.9.4 (by meinstuhlknarrt)",
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -1055,7 +1055,7 @@ var Updater = {
 		this.xhrProgress++;
 
 		// Fetch a small page which uses the subreddit CSS.
-		var url = "http://www.reddit.com/" + this.xhrCurrentTarget;
+		var url = "https://www.reddit.com/" + this.xhrCurrentTarget;
 
 		MyBrowser.sendRequest(
 			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.getCSSURLsCallback

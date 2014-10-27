@@ -407,6 +407,7 @@
 		if( nodeHTML.indexOf( 'href="/' ) < 0
 				|| nodeHTML.indexOf( 'href="//' ) > -1
 				|| nodeHTML.indexOf( 'href="/http://' ) > -1
+				|| nodeHTML.indexOf( 'href="/https://' ) > -1
 				|| node.pathname == "/"
 				|| node.pathname.indexOf( "/gold" ) == 0
 				|| node.pathname.indexOf( "/account-activity" ) == 0
