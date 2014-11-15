@@ -834,7 +834,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: "GET",
 	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "MLE/2.9.4 (by meinstuhlknarrt)",
+	xhrUserAgent: "MLE/2.9.5 (by meinstuhlknarrt)",
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,

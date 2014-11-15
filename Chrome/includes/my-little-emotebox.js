@@ -1570,7 +1570,7 @@
 						/a\[href\|="(\/[a-zA-Z0-9-]+)"]/g,
 						'a.' + this.ploungeClass + '[href|="$1"],$&'
 					);
-					this.findAndaddClassToPloungeEmotes();
+					this.findAndAddClassToPloungeEmotes();
 				}
 				else {
 					subCSS = g.sub_css["r/mlplounge"] + "\n\n";
@@ -1896,7 +1896,7 @@
 		/**
 		 * Add an additional CSS class to every emote found on the page.
 		 */
-		findAndaddClassToPloungeEmotes: function() {
+		findAndAddClassToPloungeEmotes: function() {
 			if( GLOBAL.config.adjustEmotesInInbox ) {
 				var targets = document.querySelectorAll( ".comment, .message" );
 				var emotes, from, subjectLink, subreddit, target;

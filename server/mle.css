@@ -1,45 +1,4 @@
-@font-face {
-	font-family: "OpenSans Web";
-	font-weight: normal;
-	font-style: normal;
-	src: url( "open-sans/OpenSans-Regular.ttf" ) format( "truetype" );
-}
-
-@font-face {
-	font-family: "OpenSans Web";
-	font-weight: normal;
-	font-style: italic;
-	src: url( "open-sans/OpenSans-Italic.ttf" ) format( "truetype" );
-}
-
-/*@font-face {
-	font-family: "OpenSans Web";
-	font-weight: bold;
-	font-style: italic;
-	src: url( "open-sans/OpenSans-BoldItalic.ttf" ) format( "truetype" );
-}*/
-
-@font-face {
-	font-family: "OpenSans Web";
-	font-weight: bold;
-	font-style: normal;
-	src: url( "open-sans/OpenSans-Bold.ttf" ) format( "truetype" );
-}
-
-/*@font-face {
-	font-family: "OpenSans Light Web";
-	font-weight: normal;
-	font-style: normal;
-	src: url( "open-sans/OpenSans-Light.ttf" ) format( "truetype" );
-}
-
-@font-face {
-	font-family: "OpenSans Light Web";
-	font-weight: normal;
-	font-style: italic;
-	src: url( "open-sans/OpenSans-LightItalic.ttf" ) format( "truetype" );
-}*/
-
+@import url( "http://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" );
 
 
 * {
@@ -59,7 +18,7 @@ a:hover {
 html {
 	background-color: #303030;
 	color: #f6f6f6;
-	font: 16px "OpenSans Web", Arial, sans-serif;
+	font: 16px "Open Sans", Arial, sans-serif;
 	padding-bottom: 80px;
 }
 
@@ -273,9 +232,9 @@ nav.tabs label[for="tab_opera"] {
 	border-radius: 4px;
 	color: #ffffff;
 	display: inline-block;
-	font-family: "OpenSans Web", Arial, sans-serif;
+	font-family: "Open Sans", Arial, sans-serif;
 	font-size: 100%;
-	font-weight: bold;
+	font-weight: 700;
 	margin-bottom: 16px;
 	padding: 9px 13px;
 	text-align: center;
