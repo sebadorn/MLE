@@ -1,4 +1,5 @@
-"use strict";
+'use strict';
+
 
 var BG_TASK = {
 	LOAD: 1,

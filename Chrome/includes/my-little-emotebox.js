@@ -1,4 +1,5 @@
-"use strict";
+'use strict';
+
 
 ( function() {
 
@@ -8,6 +9,19 @@
 		config: null,
 		// Loaded emotes
 		emotes: null,
+		// Links to ignore
+		ignoreLinks: [
+			'/gold',
+			'/account-activity',
+			'/prefs',
+			'/password',
+			'/about',
+			'/ad_inq',
+			'/bookmarklets',
+			'/buttons',
+			'/feedback',
+			'/widget'
+		],
 		// Keep track of mouse stats
 		MOUSE: {
 			lastX: null,
@@ -20,7 +34,7 @@
 		msgTimeout: null,
 		// Noise for CSS classes and IDs, to minimise the probability
 		// of accidentally overwriting existing styles.
-		noise: "-bd6acd4a",
+		noise: '-bd6acd4a',
 		// Holding references to DOMElements
 		REF: {
 			emoteBlocks: {},
@@ -48,9 +62,9 @@
 
 	/**
 	 * Append multiple children to a DOMElement.
-	 * @param  {DOMElement} parent
-	 * @param  {Array}      children List of children to append.
-	 * @return {DOMElement} parent
+	 * @param  {DOMElement}        parent
+	 * @param  {Array<DOMElement>} children List of children to append.
+	 * @return {DOMElement}                 parent
 	 */
 	function appendChildren( parent, children ) {
 		for( var i = 0; i < children.length; i++ ) {
@@ -62,19 +76,20 @@
 
 	/**
 	 * Callback function for the DOMNodeInserted event.
+	 * @param {Event} ev
 	 */
-	function buttonObserverDOMEvent( e ) {
+	function buttonObserverDOMEvent( ev ) {
 		// nodeType = 3 = TEXT_NODE
-		if( e.target.nodeType == 3 ) {
+		if( ev.target.nodeType == 3 ) {
 			return;
 		}
 
-		// "usertext cloneable" is the whole reply-to-comment section
-		if( e.target.className == "usertext cloneable" ) {
-			var buttonMLE = e.target.querySelector( ".mle-open-btn" );
+		// 'usertext cloneable' is the whole reply-to-comment section
+		if( ev.target.className == 'usertext cloneable' ) {
+			var buttonMLE = ev.target.querySelector( '.mle-open-btn' );
 
-			buttonMLE.addEventListener( "mouseover", rememberActiveTextarea, false );
-			buttonMLE.addEventListener( "click", mainContainerShow, false );
+			buttonMLE.addEventListener( 'mouseover', rememberActiveTextarea, false );
+			buttonMLE.addEventListener( 'click', mainContainerShow, false );
 		}
 	}
 
@@ -84,20 +99,18 @@
 	 * @param {MutationRecord} mutations
 	 */
 	function buttonObserverMutation( mutations ) {
-		var mutation, node, buttonMLE;
-
 		for( var i = 0; i < mutations.length; i++ ) {
-			mutation = mutations[i];
+			var mutation = mutations[i];
 
 			for( var j = 0; j < mutation.addedNodes.length; j++ ) {
-				node = mutation.addedNodes[j];
+				var node = mutation.addedNodes[j];
 
-				if( node.className == "usertext cloneable" ) {
-					buttonMLE = node.querySelector( ".mle-open-btn" );
+				if( node.className == 'usertext cloneable' ) {
+					var buttonMLE = node.querySelector( '.mle-open-btn' );
 
 					if( buttonMLE ) {
-						buttonMLE.addEventListener( "mouseover", rememberActiveTextarea, false );
-						buttonMLE.addEventListener( "click", mainContainerShow, false );
+						buttonMLE.addEventListener( 'mouseover', rememberActiveTextarea, false );
+						buttonMLE.addEventListener( 'click', mainContainerShow, false );
 						return;
 					}
 				}
@@ -115,21 +128,21 @@
 
 		// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
 		if( MutationObserver ) {
-			var observer = new MutationObserver( buttonObserverMutation ),
-			    observerConfig = {
-			    	attributes: false,
-			    	childList: true,
-			    	characterData: false
-			    };
-			var targets = document.querySelectorAll( ".child" );
+			var observer = new MutationObserver( buttonObserverMutation );
+			var observerConfig = {
+				attributes: false,
+				childList: true,
+				characterData: false
+			};
+			var targets = document.querySelectorAll( '.child' );
 
 			for( var i = 0; i < targets.length; i++ ) {
 				observer.observe( targets[i], observerConfig );
 			}
 		}
-		// ... but not in Opera, so we have to do this the deprecated way
+		// ... but not in Opera 12, so we have to do this the deprecated way
 		else {
-			document.addEventListener( "DOMNodeInserted", buttonObserverDOMEvent, false );
+			document.addEventListener( 'DOMNodeInserted', buttonObserverDOMEvent, false );
 		}
 	}
 
@@ -145,12 +158,23 @@
 		var cfg = GLOBAL.config;
 
 		switch( listName ) {
-			case "A": return cfg.listNameTableA;
-			case "B": return cfg.listNameTableB;
-			case "C": return cfg.listNameTableC;
-			case "E": return cfg.listNameTableE;
-			case "Plounge": return cfg.listNamePlounge;
-			default: return listName;
+			case 'A':
+				return cfg.listNameTableA;
+
+			case 'B':
+				return cfg.listNameTableB;
+
+			case 'C':
+				return cfg.listNameTableC;
+
+			case 'E':
+				return cfg.listNameTableE;
+
+			case 'Plounge':
+				return cfg.listNamePlounge;
+
+			default:
+				return listName;
 		}
 	}
 
@@ -162,27 +186,28 @@
 	 */
 	function deleteEmote( emote, list ) {
 		var g = GLOBAL;
-		var idx, children, emoteSlash;
-		var update = {};
 
 		// Emotes don't have a leading slash
-		if( emote.indexOf( "/" ) == 0 ) {
+		if( emote.indexOf( '/' ) == 0 ) {
 			emote = emote.substring( 1 );
 		}
 
 		// Remove from locale storage
-		idx = g.emotes[list].indexOf( emote );
+		var idx = g.emotes[list].indexOf( emote );
+
 		if( idx == -1 ) {
 			return;
 		}
+
 		g.emotes[list].splice( idx, 1 );
 
+		var update = {};
 		update[list] = g.emotes[list];
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Remove from DOM
-		emoteSlash = "/" + emote;
-		children = g.REF.emoteBlocks[list].childNodes;
+		var emoteSlash = '/' + emote;
+		var children = g.REF.emoteBlocks[list].childNodes;
 
 		for( var i = 0; i < children.length; i++ ) {
 			if( children[i].pathname == emoteSlash ) {
@@ -209,20 +234,24 @@
 	/**
 	 * Delete an emote list.
 	 * This will delete all the emotes in this list as well.
+	 * @param {Event} ev
 	 */
-	function deleteList( e ) {
+	function deleteList( ev ) {
 		var g = GLOBAL;
-		var listName = getOptionValue( g.REF.selectListDelete ),
-		    listToDel = g.REF.lists[listName],
-		    selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
-		var confirmDel = false, children;
 
 		// Major decision. Better ask first.
-		confirmDel = window.confirm(
-			"My Little Emotebox:\n\nIf you delete the list, you will also DELETE ALL EMOTES in this list!\n\nProceed?"
+		var confirmDel = window.confirm(
+			'My Little Emotebox:\n\n' +
+			'If you delete the list, you will also DELETE ALL EMOTES in this list!\n\n' +
+			'Proceed?'
 		);
-		if( !confirmDel ) { return; }
 
+		if( !confirmDel ) {
+			return;
+		}
+
+		var listName = getOptionValue( g.REF.selectListDelete );
+		var listToDel = g.REF.lists[listName];
 		listName = listName.replace( /\\"/g, '"' );
 
 		// Delete from emote lists
@@ -233,8 +262,10 @@
 		delete g.REF.emoteBlocks[listName];
 		g.REF.listsCont.removeChild( listToDel );
 
+		var selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
+
 		for( var i = 0; i < selectLists.length; i++ ) {
-			children = selectLists[i].childNodes;
+			var children = selectLists[i].childNodes;
 
 			for( var j = 0; j < children.length; j++ ) {
 				if( children[j].value == listName ) {
@@ -259,13 +290,14 @@
 
 	/**
 	 * Handle messages from the background process.
+	 * @param {Event} ev Event sent from the background process.
 	 */
-	function handleBackgroundMessages( e ) {
+	function handleBackgroundMessages( ev ) {
 		var g = GLOBAL;
-		var data = e.data ? e.data : e;
+		var data = ev.data ? ev.data : ev;
 
 		if( !data.task ) {
-			console.warn( "MLE: Message from background process didn't contain the handled task." );
+			console.warn( 'MLE: Message from background process didn\'t contain the handled task.' );
 			return;
 		}
 
@@ -282,8 +314,8 @@
 
 			case BG_TASK.SAVE_EMOTES:
 				if( !data.success ) {
-					showMsg( "I'm sorry, but the changes could not be saved." );
-					console.error( "MLE: Could not save emotes." );
+					showMsg( 'I\'m sorry, but the changes could not be saved.' );
+					console.error( 'MLE: Could not save emotes.' );
 				}
 				break;
 
@@ -314,55 +346,60 @@
 
 	/**
 	 * Insert a selected emote.
+	 * @param {MouseEvent} ev
 	 */
-	function insertEmote( e ) {
-		e.preventDefault(); // Don't follow emote link
-		var g = GLOBAL,
-		    ta = g.REF.focusedInput;
+	function insertEmote( ev ) {
+		ev.preventDefault(); // Don't follow emote link
 
-		mainContainerHide( e );
-		if( !ta ) { return; }
+		var g = GLOBAL;
+		var ta = g.REF.focusedInput;
 
-		var emote = e.target.href.split( "/" );
-		var selStart = ta.selectionStart,
-		    selEnd = ta.selectionEnd,
-		    taLen = ta.value.length,
-		    altText,
-		    inputEvent;
+		mainContainerHide( ev );
+
+		if( !ta ) {
+			return;
+		}
 
 		// Emote name
+		var emote = ev.target.href.split( '/' );
 		emote = emote[emote.length - 1];
 
 		// Insert reversed emote version
-		if( ( g.config.keyReverse == 16 && e.shiftKey )
-				|| ( g.config.keyReverse == 17 && e.ctrlKey )
-				|| ( g.config.keyReverse == 18 && e.altKey ) ) {
+		if(
+			( g.config.keyReverse == 16 && ev.shiftKey ) ||
+			( g.config.keyReverse == 17 && ev.ctrlKey ) ||
+			( g.config.keyReverse == 18 && ev.altKey )
+		) {
 			if( isFromDefaultSub( emote ) ) {
-				emote = "r" + emote;
+				emote = 'r' + emote;
 			}
 			else {
-				emote += "-r";
+				emote += '-r';
 			}
 		}
 
+		var selStart = ta.selectionStart;
+		var selEnd = ta.selectionEnd;
+
 		// Nothing selected, just insert at position
 		if( selStart == selEnd ) {
-			emote = "[](/" + emote + ")";
+			emote = '[](/' + emote + ')';
 		}
 		// Text marked, use for alt text
 		else {
-			altText = ta.value.substring( selStart, selEnd );
+			var altText = ta.value.substring( selStart, selEnd );
 			emote = '[](/' + emote + ' "' + altText + '")';
 		}
 
 		// Add a blank after the emote
 		if( g.config.addBlankAfterInsert ) {
-			emote += " ";
+			emote += ' ';
 		}
 
-		ta.value = ta.value.substring( 0, selStart )
-				+ emote
-				+ ta.value.substring( selEnd, taLen );
+		var taLen = ta.value.length;
+		ta.value = ta.value.substring( 0, selStart );
+		ta.value += emote;
+		ta.value += ta.value.substring( selEnd, taLen );
 
 		// Focus to the textarea
 		ta.focus();
@@ -372,8 +409,8 @@
 		);
 
 		// Fire input event, so that RedditEnhancementSuite updates the preview
-		inputEvent = document.createEvent( "Events" );
-		inputEvent.initEvent( "input", true, true );
+		var inputEvent = document.createEvent( 'Events' );
+		inputEvent.initEvent( 'input', true, true );
 		ta.dispatchEvent( inputEvent );
 	}
 
@@ -385,41 +422,40 @@
 	 */
 	function isEmote( node ) {
 		// Emotes inside the BPM window
-		if( node.parentNode.id == "bpm-sb-results" ) {
-			return !!node.getAttribute( "data-emote" );
+		if( node.parentNode.id == 'bpm-sb-results' ) {
+			return !!node.getAttribute( 'data-emote' );
 		}
 
 		// Regular link emotes
-		if( node.tagName.toLowerCase() != "a" ) {
+		if( node.tagName.toLowerCase() != 'a' ) {
 			return false;
 		}
 		if( !node.pathname ) {
 			return false;
 		}
 		// Making the hopeful assumption that emote
-		// names will never contain more than one "/"
-		if( node.pathname.split( "/" ).length > 2 ) {
+		// names will never contain more than one '/'
+		if( node.pathname.split( '/' ).length > 2 ) {
 			return false;
 		}
 
 		var nodeHTML = node.outerHTML;
 
-		if( nodeHTML.indexOf( 'href="/' ) < 0
-				|| nodeHTML.indexOf( 'href="//' ) > -1
-				|| nodeHTML.indexOf( 'href="/http://' ) > -1
-				|| nodeHTML.indexOf( 'href="/https://' ) > -1
-				|| node.pathname == "/"
-				|| node.pathname.indexOf( "/gold" ) == 0
-				|| node.pathname.indexOf( "/account-activity" ) == 0
-				|| node.pathname.indexOf( "/prefs" ) == 0
-				|| node.pathname.indexOf( "/password" ) == 0
-				|| node.pathname.indexOf( "/about" ) == 0
-				|| node.pathname.indexOf( "/ad_inq" ) == 0
-				|| node.pathname.indexOf( "/bookmarklets" ) == 0
-				|| node.pathname.indexOf( "/buttons" ) == 0
-				|| node.pathname.indexOf( "/feedback" ) == 0
-				|| node.pathname.indexOf( "/widget" ) == 0 ) {
+		if(
+			nodeHTML.indexOf( 'href="/' ) < 0 ||
+			nodeHTML.indexOf( 'href="//' ) > -1 ||
+			nodeHTML.indexOf( 'href="/http://' ) > -1 ||
+			nodeHTML.indexOf( 'href="/https://' ) > -1 ||
+			node.pathname == '/'
+		) {
 			return false;
+		}
+
+		// Links that are a normal part of reddit.
+		for( var i = 0; i < GLOBAL.ignoreLinks.length; i++ ) {
+			if( node.pathname.indexOf( GLOBAL.ignoreLinks[i] ) == 0 ) {
+				return false;
+			}
 		}
 
 		return true;
@@ -433,17 +469,17 @@
 	 * @return {Boolean}       True if the emote is from a default sub, false otherwise.
 	 */
 	function isFromDefaultSub( emote ) {
-		var g = GLOBAL,
-		    cfg = g.config;
-		var list;
+		var cfg = GLOBAL.config;
 		var keys = [
-				cfg.listNameTableA, cfg.listNameTableB,
-				cfg.listNameTableC, cfg.listNameTableE,
-				cfg.listNamePlounge
-			];
+			cfg.listNameTableA,
+			cfg.listNameTableB,
+			cfg.listNameTableC,
+			cfg.listNameTableE,
+			cfg.listNamePlounge
+		];
 
 		for( var i = 0; i < keys.length; i++ ) {
-			list = g.emotes[keys[i]];
+			var list = GLOBAL.emotes[keys[i]];
 
 			if( list.indexOf( emote ) >= 0 ) {
 				return true;
@@ -460,10 +496,10 @@
 	 * @return {Boolean}    True if list, false otherwise.
 	 */
 	function isList( node ) {
-		if( node.tagName.toLowerCase() != "li" ) {
+		if( node.tagName.toLowerCase() != 'li' ) {
 			return false;
 		}
-		if( !node.getAttribute( "draggable" ) ) {
+		if( !node.getAttribute( 'draggable' ) ) {
 			return false;
 		}
 
@@ -473,33 +509,35 @@
 
 	/**
 	 * Minimize main container.
+	 * @param {Event} ev
 	 */
-	function mainContainerHide( e ) {
-		var g = GLOBAL,
-		    mc = g.REF.mainCont;
+	function mainContainerHide( ev ) {
+		var g = GLOBAL;
+		var mc = g.REF.mainCont;
 
-		e.preventDefault();
+		ev.preventDefault();
 
 		// Wait with adding the event listener.
 		// Prevents the box from opening again, if mouse cursor hovers
 		// over the closing (CSS3 transition) box.
-		mc.className = mc.className.replace( " show", "" );
+		mc.className = mc.className.replace( ' show', '' );
 
 		setTimeout( function() {
-			this.addEventListener( "mouseover", mainContainerShow, false );
+			this.addEventListener( 'mouseover', mainContainerShow, false );
 		}.bind( mc ), g.config.boxAnimationSpeed + 100 );
 	}
 
 
 	/**
 	 * Fully display main container.
+	 * @param {Event} ev
 	 */
-	function mainContainerShow( e ) {
+	function mainContainerShow( ev ) {
 		var mc = GLOBAL.REF.mainCont;
 
-		if( mc.className.indexOf( " show" ) < 0 ) {
-			mc.className += " show";
-			mc.removeEventListener( "mouseover", mainContainerShow, false );
+		if( mc.className.indexOf( ' show' ) < 0 ) {
+			mc.className += ' show';
+			mc.removeEventListener( 'mouseover', mainContainerShow, false );
 		}
 	}
 
@@ -517,39 +555,41 @@
 
 	/**
 	 * Move the MLE window.
-	 * @param {MouseEvent} e MouseEvent from a "mousemove".
+	 * @param {MouseEvent} ev MouseEvent from a "mousemove".
 	 */
-	function moveMLE( e ) {
-		e.preventDefault();
+	function moveMLE( ev ) {
+		ev.preventDefault();
 
-		var m = GLOBAL.MOUSE,
-		    mainCont = GLOBAL.REF.mainCont,
-		    moveX = e.clientX - m.lastX,
-		    moveY = e.clientY - m.lastY;
+		var m = GLOBAL.MOUSE;
+		var mainCont = GLOBAL.REF.mainCont;
+		var moveX = ev.clientX - m.lastX;
+		var moveY = ev.clientY - m.lastY;
 
-		if( GLOBAL.config.boxAlign == "right" ) {
-			mainCont.style.right = ( parseInt( mainCont.style.right, 10 ) - moveX ) + "px";
+		if( GLOBAL.config.boxAlign == 'right' ) {
+			mainCont.style.right = ( parseInt( mainCont.style.right, 10 ) - moveX ) + 'px';
 		}
 		else {
-			mainCont.style.left = ( mainCont.offsetLeft + moveX ) + "px";
+			mainCont.style.left = ( mainCont.offsetLeft + moveX ) + 'px';
 		}
-		mainCont.style.top = ( mainCont.offsetTop + moveY ) + "px";
 
-		m.lastX = e.clientX;
-		m.lastY = e.clientY;
+		mainCont.style.top = ( mainCont.offsetTop + moveY ) + 'px';
+
+		m.lastX = ev.clientX;
+		m.lastY = ev.clientY;
 	}
 
 
 	/**
 	 * Send a message to the background process.
+	 * @param {Object} msg Message to send.
 	 */
 	function postMessage( msg ) {
 		// Opera
-		if( typeof opera != "undefined" ) {
+		if( typeof opera != 'undefined' ) {
 			opera.extension.postMessage( msg );
 		}
 		// Chrome
-		else if( typeof chrome != "undefined" ) {
+		else if( typeof chrome != 'undefined' ) {
 			chrome.extension.sendMessage( msg, handleBackgroundMessages );
 		}
 		// probably Firefox
@@ -575,60 +615,67 @@
 
 	/**
 	 * Rename a list.
-	 * @param {Object} list The list element that triggered the name change.
+	 * @param {Object}   list The list element that triggered the name change.
+	 * @param {KeyEvent} ev
 	 */
-	function renameList( list, e ) {
-		if( e.keyCode == 13 ) { // 13 = Enter
-			var g = GLOBAL;
-			var name = list.querySelector( "strong" ),
-			    listNameOld = name.textContent,
-			    listNameNew = e.target.value;
+	function renameList( list, ev ) {
+		if( ev.keyCode != 13 ) { // [Enter]
+			return;
+		}
 
-			// Length: at least 1 char
-			if( listNameNew.length > 0 && listNameOld != listNameNew ) {
-				// Change emotes object (memory, not storage)
-				g.emotes[listNameNew] = g.emotes[listNameOld];
-				g.emotes = reorderList( listNameNew, listNameOld );
-				delete g.emotes[listNameOld];
+		var g = GLOBAL;
+		var name = list.querySelector( 'strong' );
+		var listNameOld = name.textContent;
+		var listNameNew = ev.target.value;
 
-				// Change attribute name in emoteBlocks object
-				g.REF.emoteBlocks[listNameNew] = g.REF.emoteBlocks[listNameOld];
-				delete g.REF.emoteBlocks[listNameOld];
+		// Length: at least 1 char
+		if( listNameNew.length > 0 && listNameOld != listNameNew ) {
+			// Change emotes object (memory, not storage)
+			g.emotes[listNameNew] = g.emotes[listNameOld];
+			g.emotes = reorderList( listNameNew, listNameOld );
+			delete g.emotes[listNameOld];
 
-				// Change name of the currently shown block if necessary
-				if( g.shownBlock == listNameOld ) {
-					g.shownBlock = listNameNew;
-				}
+			// Change attribute name in emoteBlocks object
+			g.REF.emoteBlocks[listNameNew] = g.REF.emoteBlocks[listNameOld];
+			delete g.REF.emoteBlocks[listNameOld];
 
-				// Change name in the object of all lists
-				g.REF.lists[listNameNew] = g.REF.lists[listNameOld];
-				delete g.REF.lists[listNameOld];
-
-				// Change the <select>s of the manage page
-				Builder.updateManageSelects( listNameOld, listNameNew );
-
-				// Save changes to storage
-				saveChangesToStorage(
-					BG_TASK.UPDATE_LIST_NAME,
-					{ oldName: listNameOld, newName: listNameNew }
-				);
+			// Change name of the currently shown block if necessary
+			if( g.shownBlock == listNameOld ) {
+				g.shownBlock = listNameNew;
 			}
 
-			name.textContent = listNameNew;
-			name.removeAttribute( "hidden" );
-			list.removeChild( e.target );
+			// Change name in the object of all lists
+			g.REF.lists[listNameNew] = g.REF.lists[listNameOld];
+			delete g.REF.lists[listNameOld];
+
+			// Change the <select>s of the manage page
+			Builder.updateManageSelects( listNameOld, listNameNew );
+
+			// Save changes to storage
+			saveChangesToStorage(
+				BG_TASK.UPDATE_LIST_NAME,
+				{
+					oldName: listNameOld,
+					newName: listNameNew
+				}
+			);
 		}
+
+		name.textContent = listNameNew;
+		name.removeAttribute( 'hidden' );
+		list.removeChild( ev.target );
 	}
 
 
 	/**
 	 * Remember the currently focused/active textarea
 	 * (if there is one) as input for the emotes.
+	 * @param {Event} ev
 	 */
-	function rememberActiveTextarea( e ) {
+	function rememberActiveTextarea( ev ) {
 		var ae = document.activeElement;
 
-		if( ae && ae.tagName && ae.tagName.toLowerCase() == "textarea" ) {
+		if( ae && ae.tagName && ae.tagName.toLowerCase() == 'textarea' ) {
 			GLOBAL.REF.focusedInput = ae;
 		}
 	}
@@ -663,20 +710,20 @@
 	 */
 	function reorderList( moving, inFrontOf ) {
 		var g = GLOBAL;
-		var reordered = {},
-		    block;
+		var reordered = {};
 
 		if( moving == inFrontOf ) {
 			return g.emotes;
 		}
 
-		for( block in g.emotes ) {
+		for( var block in g.emotes ) {
 			if( block == moving ) {
 				continue;
 			}
 			if( block == inFrontOf ) {
 				reordered[moving] = g.emotes[moving];
 			}
+
 			reordered[block] = g.emotes[block];
 		}
 
@@ -686,21 +733,21 @@
 
 	/**
 	 * Resize the MLE window.
-	 * @param {MouseEvent} e MouseEvent from a "mousemove".
+	 * @param {MouseEvent} ev MouseEvent from a "mousemove".
 	 */
-	function resizeMLE( e ) {
-		e.preventDefault();
+	function resizeMLE( ev ) {
+		ev.preventDefault();
 
-		var g = GLOBAL,
-		    m = g.MOUSE,
-		    mainCont = g.REF.mainCont,
-		    moveX = e.clientX - m.lastX,
-		    moveY = e.clientY - m.lastY,
-		    newHeight = mainCont.offsetHeight + moveY,
-		    newWidth = mainCont.offsetWidth,
-		    adjustPosX = true;
+		var g = GLOBAL;
+		var m = g.MOUSE;
+		var mainCont = g.REF.mainCont;
+		var moveX = ev.clientX - m.lastX;
+		var moveY = ev.clientY - m.lastY;
+		var newHeight = mainCont.offsetHeight + moveY;
+		var newWidth = mainCont.offsetWidth;
+		var adjustPosX = true;
 
-		newWidth += ( m.resizeDirection == "sw" ) ? -moveX : moveX;
+		newWidth += ( m.resizeDirection == 'sw' ) ? -moveX : moveX;
 
 		// Limits
 		if( newWidth < m.resizeLimitWidth ) {
@@ -714,20 +761,20 @@
 		// Move window only if width limit has not been reached
 		if( adjustPosX ) {
 			// X axis orientates to the left
-			if( g.config.boxAlign == "left" && m.resizeDirection == "sw" ) {
-				mainCont.style.left = ( mainCont.offsetLeft + moveX ) + "px";
+			if( g.config.boxAlign == 'left' && m.resizeDirection == 'sw' ) {
+				mainCont.style.left = ( mainCont.offsetLeft + moveX ) + 'px';
 			}
 			// X axis oritentates to the right
-			else if( g.config.boxAlign == "right" && m.resizeDirection == "se" ) {
-				mainCont.style.right = ( parseInt( mainCont.style.right, 10 ) - moveX ) + "px";
+			else if( g.config.boxAlign == 'right' && m.resizeDirection == 'se' ) {
+				mainCont.style.right = ( parseInt( mainCont.style.right, 10 ) - moveX ) + 'px';
 			}
 		}
 
-		mainCont.style.width = newWidth + "px";
-		mainCont.style.height = newHeight + "px";
+		mainCont.style.width = newWidth + 'px';
+		mainCont.style.height = newHeight + 'px';
 
-		m.lastX = e.clientX;
-		m.lastY = e.clientY;
+		m.lastX = ev.clientX;
+		m.lastY = ev.clientY;
 	}
 
 
@@ -738,41 +785,42 @@
 	 */
 	function saveEmote( emote, list ) {
 		var g = GLOBAL;
-		var update = {};
 
 		// Ignore empty
 		if( emote.length == 0 ) {
-			showMsg( "That ain't no emote, sugarcube." );
+			showMsg( 'That ain\'t no emote, sugarcube.' );
 			return;
 		}
 
 		// Emotes are saved without leading slash
-		if( emote.indexOf( "/" ) == 0 ) {
+		if( emote.indexOf( '/' ) == 0 ) {
 			emote = emote.substring( 1 );
 		}
 
 		// Remove modifier flags
-		if( emote.indexOf( "-" ) > -1 ) {
-			emote = emote.split( "-" )[0];
+		if( emote.indexOf( '-' ) > -1 ) {
+			emote = emote.split( '-' )[0];
 		}
 
 		// Only save if not already in list
 		if( g.emotes[list].indexOf( emote ) > -1 ) {
-			showMsg( "This emote is already in the list." );
+			showMsg( 'This emote is already in the list.' );
 			return;
 		}
 		// Don't save mirrored ones either
-		if( emote[0] == "r" && g.emotes[list].indexOf( emote.substring( 1 ) ) > -1 ) {
-			showMsg( "This emote is a mirrored version of one already in the list." );
+		if( emote[0] == 'r' && g.emotes[list].indexOf( emote.substring( 1 ) ) > -1 ) {
+			showMsg( 'This emote is a mirrored version of one already in the list.' );
 			return;
 		}
+
+		var update = {};
 
 		g.emotes[list].push( emote );
 		update[list] = g.emotes[list];
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Add to DOM
-		g.REF.emoteBlocks[list].appendChild( Builder.createEmote( "/" + emote ) );
+		g.REF.emoteBlocks[list].appendChild( Builder.createEmote( '/' + emote ) );
 
 		// Update emote count of list
 		Builder.updateEmoteCount( list, g.emotes[list].length );
@@ -785,53 +833,58 @@
 	 * @param {Object}  update Change to update.
 	 */
 	function saveChangesToStorage( task, update ) {
-		postMessage( { task: task, update: update } );
+		postMessage( {
+			task: task,
+			update: update
+		} );
 	}
 
 
 	/**
 	 * From the manage page: Save new emote.
+	 * @param {Event} ev
 	 */
-	function saveNewEmote( e ) {
-		var d = document,
-		    g = GLOBAL;
-		var inputEmote = g.REF.inputAddEmote,
-		    selectHTML = g.REF.selectListAddEmote,
-		    list = getOptionValue( selectHTML );
+	function saveNewEmote( ev ) {
+		var g = GLOBAL;
+		var inputEmote = g.REF.inputAddEmote;
+		var selectHTML = g.REF.selectListAddEmote;
+		var list = getOptionValue( selectHTML );
 		var emote = inputEmote.value.trim();
 
 		saveEmote( emote, list );
-		inputEmote.value = "";
+		inputEmote.value = '';
 		inputEmote.focus();
 	}
 
 
 	/**
 	 * From the manage page: Save new list.
+	 * @param {Event} ev
 	 */
-	function saveNewList( e ) {
+	function saveNewList( ev ) {
 		var g = GLOBAL;
-		var inputField = g.REF.inputAddList,
-		    listName = inputField.value.trim(),
-		    update = {};
+		var inputField = g.REF.inputAddList;
+		var listName = inputField.value.trim();
 
 		// Ignore empty
 		if( listName.length == 0 ) {
-			showMsg( "That ain't no valid name for a list." );
+			showMsg( 'That ain\'t no valid name for a list.' );
 			return;
 		}
 
 		// Only create list if it doesn't exist already
 		if( listName in g.emotes ) {
-			showMsg( "This list already exists." );
+			showMsg( 'This list already exists.' );
 			return;
 		}
+
+		var update = {};
 
 		g.emotes[listName] = [];
 		update[listName] = [];
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
-		inputField.value = "";
+		inputField.value = '';
 		Builder.updateListsAddNew( listName );
 	}
 
@@ -840,8 +893,9 @@
 	 * Create and show manage page.
 	 * Only create manage elements when needed. Because
 	 * it won't be needed that often, probably.
+	 * @param {Event} ev
 	 */
-	function showManagePage( e ) {
+	function showManagePage( ev ) {
 		var gr = GLOBAL.REF;
 
 		toggleEmoteBlock( false );
@@ -857,61 +911,63 @@
 
 	/**
 	 * Display a little popup message, that disappears again after a few seconds.
+	 * @param {String} text Message text to display.
 	 */
 	function showMsg( text ) {
 		var g = GLOBAL;
 
-		if( !g.REF.msg || g.REF.msg == null ) { return; }
+		if( !g.REF.msg || g.REF.msg == null ) {
+			return;
+		}
 
 		clearTimeout( g.msgTimeout );
-		g.REF.msg.className += " show";
+		g.REF.msg.className += ' show';
 		g.REF.msg.textContent = text;
 
 		g.msgTimeout = setTimeout( function() {
-			GLOBAL.REF.msg.className = "mle-msg" + GLOBAL.noise;
+			GLOBAL.REF.msg.className = 'mle-msg' + GLOBAL.noise;
 		}, g.config.msgTimeout );
 	}
 
 
 	/**
 	 * Prevent the default action of an event.
-	 * @param {Event} e The event.
+	 * @param {Event} ev The event.
 	 */
-	function stopEvent( e ) {
-		e.preventDefault();
+	function stopEvent( ev ) {
+		ev.preventDefault();
 	}
 
 
 	/**
 	 * Show/hide emote blocks when selected in the navigation.
+	 * @param {Event} ev
 	 */
-	function toggleEmoteBlock( e ) {
-		var g = GLOBAL,
-		    geb = g.REF.emoteBlocks,
-		    gnl = g.REF.lists,
-		    e_target = e.target;
+	function toggleEmoteBlock( ev ) {
+		var g = GLOBAL;
+		var geb = g.REF.emoteBlocks;
+		var gnl = g.REF.lists;
+		var evTarget = ev.target;
 
 		// In case a child element was clicked instead of the (parent) list element container
-		if( e_target != this ) {
-			e_target = e_target.parentNode;
+		if( evTarget != this ) {
+			evTarget = evTarget.parentNode;
 		}
 
 		// Set chosen list to active
 		for( var key in gnl ) {
-			gnl[key].className = "";
+			gnl[key].className = '';
 		}
-		if( e ) {
-			e_target.className = "activelist";
+		if( ev ) {
+			evTarget.className = 'activelist';
 		}
 
 		removeAllBlocksAndPages();
 
 		// Show emotes of chosen block
-		if( e ) {
-			var name;
-
+		if( ev ) {
 			for( var listName in geb ) {
-				name = e_target.querySelector( "strong" );
+				var name = evTarget.querySelector( 'strong' );
 
 				if( name && name.textContent == listName ) {
 					g.REF.mainCont.appendChild( geb[listName] );
@@ -925,33 +981,32 @@
 
 	/**
 	 * Keep track if the left mouse button is pressed.
+	 * @param {Event} ev
 	 */
-	function trackMouseDown( e ) {
-		e.preventDefault();
+	function trackMouseDown( ev ) {
+		ev.preventDefault();
 
 		// Move (drag) or Resize
-		var cn = e.target.className,
-		    hasCase;
+		var cn = ev.target.className;
+		var hasCase;
 
-		if( cn.indexOf( "mle-dragbar" ) >= 0 ) {
-			hasCase = "MOVE";
+		if( cn.indexOf( 'mle-dragbar' ) >= 0 ) {
+			hasCase = 'MOVE';
 		}
-		else if( cn.indexOf( "mle-resizer" ) >= 0 ) {
-			hasCase = "RESIZE";
+		else if( cn.indexOf( 'mle-resizer' ) >= 0 ) {
+			hasCase = 'RESIZE';
 		}
 
 		// In case of mouse down
-		if( e.which == 1 && e.type == "mousedown" ) {
+		if( ev.type == 'mousedown' && ev.which == 1 ) {
 			switch( hasCase ) {
-				case "MOVE":
-					trackMouseDownStart_Move( e );
+				case 'MOVE':
+					trackMouseDownStart_Move( ev );
 					break;
-				case "RESIZE":
-					var direction = "se";
-					if( cn.indexOf( "mle-resizer0" ) >= 0 ) {
-						direction = "sw";
-					}
-					trackMouseDownStart_Resize( e, direction );
+
+				case 'RESIZE':
+					var direction = ( cn.indexOf( 'mle-resizer0' ) >= 0 ) ? 'sw' : 'se';
+					trackMouseDownStart_Resize( ev, direction );
 					break;
 			}
 		}
@@ -961,23 +1016,24 @@
 	/**
 	 * Start tracking the mouse movement and
 	 * adjust the window position.
+	 * @param {Event} ev
 	 */
-	function trackMouseDownEnd_Move( e ) {
-		var g = GLOBAL,
-		    m = g.MOUSE;
+	function trackMouseDownEnd_Move( ev ) {
+		var g = GLOBAL;
+		var m = g.MOUSE;
 		var posX;
 
 		m.lastX = null;
 		m.lastY = null;
 
-		document.removeEventListener( "mousemove", moveMLE, false );
-		document.removeEventListener( "mouseup", trackMouseDownEnd_Move, false );
+		document.removeEventListener( 'mousemove', moveMLE, false );
+		document.removeEventListener( 'mouseup', trackMouseDownEnd_Move, false );
 
-		if( g.config.boxAlign == "right" ) {
+		if( g.config.boxAlign == 'right' ) {
 			posX = parseInt( g.REF.mainCont.style.right, 10 );
 
 			// Workaround for Firefox: Troubles with scrollbar width.
-			if( typeof chrome == "undefined" && typeof opera == "undefined" ) {
+			if( typeof chrome == 'undefined' && typeof opera == 'undefined' ) {
 				posX -= window.innerWidth - document.body.offsetWidth;
 			}
 		}
@@ -999,47 +1055,46 @@
 
 
 	/**
-	 * Stop tracking the mouse movement and
-	 * save the window position.
+	 * Stop tracking the mouse movement and save the window position.
+	 * @param {MouseEvent} ev
 	 */
-	function trackMouseDownStart_Move( e ) {
-		var g = GLOBAL,
-		    m = g.MOUSE;
+	function trackMouseDownStart_Move( ev ) {
+		var m = GLOBAL.MOUSE;
 
-		m.lastX = e.clientX;
-		m.lastY = e.clientY;
+		m.lastX = ev.clientX;
+		m.lastY = ev.clientY;
 
-		document.addEventListener( "mousemove", moveMLE, false );
-		document.addEventListener( "mouseup", trackMouseDownEnd_Move, false );
+		document.addEventListener( 'mousemove', moveMLE, false );
+		document.addEventListener( 'mouseup', trackMouseDownEnd_Move, false );
 	}
 
 
 	/**
-	 * Start tracking the mouse movement and
-	 * adjust the window size.
+	 * Start tracking the mouse movement and adjust the window size.
+	 * @param {MouseEvent} ev
 	 */
-	function trackMouseDownEnd_Resize( e ) {
-		var d = document,
-		    g = GLOBAL,
-		    m = g.MOUSE,
-		    mc = g.REF.mainCont,
-		    posX = mc.offsetLeft,
-		    boxWidth = parseInt( mc.style.width, 10 ),
-		    boxHeight = parseInt( mc.style.height, 10 );
+	function trackMouseDownEnd_Resize( ev ) {
+		var d = document;
+		var g = GLOBAL;
+		var m = g.MOUSE;
+		var mc = g.REF.mainCont;
+		var posX = mc.offsetLeft;
+		var boxWidth = parseInt( mc.style.width, 10 );
+		var boxHeight = parseInt( mc.style.height, 10 );
 
-		mc.className += " transition";
+		mc.className += ' transition';
 
 		m.lastX = null;
 		m.lastY = null;
 
-		d.removeEventListener( "mousemove", resizeMLE, false );
-		d.removeEventListener( "mouseup", trackMouseDownEnd_Resize, false );
+		d.removeEventListener( 'mousemove', resizeMLE, false );
+		d.removeEventListener( 'mouseup', trackMouseDownEnd_Resize, false );
 
 		// Update config in this tab – part 1
 		g.config.boxWidth = boxWidth;
 		g.config.boxHeight = boxHeight;
 
-		if( g.config.boxAlign == "right" ) {
+		if( g.config.boxAlign == 'right' ) {
 			posX = parseInt( mc.style.right, 10 );
 		}
 		else {
@@ -1058,69 +1113,72 @@
 		saveChangesToStorage( BG_TASK.SAVE_CONFIG, update );
 
 		// Adjust CSS just until the next page reload
-		var tempStyle = d.getElementById( "MLE-temp" + g.noise );
+		var tempStyle = d.getElementById( 'MLE-temp' + g.noise );
 
 		if( !tempStyle ) {
-			tempStyle = d.createElement( "style" );
-			tempStyle.type = "text/css";
-			tempStyle.id = "MLE-temp" + g.noise;
+			tempStyle = d.createElement( 'style' );
+			tempStyle.type = 'text/css';
+			tempStyle.id = 'MLE-temp' + g.noise;
 		}
 
-		tempStyle.textContent = "#mle" + g.noise + ".show { width: " + boxWidth + "px !important; height: " + boxHeight + "px !important; }";
-		d.getElementsByTagName( "head" )[0].appendChild( tempStyle );
+		tempStyle.textContent = '#mle' + g.noise + '.show {' +
+			' width: ' + boxWidth + 'px !important;' +
+			' height: ' + boxHeight + 'px !important; }';
+		d.getElementsByTagName( 'head' )[0].appendChild( tempStyle );
 
-		mc.style.width = "";
-		mc.style.height = "";
+		mc.style.width = '';
+		mc.style.height = '';
 	}
 
 
 	/**
 	 * Stop tracking the mouse movement and
 	 * save the window size.
-	 * @param {String} direction "sw" or "se".
+	 * @param {MouseEvent} ev
+	 * @param {String}     direction "sw" or "se".
 	 */
-	function trackMouseDownStart_Resize( e, direction ) {
-		var d = document,
-		    g = GLOBAL,
-		    m = g.MOUSE,
-		    mc = g.REF.mainCont,
-		    tempStyle = d.getElementById( "MLE-temp" + g.noise );
+	function trackMouseDownStart_Resize( ev, direction ) {
+		var d = document;
+		var g = GLOBAL;
+		var m = g.MOUSE;
+		var mc = g.REF.mainCont;
+		var tempStyle = d.getElementById( 'MLE-temp' + g.noise );
 
 		if( tempStyle ) {
-			tempStyle.textContent = "";
+			tempStyle.textContent = '';
 		}
 
-		mc.className = mc.className.replace( " transition", "" );
+		mc.className = mc.className.replace( ' transition', '' );
+		mc.style.width = g.config.boxWidth + 'px';
+		mc.style.height = g.config.boxHeight + 'px';
 
-		mc.style.width = g.config.boxWidth + "px";
-		mc.style.height = g.config.boxHeight + "px";
-
-		m.lastX = e.clientX;
-		m.lastY = e.clientY;
+		m.lastX = ev.clientX;
+		m.lastY = ev.clientY;
 		m.resizeDirection = direction;
 
-		d.addEventListener( "mousemove", resizeMLE, false );
-		d.addEventListener( "mouseup", trackMouseDownEnd_Resize, false );
+		d.addEventListener( 'mousemove', resizeMLE, false );
+		d.addEventListener( 'mouseup', trackMouseDownEnd_Resize, false );
 	}
 
 
 	/**
 	 * Show a preview of the emote that is about to be added.
+	 * @param {Event} ev
 	 */
-	function updatePreview( e ) {
-		var previewId = "preview" + e.target.id,
-		    preview = document.getElementById( previewId ),
-		    emoteLink = e.target.value;
+	function updatePreview( ev ) {
+		var previewId = 'preview' + ev.target.id;
+		var preview = document.getElementById( previewId );
+		var emoteLink = ev.target.value;
 
-		if( emoteLink.indexOf( "/" ) != 0 ) {
-			emoteLink = "/" + emoteLink;
+		if( emoteLink.indexOf( '/' ) != 0 ) {
+			emoteLink = '/' + emoteLink;
 		}
 		if( emoteLink == preview.href ) {
 			return;
 		}
 
 		preview.href = emoteLink;
-		preview.className = ""; // reset old classes
+		preview.className = ''; // reset old classes
 		preview = Builder.addClassesForEmote( preview );
 	}
 
@@ -1129,12 +1187,11 @@
 	/**
 	 * Build all the HTML.
 	 * Or most of it. There is an extra "class" for the context menu.
-	 * @type {Object}
 	 */
 	var Builder = {
 
 
-		ploungeClass: "mle-ploungemote",
+		ploungeClass: 'mle-ploungemote',
 
 
 		/**
@@ -1145,21 +1202,21 @@
 		 */
 		addClassesForEmote: function( emote ) {
 			var cfg = GLOBAL.config;
-			var emoteName = emote.href.split( "/" );
+			var emoteName = emote.href.split( '/' );
 
 			emoteName = emoteName[emoteName.length - 1];
 
 			if( !emote.className ) {
-				emote.className = "";
+				emote.className = '';
 			}
 
 			// If BetterPonymotes is used for out-of-sub emotes
 			if( cfg.adjustForBetterPonymotes ) {
-				emote.className += " bpmote-" + emoteName.toLowerCase();
+				emote.className += ' bpmote-' + emoteName.toLowerCase();
 			}
 			// If GrEmB is used
 			if( cfg.adjustForGrEmB ) {
-				emote.className += " G_" + emoteName + "_";
+				emote.className += ' G_' + emoteName + '_';
 			}
 
 			emote.className = emote.className.trim();
@@ -1172,15 +1229,14 @@
 		 * Add CSS rules to the page inside a <style> tag in the head.
 		 */
 		addCSS: function() {
-			var g = GLOBAL,
-			    cfg = g.config,
-			    d = document;
-			var styleNode = d.createElement( "style" ),
-			    rules = "\n";
+			var g = GLOBAL;
+			var cfg = g.config;
+			var styleNode = document.createElement( 'style' );
+			var rules = '\n';
 			var zIndex, listDir;
 
 			zIndex = cfg.boxUnderHeader ? 10 : 10000;
-			listDir = ( cfg.boxScrollbar == "right" ) ? "ltr" : "rtl";
+			listDir = ( cfg.boxScrollbar == 'right' ) ? 'ltr' : 'rtl';
 
 			// Show out-of-sub emotes
 			this.addOutOfSubCSS();
@@ -1188,189 +1244,193 @@
 			// '%' will be replaced with noise
 			var css = {
 				// Collection of same CSS
-				"#mle%.show,\
+				'#mle%.show,\
 				 #mle%.show ul,\
 				 #mle%.show .mle-dragbar,\
 				 #mle%.show .mle-btn,\
 				 #mle%.show .mle-search,\
 				 #mle%.show div,\
 				 #mle-ctxmenu%.show,\
-				 .diag.show":
-						"display: block;",
-				"#mle%,\
-				 #mle-ctxmenu%":
-						"font: 12px Verdana, Arial, Helvetica, \"DejaVu Sans\", sans-serif; line-height: 14px; text-align: left;",
-				"#mle% .mle-btn":
-						"background-color: #808080; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; display: none; font-weight: bold; padding: 5px 0 6px; position: absolute; text-align: center; top: -1px;",
-				"#mle% .mle-btn:hover":
-						"background-color: #404040;",
+				 .diag.show':
+						'display: block;',
+				'#mle%,\
+				 #mle-ctxmenu%':
+						'font: 12px Verdana, Arial, Helvetica, "DejaVu Sans", sans-serif; line-height: 14px; text-align: left;',
+				'#mle% .mle-btn':
+						'background-color: #808080; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; display: none; font-weight: bold; padding: 5px 0 6px; position: absolute; text-align: center; top: -1px;',
+				'#mle% .mle-btn:hover':
+						'background-color: #404040;',
 				// Inactive state
-				"#mle%":
-						"background-color: " + cfg.boxBgColor + "; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; z-index: " + zIndex + "; width: " + cfg.boxWidthMinimized + "px;",
-				"#mle%.transition":
-						"-moz-transition: width " + cfg.boxAnimationSpeed + "ms; -webkit-transition: width " + cfg.boxAnimationSpeed + "ms; -o-transition: width " + cfg.boxAnimationSpeed + "ms; transition: width " + cfg.boxAnimationSpeed + "ms;",
+				'#mle%':
+						'background-color: ' + cfg.boxBgColor + '; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; z-index: ' + zIndex + '; width: ' + cfg.boxWidthMinimized + 'px;',
+				'#mle%.transition':
+						'-moz-transition: width ' + cfg.boxAnimationSpeed + 'ms; -webkit-transition: width ' + cfg.boxAnimationSpeed + 'ms; -o-transition: width ' + cfg.boxAnimationSpeed + 'ms; transition: width ' + cfg.boxAnimationSpeed + 'ms;',
 				// Active state
-				"#mle%.show":
-						"width: " + cfg.boxWidth + "px; height: " + cfg.boxHeight + "px; padding: 36px 10px 10px; z-index: 10000;",
+				'#mle%.show':
+						'width: ' + cfg.boxWidth + 'px; height: ' + cfg.boxHeight + 'px; padding: 36px 10px 10px; z-index: 10000;',
 				// Dragging bars
-				".mle-dragbar":
-						"display: none; position: absolute;",
-				".mle-dragbar0": // left
-						"height: 100%; left: 0; top: 0; width: 10px;",
-				".mle-dragbar1": // right
-						"height: 100%; right: 0; top: 0; width: 10px;",
-				".mle-dragbar2": // bottom
-						"bottom: 0; height: 10px; left: 0; width: 100%;",
-				".mle-dragbar3": // top
-						"height: 32px; left: 0; top: 0; width: 100%;",
+				'.mle-dragbar':
+						'display: none; position: absolute;',
+				'.mle-dragbar0': // left
+						'height: 100%; left: 0; top: 0; width: 10px;',
+				'.mle-dragbar1': // right
+						'height: 100%; right: 0; top: 0; width: 10px;',
+				'.mle-dragbar2': // bottom
+						'bottom: 0; height: 10px; left: 0; width: 100%;',
+				'.mle-dragbar3': // top
+						'height: 32px; left: 0; top: 0; width: 100%;',
 				// Resize handles
-				".mle-resizer":
-						"background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAG0lEQVQY02NgIBFoEKuQf+AUaxCrmH9wKMYKALBdAnfp7Ex1AAAAAElFTkSuQmCC'); bottom: 0; display: none; height: 10px; position: absolute; width: 10px;",
-				".mle-resizer:hover":
-						"background-color: rgba( 10, 10, 10, 0.1 );",
-				".mle-resizer0":
-						"border-top-right-radius: 2px; cursor: sw-resize; left: 0;",
-				".mle-resizer1":
-						"border-top-left-radius: 2px; cursor: se-resize; right: 0; -o-transform: scaleX( -1 ); -webkit-transform: scaleX( -1 ); transform: scaleX( -1 );",
+				'.mle-resizer':
+						'background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAG0lEQVQY02NgIBFoEKuQf+AUaxCrmH9wKMYKALBdAnfp7Ex1AAAAAElFTkSuQmCC"); bottom: 0; display: none; height: 10px; position: absolute; width: 10px;',
+				'.mle-resizer:hover':
+						'background-color: rgba( 10, 10, 10, 0.1 );',
+				'.mle-resizer0':
+						'border-top-right-radius: 2px; cursor: sw-resize; left: 0;',
+				'.mle-resizer1':
+						'border-top-left-radius: 2px; cursor: se-resize; right: 0; -o-transform: scaleX( -1 ); -webkit-transform: scaleX( -1 ); transform: scaleX( -1 );',
 				// Header
-				"#mle% .mle-header":
-						"display: block; color: #303030; font-weight: bold; padding: 6px 0; text-align: center;",
-				"#mle%.show .mle-header":
-						"display: none;",
+				'#mle% .mle-header':
+						'display: block; color: #303030; font-weight: bold; padding: 6px 0; text-align: center;',
+				'#mle%.show .mle-header':
+						'display: none;',
 				// Manage button
-				"#mle% .mle-mng-link":
-						"width: 72px; z-index: 10;",
+				'#mle% .mle-mng-link':
+						'width: 72px; z-index: 10;',
 				// Options button
-				"#mle% .mle-opt-link":
-						"background-color: #f4f4f4 !important; border-top-color: #b0b0b0; color: #a0a0a0; font-weight: normal !important; left: 98px; padding-left: 8px; padding-right: 8px; z-index: 14;",
-				"#mle% .mle-opt-link:hover":
-						"border-top-color: #606060; color: #000000;",
+				'#mle% .mle-opt-link':
+						'background-color: #f4f4f4 !important; border-top-color: #b0b0b0; color: #a0a0a0; font-weight: normal !important; left: 98px; padding-left: 8px; padding-right: 8px; z-index: 14;',
+				'#mle% .mle-opt-link:hover':
+						'border-top-color: #606060; color: #000000;',
 				// Search field
-				"#mle% .mle-search":
-						"border: 1px solid #e0e0e0; border-top-color: #b0b0b0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; color: #b0b0b0; display: none; left: 175px; padding: 3px 5px; position: absolute; top: -1px; width: 120px; z-index: 16;",
-				"#mle% .mle-search:active,\
-				 #mle% .mle-search:focus":
-						"color: #101010;",
+				'#mle% .mle-search':
+						'border: 1px solid #e0e0e0; border-top-color: #b0b0b0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; color: #b0b0b0; display: none; left: 175px; padding: 3px 5px; position: absolute; top: -1px; width: 120px; z-index: 16;',
+				'#mle% .mle-search:active,\
+				 #mle% .mle-search:focus':
+						'color: #101010;',
 				// Search page
-				"strong.search-header%":
-						"border-bottom: 1px solid #e0e0e0; color: #101010; display: block; font-size: 14px; font-weight: normal; margin: 14px 0 10px; padding-bottom: 2px;",
-				"strong.search-header%:first-child":
-						"margin-top: 0;",
+				'strong.search-header%':
+						'border-bottom: 1px solid #e0e0e0; color: #101010; display: block; font-size: 14px; font-weight: normal; margin: 14px 0 10px; padding-bottom: 2px;',
+				'strong.search-header%:first-child':
+						'margin-top: 0;',
 				// Close button
-				"#mle% .mle-close":
-						"right: 10px; z-index: 20; padding-left: 12px; padding-right: 12px;",
+				'#mle% .mle-close':
+						'right: 10px; z-index: 20; padding-left: 12px; padding-right: 12px;',
 				// Selection list
-				"#mle% ul":
-						"direction: " + listDir + "; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;",
-				"#mle% li":
-						"background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;",
-				"#mle% li:first-child":
-						"border-top-width: 0;",
-				"#mle% li:last-child":
-						"border-bottom-width: 0;",
-				"#mle% li:hover":
-						"background-color: #d0d0d0;",
-				"#mle% li.activelist":
-						"background-color: transparent;",
-				"#mle% li.activelist strong":
-						"font-weight: bold;",
-				"#mle% li strong":
-						"font-weight: normal; padding-right: 16px; white-space: nowrap;",
-				"#mle% li span":
-						"color: #909090; display: block; font-size: 9px; font-weight: normal !important; white-space: nowrap;",
-				"#mle% li input":
-						"box-sizing: border-box; -moz-box-sizing: border-box; width: 100%;",
+				'#mle% ul':
+						'direction: ' + listDir + '; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;',
+				'#mle% li':
+						'background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;',
+				'#mle% li:first-child':
+						'border-top-width: 0;',
+				'#mle% li:last-child':
+						'border-bottom-width: 0;',
+				'#mle% li:hover':
+						'background-color: #d0d0d0;',
+				'#mle% li.activelist':
+						'background-color: transparent;',
+				'#mle% li.activelist strong':
+						'font-weight: bold;',
+				'#mle% li strong':
+						'font-weight: normal; padding-right: 16px; white-space: nowrap;',
+				'#mle% li span':
+						'color: #909090; display: block; font-size: 9px; font-weight: normal !important; white-space: nowrap;',
+				'#mle% li input':
+						'box-sizing: border-box; -moz-box-sizing: border-box; width: 100%;',
 				// Blocks and pages
-				".mle-block%,\
+				'.mle-block%,\
 				 .mle-manage%,\
-				 .mle-search%":
-						"box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;",
+				 .mle-search%':
+						'box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;',
 				// Emote blocks
-				".mle-block% a":
-						"display: inline-block !important; float: none !important; border: 1px solid " + cfg.boxEmoteBorder + "; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;",
-				".mle-block% a:hover":
-						"border-color: #96BFE9;",
-				".mle-warning":
-						"color: #808080; margin-bottom: 10px; text-align: center; text-shadow: 1px 1px 0 #ffffff;",
+				'.mle-block% a':
+						'display: inline-block !important; float: none !important; border: 1px solid ' + cfg.boxEmoteBorder + '; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;',
+				'.mle-block% a:hover':
+						'border-color: #96BFE9;',
+				'.mle-warning':
+						'color: #808080; margin-bottom: 10px; text-align: center; text-shadow: 1px 1px 0 #ffffff;',
 				// Notifier
-				".mle-msg%":
-						"background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; " + cfg.msgPosition + ": -200px; padding: 19px 0; text-align: center; width: 100%; z-index: 10100; -moz-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -webkit-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; -o-transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms; transition: " + cfg.msgPosition + " " + cfg.msgAnimationSpeed + "ms;",
-				".mle-msg%.show":
-						cfg.msgPosition + ": 0;",
+				'.mle-msg%':
+						'background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; ' + cfg.msgPosition + ': -200px; padding: 19px 0; text-align: center; width: 100%; z-index: 10100; -moz-transition: ' + cfg.msgPosition + ' ' + cfg.msgAnimationSpeed + 'ms; -webkit-transition: ' + cfg.msgPosition + ' ' + cfg.msgAnimationSpeed + 'ms; -o-transition: ' + cfg.msgPosition + ' ' + cfg.msgAnimationSpeed + 'ms; transition: ' + cfg.msgPosition + ' ' + cfg.msgAnimationSpeed + 'ms;',
+				'.mle-msg%.show':
+						cfg.msgPosition + ': 0;',
 				// Manage page
-				".mle-manage% label":
-						"border-bottom: 1px solid #e0e0e0; display: block; font-weight: bold; margin-bottom: 10px; padding-bottom: 4px;",
-				".mle-manage% div":
-						"padding-bottom: 20px;",
-				".mle-manage% input[type=\"text\"]":
-						"background-color: #ffffff; border: 1px solid #d0d0d0; padding: 2px 4px; width: 120px;",
-				".mle-manage% select":
-						"background-color: #ffffff; border: 1px solid #d0d0d0; max-width: 100px; padding: 2px 4px;",
-				".mle-manage% input[type=\"submit\"]":
-						"background-color: #6189b5; border: 0; border-radius: 2px; color: #ffffff; margin-left: 12px; padding: 3px 8px;",
-				".mle-manage% input[type=\"submit\"]:hover":
-						"background-color: #202020 !important;",
-				"#previewaddemote%":
-						"display: inline-block; border: 1px solid #505050; border-radius: 2px; float: none; margin-top: 10px; min-height: 4px; min-width: 4px;",
-				".mle-manage% div div":
-						"line-height: 16px; padding: 0;",
-				".mle-manage% table":
-						"margin-top: 10px;",
-				".mle-manage% th,\
-				 .mle-manage% td":
-						"border: 1px solid #e0e0e0; padding: 2px 4px; vertical-align: top;"
+				'.mle-manage% label':
+						'border-bottom: 1px solid #e0e0e0; display: block; font-weight: bold; margin-bottom: 10px; padding-bottom: 4px;',
+				'.mle-manage% div':
+						'padding-bottom: 20px;',
+				'.mle-manage% input[type="text"]':
+						'background-color: #ffffff; border: 1px solid #d0d0d0; padding: 2px 4px; width: 120px;',
+				'.mle-manage% select':
+						'background-color: #ffffff; border: 1px solid #d0d0d0; max-width: 100px; padding: 2px 4px;',
+				'.mle-manage% input[type="submit"]':
+						'background-color: #6189b5; border: 0; border-radius: 2px; color: #ffffff; margin-left: 12px; padding: 3px 8px;',
+				'.mle-manage% input[type="submit"]:hover':
+						'background-color: #202020 !important;',
+				'#previewaddemote%':
+						'display: inline-block; border: 1px solid #505050; border-radius: 2px; float: none; margin-top: 10px; min-height: 4px; min-width: 4px;',
+				'.mle-manage% div div':
+						'line-height: 16px; padding: 0;',
+				'.mle-manage% table':
+						'margin-top: 10px;',
+				'.mle-manage% th,\
+				 .mle-manage% td':
+						'border: 1px solid #e0e0e0; padding: 2px 4px; vertical-align: top;'
 			};
 
-			if( cfg.boxTrigger != "float" ) {
-				css["#mle%"] += " display: none;";
+			if( cfg.boxTrigger != 'float' ) {
+				css['#mle%'] += ' display: none;';
 			}
-			if( cfg.boxTrigger == "button" ) {
-				css[".mle-open-btn"] = "margin: 0 0 0 4px !important; vertical-align: top;";
-			}
-			if( cfg.ctxMenu ) {
-				css["#mle-ctxmenu%,\
-				     .diag"] =
-						"color: " + cfg.ctxStyleColor + "; cursor: default; display: none; position: fixed; z-index: 50000000; white-space: nowrap; background-color: " + cfg.ctxStyleBgColor + "; border: 1px solid " + cfg.ctxStyleBorderColor + "; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;";
-				css["#mle-ctxmenu% li"] =
-						"display: none;";
-				css["#mle-ctxmenu% li,\
-				     .diag li"] =
-						"margin: 2px 0; padding: 5px 14px;";
-				css["#mle-ctxmenu% li:hover,\
-				     .diag li:hover"] =
-						"background-color: " + cfg.ctxStyleHoverColor + ";";
-				css["#mle-ctxmenu%.in-box .in,\
-				     #mle-ctxmenu%.out-of-box .out"] =
-						"display: block;";
-				css[".diag"] =
-						"max-height: " + ContextMenu.CONFIG.menuMaxHeight + "px; overflow: auto; width: " + ContextMenu.CONFIG.menuWidth + "px; z-index: 50000010;";
-			}
-			if( cfg.showEmoteTitleText ) {
-				var display = "float: left;";
 
-				if( cfg.showTitleStyleDisplay == "block" ) {
-					display = "display: block;";
+			if( cfg.boxTrigger == 'button' ) {
+				css['.mle-open-btn'] = 'margin: 0 0 0 4px !important; vertical-align: top;';
+			}
+
+			if( cfg.ctxMenu ) {
+				css['#mle-ctxmenu%,\
+				     .diag'] =
+						'color: ' + cfg.ctxStyleColor + '; cursor: default; display: none; position: fixed; z-index: 50000000; white-space: nowrap; background-color: ' + cfg.ctxStyleBgColor + '; border: 1px solid ' + cfg.ctxStyleBorderColor + '; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;';
+				css['#mle-ctxmenu% li'] =
+						'display: none;';
+				css['#mle-ctxmenu% li,\
+				     .diag li'] =
+						'margin: 2px 0; padding: 5px 14px;';
+				css['#mle-ctxmenu% li:hover,\
+				     .diag li:hover'] =
+						'background-color: ' + cfg.ctxStyleHoverColor + ';';
+				css['#mle-ctxmenu%.in-box .in,\
+				     #mle-ctxmenu%.out-of-box .out'] =
+						'display: block;';
+				css['.diag'] =
+						'max-height: ' + ContextMenu.CONFIG.menuMaxHeight + 'px; overflow: auto; width: ' + ContextMenu.CONFIG.menuWidth + 'px; z-index: 50000010;';
+			}
+
+			if( cfg.showEmoteTitleText ) {
+				var display = 'float: left;';
+
+				if( cfg.showTitleStyleDisplay == 'block' ) {
+					display = 'display: block;';
 				}
 
-				css[".mle-titletext"] =
-						"background-color: " + cfg.showTitleStyleBgColor + "; border: 1px solid " + cfg.showTitleStyleBorderColor + "; border-radius: 2px; color: " + cfg.showTitleStyleColor + "; margin-right: 4px; padding: 0 4px; " + display;
-			}
-			if( cfg.revealUnknownEmotes ) {
-				css[".mle-revealemote"] =
-						"background-color: " + cfg.revealStyleBgColor + "; border: 1px solid " + cfg.revealStyleBorderColor + "; border-radius: 2px; color: " + cfg.revealStyleColor + "; display: inline-block; float: left; margin-right: 4px; padding: 2px 6px;" ;
+				css['.mle-titletext'] =
+						'background-color: ' + cfg.showTitleStyleBgColor + '; border: 1px solid ' + cfg.showTitleStyleBorderColor + '; border-radius: 2px; color: ' + cfg.showTitleStyleColor + '; margin-right: 4px; padding: 0 4px; ' + display;
 			}
 
-			styleNode.type = "text/css";
-			styleNode.id = "MLE" + g.noise;
+			if( cfg.revealUnknownEmotes ) {
+				css['.mle-revealemote'] =
+						'background-color: ' + cfg.revealStyleBgColor + '; border: 1px solid ' + cfg.revealStyleBorderColor + '; border-radius: 2px; color: ' + cfg.revealStyleColor + '; display: inline-block; float: left; margin-right: 4px; padding: 2px 6px;' ;
+			}
+
+			styleNode.type = 'text/css';
+			styleNode.id = 'MLE' + g.noise;
 
 			for( var rule in css ) {
 				rules += rule.replace( /%/g, g.noise );
-				rules += "{" + css[rule] + "}";
+				rules += '{' + css[rule] + '}';
 			}
 
 			styleNode.textContent = rules;
 
-			d.getElementsByTagName( "head" )[0].appendChild( styleNode );
+			document.getElementsByTagName( 'head' )[0].appendChild( styleNode );
 
 			// The CSS variable is a little big and we won't need this function again, sooo...
 			// Leave this function for the Garbage Collector.
@@ -1382,64 +1442,64 @@
 		 * Add the HTML to the page.
 		 */
 		addHTML: function() {
-			var d = document,
-			    g = GLOBAL;
+			var d = document;
+			var g = GLOBAL;
 			var fragmentNode = d.createDocumentFragment();
 
 			// Add headline
-			var labelMain = d.createElement( "strong" );
-			labelMain.className = "mle-header";
+			var labelMain = d.createElement( 'strong' );
+			labelMain.className = 'mle-header';
 			labelMain.textContent = g.config.boxLabelMinimized;
 
 			// Add close button
-			var close = d.createElement( "span" );
-			close.className = "mle-close mle-btn";
-			close.textContent = "x";
-			close.addEventListener( "click", mainContainerHide, false );
+			var close = d.createElement( 'span' );
+			close.className = 'mle-close mle-btn';
+			close.textContent = 'x';
+			close.addEventListener( 'click', mainContainerHide, false );
 
 			// Add manage link
-			var mngTrigger = d.createElement( "span" );
-			mngTrigger.className = "mle-mng-link mle-btn";
-			mngTrigger.textContent = "Manage";
-			mngTrigger.addEventListener( "click", showManagePage, false );
+			var mngTrigger = d.createElement( 'span' );
+			mngTrigger.className = 'mle-mng-link mle-btn';
+			mngTrigger.textContent = 'Manage';
+			mngTrigger.addEventListener( 'click', showManagePage, false );
 
 			// Add options link
-			var optTrigger = d.createElement( "span" );
-			optTrigger.className = "mle-opt-link mle-btn";
-			optTrigger.textContent = "Options";
-			optTrigger.title = "Opens the options page";
-			optTrigger.addEventListener( "click", function( e ) {
+			var optTrigger = d.createElement( 'span' );
+			optTrigger.className = 'mle-opt-link mle-btn';
+			optTrigger.textContent = 'Options';
+			optTrigger.title = 'Opens the options page';
+			optTrigger.addEventListener( 'click', function( e ) {
 				postMessage( { task: BG_TASK.OPEN_OPTIONS } );
 			}, false );
 
 			// Add search field
-			var searchTrigger = d.createElement( "input" );
-			searchTrigger.className = "mle-search";
-			searchTrigger.value = "search";
-			searchTrigger.addEventListener( "click", Search.activate, false );
-			searchTrigger.addEventListener( "keyup", Search.submit.bind( Search ), false );
+			var searchTrigger = d.createElement( 'input' );
+			searchTrigger.className = 'mle-search';
+			searchTrigger.value = 'search';
+			searchTrigger.addEventListener( 'click', Search.activate, false );
+			searchTrigger.addEventListener( 'keyup', Search.submit.bind( Search ), false );
 
 			// Add search page
-			var searchPage = d.createElement( "div" );
-			searchPage.className = "mle-block" + g.noise;
+			var searchPage = d.createElement( 'div' );
+			searchPage.className = 'mle-block' + g.noise;
 			this.preventOverScrolling( searchPage );
 
 			// Add manage page
-			var mngPage = d.createElement( "div" );
-			mngPage.className = "mle-manage" + g.noise;
+			var mngPage = d.createElement( 'div' );
+			mngPage.className = 'mle-manage' + g.noise;
 
 			// Add most-of-the-time-hidden message block
 			// (NOT a part of the main container)
-			var msg = d.createElement( "p" );
-			msg.className = "mle-msg" + g.noise;
+			var msg = d.createElement( 'p' );
+			msg.className = 'mle-msg' + g.noise;
 
 			// Add dragging bars
 			var dragbar;
 			for( var i = 0; i < 4; i++ ) {
-				dragbar = d.createElement( "div" );
-				dragbar.className = "mle-dragbar mle-dragbar" + i;
-				dragbar.addEventListener( "mousedown", trackMouseDown, false );
-				dragbar.addEventListener( "mouseup", trackMouseDown, false );
+				dragbar = d.createElement( 'div' );
+				dragbar.className = 'mle-dragbar mle-dragbar' + i;
+				dragbar.addEventListener( 'mousedown', trackMouseDown, false );
+				dragbar.addEventListener( 'mouseup', trackMouseDown, false );
 
 				fragmentNode.appendChild( dragbar );
 			}
@@ -1447,10 +1507,10 @@
 			// Add resize handles
 			var resizer;
 			for( var i = 0; i < 2; i++ ) {
-				resizer = d.createElement( "div" );
-				resizer.className = "mle-resizer mle-resizer" + i;
-				resizer.addEventListener( "mousedown", trackMouseDown, false );
-				resizer.addEventListener( "mouseup", trackMouseDown, false );
+				resizer = d.createElement( 'div' );
+				resizer.className = 'mle-resizer mle-resizer' + i;
+				resizer.addEventListener( 'mousedown', trackMouseDown, false );
+				resizer.addEventListener( 'mouseup', trackMouseDown, false );
 
 				fragmentNode.appendChild( resizer );
 			}
@@ -1459,8 +1519,11 @@
 			fragmentNode = appendChildren(
 				fragmentNode,
 				[
-					mngTrigger, optTrigger, searchTrigger,
-					labelMain, close,
+					mngTrigger,
+					optTrigger,
+					searchTrigger,
+					labelMain,
+					close,
 					this.createEmoteBlocksAndNav()
 				]
 			);
@@ -1480,7 +1543,7 @@
 				d.body.appendChild( ContextMenu.create() );
 			}
 
-			if( g.config.boxTrigger == "button" ) {
+			if( g.config.boxTrigger == 'button' ) {
 				this.addMLEButtons();
 			}
 		},
@@ -1491,27 +1554,21 @@
 		 */
 		addMLEButtons: function() {
 			var d = document;
-			var textareas = d.querySelectorAll( ".help-toggle" ),
-			    button,
-			    refEle;
+			var textareas = d.querySelectorAll( '.help-toggle' );
 
 			for( var i = 0; i < textareas.length; i++ ) {
-				button = d.createElement( "button" );
-				button.className = "mle-open-btn";
-				button.type = "button";
-				button.textContent = "open MLE";
-				button.addEventListener( "mouseover", rememberActiveTextarea, false );
-				button.addEventListener( "click", mainContainerShow, false );
+				var ta = textareas[i];
 
-				refEle = textareas[i].querySelector( ".bpm-search-toggle" );
+				var button = d.createElement( 'button' );
+				button.className = 'mle-open-btn';
+				button.type = 'button';
+				button.textContent = 'open MLE';
+				button.addEventListener( 'mouseover', rememberActiveTextarea, false );
+				button.addEventListener( 'click', mainContainerShow, false );
 
-				if( refEle ) {
-					// Place MLE button to the left of the BPM button
-					textareas[i].insertBefore( button, refEle );
-				}
-				else {
-					textareas[i].appendChild( button );
-				}
+				// Place MLE button to the left of the BPM button
+				var refEle = ta.querySelector( '.bpm-search-toggle' );
+				refEle ? ta.insertBefore( button, refEle ) : ta.appendChild( button );
 			}
 
 			buttonObserverSetup();
@@ -1520,19 +1577,20 @@
 
 		/**
 		 * Switch the name of the list with an input field to change the name.
+		 * @param {Event} ev
 		 */
-		addRenameListField: function( e ) {
-			var name = e.target.textContent,
-			    parent = e.target.parentNode,
-			    input = document.createElement( "input" );
+		addRenameListField: function( ev ) {
+			var name = ev.target.textContent;
+			var parent = ev.target.parentNode;
+			var input = document.createElement( 'input' );
 
-			input.type = "text";
+			input.type = 'text';
 			input.value = name;
-			input.addEventListener( "keydown", function( e2 ) {
-				renameList( parent, e2 );
+			input.addEventListener( 'keydown', function( ev ) {
+				renameList( parent, ev );
 			}, false );
 
-			e.target.setAttribute( "hidden", "hidden" );
+			ev.target.setAttribute( 'hidden', 'hidden' );
 			parent.insertBefore( input, parent.firstChild );
 		},
 
@@ -1547,25 +1605,23 @@
 				return;
 			}
 
-			var head = document.getElementsByTagName( "head" )[0],
-			    here = window.location.pathname.toLowerCase(),
-			    styleNode,
-			    subCSS;
-
-			styleNode = document.createElement( "style" );
-			styleNode.type = "text/css";
-			styleNode.id = "MLE-emotes" + g.noise;
+			var styleNode = document.createElement( 'style' );
+			styleNode.type = 'text/css';
+			styleNode.id = 'MLE-emotes' + g.noise;
 
 			// Not very graceful, but at the moment this extension
 			// is build under the assumption that no more subreddits
 			// will be added in the future.
+
+			var here = window.location.pathname.toLowerCase();
+			var subCSS;
 
 			// Don't include CSS on the subreddit it originates from
 			if( !/^\/r\/mlplounge\//i.test( here ) ) {
 				// On the user/message page we know from which subreddit a
 				// comment comes from, therefore we can use the right emote.
 				if( /^\/(user\/|message\/|r\/friends\/comments)/i.test( here ) ) {
-					subCSS = g.sub_css["r/mlplounge"] + "\n\n";
+					subCSS = g.sub_css['r/mlplounge'] + '\n\n';
 					subCSS = subCSS.replace(
 						/a\[href\|="(\/[a-zA-Z0-9-]+)"]/g,
 						'a.' + this.ploungeClass + '[href|="$1"],$&'
@@ -1573,20 +1629,23 @@
 					this.findAndAddClassToPloungeEmotes();
 				}
 				else {
-					subCSS = g.sub_css["r/mlplounge"] + "\n\n";
+					subCSS = g.sub_css['r/mlplounge'] + '\n\n';
 				}
+
 				styleNode.textContent += subCSS;
 			}
+
 			if( !/^\/r\/mylittlepony\//i.test( here ) ) {
-				styleNode.textContent += g.sub_css["r/mylittlepony"] + "\n\n";
+				styleNode.textContent += g.sub_css['r/mylittlepony'] + '\n\n';
 			}
 
 			// Special modifiers from r/mylittlepony
-			styleNode.textContent += 'a[href|="/sp"]{display:inline-block;padding-right:100%;width:0px;height:0px}a[href|="/sp"]+.reddit_show_hidden_emotes_span{display:none}a[href^="/"][href*="-in-"],a[href^="/"][href$="-in"],a[href^="/"][href*="-inp-"],a[href^="/"][href$="-inp"]{float:none!important;display:inline-block!important}a[href="/spoiler"]{background:black!important;color:black!important}a[href="/spoiler"]:hover{color:white!important}';
+			styleNode.textContent += 'a[href|="/sp"]{display:inline-block;padding-right:100%;width:0px;height:0px}a[href|="/sp"]+.reddit_show_hidden_emotes_span{display:none}a[href^="/"][href*="-in-"],a[href^="/"][href$="-in"],a[href^="/"][href*="-inp-"],a[href^="/"][href$="-inp"]{float:none!important;display:inline-block!important}body a[href="/spoiler"]{background:black!important;color:black!important}body a[href="/spoiler"]:hover{color:white!important}';
 
 			// Not needed anymore, leave it for the Garbage Collector
 			g.sub_css = {};
 
+			var head = document.getElementsByTagName( 'head' )[0];
 			head.insertBefore( styleNode, head.firstChild );
 		},
 
@@ -1595,37 +1654,38 @@
 		 * Create emote blocks filled with emotes and the navigation.
 		 */
 		createEmoteBlocksAndNav: function() {
-			var d = document,
-			    g = GLOBAL;
-			var countBlocks = 0,
-			    fragmentNode = d.createDocumentFragment(),
-			    here = window.location.pathname.toLowerCase(),
-			    listNav = d.createElement( "ul" );
-			var emoteBlock, emoteList, listLink, warn;
+			var d = document;
+			var g = GLOBAL;
+			var countBlocks = 0;
+			var fragmentNode = d.createDocumentFragment();
+			var here = window.location.pathname.toLowerCase();
+			var listNav = d.createElement( 'ul' );
 
 			// Add navigation
 			this.preventOverScrolling( listNav );
 			fragmentNode.appendChild( listNav );
 
 			for( var listName in g.emotes ) {
-				emoteList = g.emotes[listName];
+				var emoteList = g.emotes[listName];
 
 				// Create list navigation
-				listLink = this.createListLink( listName, g.emotes[listName].length );
+				var listLink = this.createListLink( listName, g.emotes[listName].length );
 				listNav.appendChild( listLink );
 
 				// Create emotes section
-				emoteBlock = d.createElement( "div" );
-				emoteBlock.className = "mle-block" + g.noise;
+				var emoteBlock = d.createElement( 'div' );
+				emoteBlock.className = 'mle-block' + g.noise;
 				this.preventOverScrolling( emoteBlock );
 
 				// Display a little warning for the Plounge emote list, if opened in
 				// r/mylittlepony since those emotes won't be visible for not-pony-script-users.
-				if( here.indexOf( "/r/mylittlepony/" ) == 0
-						&& listName == g.config.listNamePlounge ) {
-					warn = document.createElement( "p" );
-					warn.className = "mle-warning";
-					warn.textContent = "Please remember that the emotes of this list won't be visible to people without an extension like MLE or BPM in this subreddit.";
+				if(
+					here.indexOf( '/r/mylittlepony/' ) == 0 &&
+					listName == g.config.listNamePlounge
+				) {
+					var warn = document.createElement( 'p' );
+					warn.className = 'mle-warning';
+					warn.textContent = 'Please remember that the emotes of this list won\'t be visible to people without an extension like MLE or BPM in this subreddit.';
 					emoteBlock.appendChild( warn );
 				}
 
@@ -1634,7 +1694,7 @@
 
 				// Display first emote section per default
 				if( countBlocks == 0 ) {
-					listLink.className = "activelist";
+					listLink.className = 'activelist';
 					g.shownBlock = listName;
 					fragmentNode.appendChild( emoteBlock );
 				}
@@ -1655,11 +1715,10 @@
 		 * Fill an emote block with emotes.
 		 */
 		createEmotesOfList: function( emoteList ) {
-			var fragment = document.createDocumentFragment(),
-			    emoteLink;
+			var fragment = document.createDocumentFragment();
 
 			for( var i = 0; i < emoteList.length; i++ ) {
-				emoteLink = '/' + emoteList[i];
+				var emoteLink = '/' + emoteList[i];
 				fragment.appendChild( this.createEmote( emoteLink ) );
 			}
 
@@ -1673,30 +1732,30 @@
 		 * @param {Boolean} draggable If the emote shall be draggable.
 		 */
 		createEmote: function( link, draggable ) {
-			var emote = document.createElement( "a" );
+			var emote = document.createElement( 'a' );
 
-			if( typeof draggable == "undefined" ) {
+			if( typeof draggable == 'undefined' ) {
 				draggable = true;
 			}
 
 			emote.href = link;
 			emote = this.addClassesForEmote( emote );
 
-			emote.addEventListener( "click", insertEmote, false );
+			emote.addEventListener( 'click', insertEmote, false );
 
 			if( draggable ) {
-				emote.addEventListener( "dragstart", DragAndDrop.dragstartMoveEmote.bind( DragAndDrop ), false );
+				emote.addEventListener( 'dragstart', DragAndDrop.dragstartMoveEmote.bind( DragAndDrop ), false );
 
 				// The "dragenter" and "dragover" events have
 				// to be stopped in order for "drop" to work.
-				emote.addEventListener( "dragenter", stopEvent, false );
-				emote.addEventListener( "dragover", stopEvent, false );
+				emote.addEventListener( 'dragenter', stopEvent, false );
+				emote.addEventListener( 'dragover', stopEvent, false );
 
 				// Stop "dragend" as well, so if the drop target isn't
 				// an emote, the browser doesn't open the emote URL.
-				emote.addEventListener( "dragend", stopEvent, false );
+				emote.addEventListener( 'dragend', stopEvent, false );
 
-				emote.addEventListener( "drop", DragAndDrop.dropMoveEmote.bind( DragAndDrop ), false );
+				emote.addEventListener( 'drop', DragAndDrop.dropMoveEmote.bind( DragAndDrop ), false );
 			}
 
 			return emote;
@@ -1709,9 +1768,9 @@
 		 * @return {DOMElement}
 		 */
 		createHeaderForSearch: function( listName ) {
-			var header = document.createElement( "strong" );
+			var header = document.createElement( 'strong' );
 
-			header.className = "search-header" + GLOBAL.noise;
+			header.className = 'search-header' + GLOBAL.noise;
 			header.textContent = listName;
 
 			return header;
@@ -1726,18 +1785,18 @@
 		 */
 		createListLink: function( listName, elementCount ) {
 			var d = document;
-			var listLink = d.createElement( "li" ),
-			    name = d.createElement( "strong" ),
-			    count = d.createElement( "span" );
+			var listLink = d.createElement( 'li' );
+			var name = d.createElement( 'strong' );
+			var count = d.createElement( 'span' );
 
 			name.textContent = listName;
-			name.addEventListener( "dblclick", this.addRenameListField, false );
+			name.addEventListener( 'dblclick', this.addRenameListField, false );
 
-			count.textContent = elementCount + " emotes";
+			count.textContent = elementCount + ' emotes';
 
-			listLink.setAttribute( "draggable", "true" );
-			listLink.addEventListener( "click", toggleEmoteBlock, false );
-			listLink.addEventListener( "dragstart", DragAndDrop.dragstartMoveList.bind( DragAndDrop ), false );
+			listLink.setAttribute( 'draggable', 'true' );
+			listLink.addEventListener( 'click', toggleEmoteBlock, false );
+			listLink.addEventListener( 'dragstart', DragAndDrop.dragstartMoveList.bind( DragAndDrop ), false );
 			DragAndDrop.makeDropZone( listLink, DragAndDrop.dropMoveList );
 
 			appendChildren( listLink, [name, count] );
@@ -1748,11 +1807,11 @@
 
 		/**
 		 * Create a label.
-		 * @param  {String} text Text for the label.
-		 * @return {DOMElement} label
+		 * @param  {String}     text Text for the label.
+		 * @return {DOMElement}      The label.
 		 */
 		createLabel: function( text ) {
-			var label = document.createElement( "label" );
+			var label = document.createElement( 'label' );
 			label.textContent = text;
 
 			return label;
@@ -1764,14 +1823,10 @@
 		 * @param {String} selId Value for ID attribute of the <select>.
 		 */
 		createListSelect: function( selId ) {
-			var d = document,
-			    g = GLOBAL;
-			var selList = d.createElement( "select" ),
-			    optList,
-			    listName;
+			var selList = document.createElement( 'select' );
 
-			for( listName in g.emotes ) {
-				optList = d.createElement( "option" );
+			for( var listName in GLOBAL.emotes ) {
+				var optList = document.createElement( 'option' );
 				optList.value = listName.replace( /"/g, '\\"' );
 				optList.textContent = listName;
 
@@ -1789,23 +1844,23 @@
 		 * @return {DOMElement} Main container.
 		 */
 		createMainContainer: function() {
-			var d = document,
-			    cfg = GLOBAL.config;
-			var main = d.createElement( "div" );
+			var cfg = GLOBAL.config;
+			var main = document.createElement( 'div' );
 
-			main.id = "mle" + GLOBAL.noise;
-			main.className = " transition";
-			main.addEventListener( "mouseover", rememberActiveTextarea, false );
-			main.addEventListener( "mouseover", mainContainerShow, false );
+			main.id = 'mle' + GLOBAL.noise;
+			main.className = ' transition';
+			main.addEventListener( 'mouseover', rememberActiveTextarea, false );
+			main.addEventListener( 'mouseover', mainContainerShow, false );
 
 			// Add style for position of main container
-			if( cfg.boxAlign == "right" ) {
-				main.style.right = cfg.boxPosX + "px";
+			if( cfg.boxAlign == 'right' ) {
+				main.style.right = cfg.boxPosX + 'px';
 			}
 			else {
-				main.style.left = cfg.boxPosX + "px";
+				main.style.left = cfg.boxPosX + 'px';
 			}
-			main.style.top = cfg.boxPosTop + "px";
+
+			main.style.top = cfg.boxPosTop + 'px';
 
 			return main;
 		},
@@ -1817,44 +1872,44 @@
 		 */
 		createManagePage: function( form ) {
 			var areas = [
-					this.mngAreaForNewEmote(),
-					this.mngAreaForNewList(),
-					this.mngAreaForDelList(),
-					this.mngAreaForNote(
-						"Move emotes",
-						"Use Drag&amp;Drop to move emotes.<br />To move it to another list, right-click on it and select “Move to List”."
-					),
-					this.mngAreaForNote(
-						"Delete emotes",
-						"Right-click on the emote and select “Delete Emote”."
-					),
-					this.mngAreaForNote(
-						"Move lists",
-						"Use Drag&amp;Drop to move lists. A dragged object will be inserted before the one it was dropped on."
-					),
-					this.mngAreaForNote(
-						"Rename lists",
-						"Double-click on the list name. Confirm the new name with [Enter]."
-					),
-					this.mngAreaForNote(
-						"Search",
-						"There are additional search modes. Set one of the following as prefix:<table>"
-						+ "<tr><th><code>regex:</code></th><td>Use regular expressions.</td></tr>"
-						+ "<tr><th><code>alt:</code></th><td>Include alternative names learned from the subreddit stylesheets. For example \"a00\" will find \"ajlie\".</td></tr>"
-						+ "<tr><th><code>tag:</code></th><td>Get all emotes with the given tag.<br />"
-						+ "<b>Moods:</b> angry, bashful, blank, crazed (derped), evil (malicious), determined, distraught, happy, incredulous, misc, sad, sarcastic (smug), scared, shocked, thoughtful.<br />"
-						+ "<b>Ponies:</b> Just use the name (without blanks) or try initials like <code>\"ts\"</code> for Twilight.</td></tr>"
-						+ "</table>"
-					),
-					this.mngAreaForNote(
-						"Backups",
-						"Please back up your emotes and config from time to time. You can export those on the options page and then copy&amp;paste them into a text file."
-					),
-					this.mngAreaForNote(
-						"Did you know?",
-						"You can move this window. Just grab it close to its border."
-					)
-				];
+				this.mngAreaForNewEmote(),
+				this.mngAreaForNewList(),
+				this.mngAreaForDelList(),
+				this.mngAreaForNote(
+					'Move emotes',
+					'Use Drag&amp;Drop to move emotes.<br />To move it to another list, right-click on it and select “Move to List”.'
+				),
+				this.mngAreaForNote(
+					'Delete emotes',
+					'Right-click on the emote and select “Delete Emote”.'
+				),
+				this.mngAreaForNote(
+					'Move lists',
+					'Use Drag&amp;Drop to move lists. A dragged object will be inserted before the one it was dropped on.'
+				),
+				this.mngAreaForNote(
+					'Rename lists',
+					'Double-click on the list name. Confirm the new name with [Enter].'
+				),
+				this.mngAreaForNote(
+					'Search',
+					'There are additional search modes. Set one of the following as prefix:<table>' +
+					'<tr><th><code>regex:</code></th><td>Use regular expressions.</td></tr>' +
+					'<tr><th><code>alt:</code></th><td>Include alternative names learned from the subreddit stylesheets. For example "a00" will find "ajlie".</td></tr>' +
+					'<tr><th><code>tag:</code></th><td>Get all emotes with the given tag.<br />' +
+					'<span style="font-weight: bold;">Moods:</span> angry, bashful, blank, crazed (derped), evil (malicious), determined, distraught, happy, incredulous, misc, sad, sarcastic (smug), scared, shocked, thoughtful.<br />' +
+					'<span style="font-weight: bold;">Ponies:</span> Just use the name (without blanks) or try initials like <code>"ts"</code> for Twilight.</td></tr>' +
+					'</table>'
+				),
+				this.mngAreaForNote(
+					'Backups',
+					'Please back up your emotes and config from time to time. You can export those on the options page and then copy&amp;paste them into a text file.'
+				),
+				this.mngAreaForNote(
+					'Did you know?',
+					'You can move this window. Just grab it close to its border.'
+				)
+			];
 			var frag = appendChildren( document.createDocumentFragment(), areas );
 
 			this.preventOverScrolling( form );
@@ -1867,28 +1922,33 @@
 		 * @param {DOMElement} emote
 		 */
 		emoteShowTitleText: function( emote ) {
-			var pathNoFlags = emote.pathname.split( "-" )[0];
+			var pathNoFlags = emote.pathname.split( '-' )[0];
 
-			if( emote.title == ""
-					|| pathNoFlags == "/spoiler"
-					|| pathNoFlags == "/s" ) {
+			if(
+				emote.title.length == 0 ||
+				pathNoFlags == '/spoiler' ||
+				pathNoFlags == '/s'
+			) {
 				return;
 			}
+
 			// Don't reveal title text if it's some emote info put there by BPM
 			if( emote.title.match( /( from r\/[a-z0-9-_]+$)|(Unknown emote )/i ) ) {
 				return;
 			}
 
-			var text = document.createElement( "span" ),
-			    evaluated = this.linkifyURLs( emote.title );
+			var text = document.createElement( 'span' );
+			var evaluated = this.linkifyURLs( emote.title );
 
-			text.className = "mle-titletext";
+			text.className = 'mle-titletext';
+
 			if( emote.title == evaluated ) {
 				text.textContent = evaluated;
 			}
 			else {
 				text.innerHTML = evaluated;
 			}
+
 			emote.parentNode.insertBefore( text, emote.nextSibling );
 		},
 
@@ -1898,13 +1958,13 @@
 		 */
 		findAndAddClassToPloungeEmotes: function() {
 			if( GLOBAL.config.adjustEmotesInInbox ) {
-				var targets = document.querySelectorAll( ".comment, .message" );
-				var emotes, from, subjectLink, subreddit, target;
+				var targets = document.querySelectorAll( '.comment, .message' );
 
 				for( var i = 0; i < targets.length; i++ ) {
-					target = targets[i];
-					subreddit = target.querySelector( ".parent a.subreddit" );
-					subjectLink = target.querySelector( ".subject a" );
+					var target = targets[i];
+					var subreddit = target.querySelector( '.parent a.subreddit' );
+					var subjectLink = target.querySelector( '.subject a' );
+					var from;
 
 					if( subreddit ) {
 						from = subreddit.pathname.toLowerCase();
@@ -1916,8 +1976,8 @@
 						continue;
 					}
 
-					if( from.indexOf( "/r/mlplounge/" ) == 0 ) {
-						emotes = target.querySelectorAll( ".md a" );
+					if( from.indexOf( '/r/mlplounge/' ) == 0 ) {
+						var emotes = target.querySelectorAll( '.md a' );
 						this.ploungeEmotesAddClass( emotes );
 					}
 				}
@@ -1934,25 +1994,23 @@
 			var base = false;
 
 			// Textarea
-			if(
-				ele.tagName.toLowerCase() == "textarea"
-			) {
+			if( ele.tagName.toLowerCase() == 'textarea' ) {
 				base = ele.parentNode.parentNode.parentNode;
 			}
 			// Reply
 			else if(
-				ele.tagName.toLowerCase() == "a" &&
+				ele.tagName.toLowerCase() == 'a' &&
 				ele.outerHTML.indexOf( 'onclick="return reply(this)"' ) >= 0
 			) {
 				// I'm sorry.
-				base = ele.parentNode.parentNode.parentNode.parentNode.parentNode.querySelector( ".child > form.usertext" );
+				base = ele.parentNode.parentNode.parentNode.parentNode.parentNode.querySelector( '.child > form.usertext' );
 			}
 			// Edit
 			else if(
-				ele.tagName.toLowerCase() == "a" &&
+				ele.tagName.toLowerCase() == 'a' &&
 				ele.outerHTML.indexOf( 'onclick="return edit_usertext(this)"' ) >= 0
 			) {
-				base = ele.parentNode.parentNode.parentNode.querySelector( "form.usertext" );
+				base = ele.parentNode.parentNode.parentNode.querySelector( 'form.usertext' );
 			}
 
 			return base;
@@ -1973,8 +2031,8 @@
 			// text = text.replace( /\[(.*)\]\((.+)\)/g, "<a href=\"$2\">$1</a>" );
 
 			// URL only
-			text = text.replace( /([^=][^"])((http|ftp)[s]?:\/\/[^ "']+)/gi, "$1<a href=\"$2\">$2</a>" );
-			text = text.replace( /^((http|ftp)[s]?:\/\/[^ "']+)/gi, "<a href=\"$1\">$1</a>" );
+			text = text.replace( /([^=][^"])((http|ftp)[s]?:\/\/[^ "']+)/gi, '$1<a href="$2">$2</a>' );
+			text = text.replace( /^((http|ftp)[s]?:\/\/[^ "']+)/gi, '<a href="$1">$1</a>' );
 
 			return text;
 		},
@@ -1985,16 +2043,20 @@
 		 * to maybe modify them in some way.
 		 */
 		modifyAllOnPageEmotes: function() {
-			var d = document,
-			    cfg = GLOBAL.config;
+			var d = document;
+			var cfg = GLOBAL.config;
 
 			// If we ain't gonna modify anything, then there's no reason
 			// to iterate through all the links, now is there?
-			if( !cfg.showEmoteTitleText && !cfg.stopEmoteLinkFollowing && !cfg.revealUnknownEmotes ) {
+			if(
+				!cfg.showEmoteTitleText &&
+				!cfg.stopEmoteLinkFollowing &&
+				!cfg.revealUnknownEmotes
+			) {
 				return;
 			}
 
-			d.addEventListener( "click", this.scanForLivePreview );
+			d.addEventListener( 'click', this.scanForLivePreview );
 
 			// Iterate all the links
 			for( var i = 0; i < d.links.length; i++ ) {
@@ -2016,7 +2078,7 @@
 
 			// Prevent following of the link (what an emote basically is)
 			if( cfg.stopEmoteLinkFollowing ) {
-				emote.addEventListener( "click", stopEvent, false );
+				emote.addEventListener( 'click', stopEvent, false );
 			}
 
 			// Display title text
@@ -2034,24 +2096,25 @@
 		/**
 		 * Modify emotes: Stop link following, show title, reveal unknown ones.
 		 * Callback function for the DOMNodeInserted event.
+		 * @param {Event} ev
 		 */
-		modifyEmotesDOMEvent: function( e ) {
+		modifyEmotesDOMEvent: function( ev ) {
 			// nodeType = 3 = TEXT_NODE
-			if( e.target.nodeType == 3 ) {
+			if( ev.target.nodeType == 3 ) {
 				return;
 			}
 
-			if( e.target.tagName.toLowerCase() == "a" ) {
-				this.modifyEmote( e.target );
+			if( ev.target.tagName.toLowerCase() == 'a' ) {
+				this.modifyEmote( ev.target );
 				return;
 			}
 
 			// Not a link and no child nodes, so there can't be any emotes
-			if( e.target.children.length == 0 ) {
+			if( ev.target.children.length == 0 ) {
 				return;
 			}
 
-			var links = e.target.querySelectorAll( "a[href]" );
+			var links = ev.target.querySelectorAll( 'a[href]' );
 
 			for( var i = 0; i < links.length; i++ ) {
 				this.modifyEmote( links[i] );
@@ -2065,20 +2128,18 @@
 		 * @param {MutationRecord} mutations
 		 */
 		modifyEmotesMutationObserver: function( mutations ) {
-			var links, mutation, node;
-
 			for( var i = 0; i < mutations.length; i++ ) {
-				mutation = mutations[i];
+				var mutation = mutations[i];
 
 				for( var j = 0; j < mutation.addedNodes.length; j++ ) {
-					node = mutation.addedNodes[j];
+					var node = mutation.addedNodes[j];
 
 					// nodeType = 3 = TEXT_NODE
 					if( node.nodeType == 3 ) {
 						continue;
 					}
 
-					links = node.querySelectorAll( "a[href]" );
+					var links = node.querySelectorAll( 'a[href]' );
 
 					for( var k = 0; k < links.length; k++ ) {
 						this.modifyEmote( links[k] );
@@ -2092,35 +2153,35 @@
 		 * Create manage area for adding new emotes to lists.
 		 */
 		mngAreaForNewEmote: function() {
-			var d = document,
-			    g = GLOBAL;
-			var inputEmote = d.createElement( "input" ),
-			    preview = d.createElement( "a" ),
-			    submitEmote = d.createElement( "input" );
+			var d = document;
+			var g = GLOBAL;
+			var inputEmote = d.createElement( 'input' );
+			var preview = d.createElement( 'a' );
+			var submitEmote = d.createElement( 'input' );
 
-			inputEmote.type = "text";
-			inputEmote.id = "addemote" + g.noise;
-			inputEmote.addEventListener( "keyup", updatePreview, false );
+			inputEmote.type = 'text';
+			inputEmote.id = 'addemote' + g.noise;
+			inputEmote.addEventListener( 'keyup', updatePreview, false );
 			g.REF.inputAddEmote = inputEmote;
 
-			preview.id = "previewaddemote" + g.noise;
+			preview.id = 'previewaddemote' + g.noise;
 
 			// Select a list to add the emote to.
-			g.REF.selectListAddEmote = this.createListSelect( "addtolist" + g.noise );
+			g.REF.selectListAddEmote = this.createListSelect( 'addtolist' + g.noise );
 
-			submitEmote.type = "submit";
-			submitEmote.value = "save emote";
-			submitEmote.addEventListener( "click", saveNewEmote, false );
+			submitEmote.type = 'submit';
+			submitEmote.value = 'save emote';
+			submitEmote.addEventListener( 'click', saveNewEmote, false );
 
 			return appendChildren(
-				d.createElement( "div" ),
+				d.createElement( 'div' ),
 				[
-					this.createLabel( "Add emote" ),
+					this.createLabel( 'Add emote' ),
 					inputEmote,
-					d.createTextNode( " to " ),
+					d.createTextNode( ' to ' ),
 					g.REF.selectListAddEmote,
 					submitEmote,
-					d.createElement( "br" ),
+					d.createElement( 'br' ),
 					preview
 				]
 			);
@@ -2131,23 +2192,22 @@
 		 * Create manage area for adding new lists.
 		 */
 		mngAreaForNewList: function() {
-			var d = document,
-			    g = GLOBAL;
-			var inputList = d.createElement( "input" ),
-			    submitList = d.createElement( "input" );
+			var d = document;
 
-			inputList.type = "text";
-			inputList.id = "addlist" + g.noise;
-			g.REF.inputAddList = inputList;
+			var inputList = d.createElement( 'input' );
+			inputList.type = 'text';
+			inputList.id = 'addlist' + GLOBAL.noise;
+			GLOBAL.REF.inputAddList = inputList;
 
-			submitList.type = "submit";
-			submitList.value = "create new list";
-			submitList.addEventListener( "click", saveNewList, false );
+			var submitList = d.createElement( 'input' );
+			submitList.type = 'submit';
+			submitList.value = 'create new list';
+			submitList.addEventListener( 'click', saveNewList, false );
 
 			return appendChildren(
-				d.createElement( "div" ),
+				d.createElement( 'div' ),
 				[
-					this.createLabel( "Add list" ),
+					this.createLabel( 'Add list' ),
 					inputList,
 					submitList
 				]
@@ -2159,20 +2219,19 @@
 		 * Create manage area for deleting lists.
 		 */
 		mngAreaForDelList: function() {
-			var d = document,
-			    g = GLOBAL;
-			var submitDel = d.createElement( "input" );
+			var g = GLOBAL;
 
-			g.REF.selectListDelete = this.createListSelect( "dellist" + g.noise );
+			g.REF.selectListDelete = this.createListSelect( 'dellist' + g.noise );
 
-			submitDel.type = "submit";
-			submitDel.value = "delete list";
-			submitDel.addEventListener( "click", deleteList, false );
+			var submitDel = document.createElement( 'input' );
+			submitDel.type = 'submit';
+			submitDel.value = 'delete list';
+			submitDel.addEventListener( 'click', deleteList, false );
 
 			return appendChildren(
-				d.createElement( "div" ),
+				document.createElement( 'div' ),
 				[
-					this.createLabel( "Delete list" ),
+					this.createLabel( 'Delete list' ),
 					g.REF.selectListDelete,
 					submitDel
 				]
@@ -2187,30 +2246,29 @@
 		 * @return {DOMElement}
 		 */
 		mngAreaForNote: function( title, text ) {
-			var d = document;
-			var note = d.createElement( "div" );
-
+			var note = document.createElement( 'div' );
 			note.innerHTML = text;
 
 			return appendChildren(
-				d.createElement( "div" ),
-				[this.createLabel( title ), note]
+				document.createElement( 'div' ),
+				[
+					this.createLabel( title ),
+					note
+				]
 			);
 		},
 
 
 		/**
 		 * Add a plounge emote CSS class to the list of given emotes.
-		 * @param {Array} emotes List of emotes.
+		 * @param {Array<DOMElement>} emotes List of emotes.
 		 */
 		ploungeEmotesAddClass: function( emotes ) {
-			var emote;
-
 			for( var i = 0; i < emotes.length; i++ ) {
-				emote = emotes[i];
+				var emote = emotes[i];
 
 				if( isEmote( emote ) ) {
-					emote.className += " " + this.ploungeClass;
+					emote.className += ' ' + this.ploungeClass;
 				}
 			}
 		},
@@ -2224,11 +2282,11 @@
 		preventOverScrolling: function( node ) {
 			// Chrome, Opera
 			node.addEventListener(
-				"mousewheel", this.stopScrolling.bind( node ), false
+				'mousewheel', this.stopScrolling.bind( node ), false
 			);
 			// Firefox, the actual standard
 			node.addEventListener(
-				"wheel", this.stopScrolling.bind( node ), false
+				'wheel', this.stopScrolling.bind( node ), false
 			);
 		},
 
@@ -2238,14 +2296,13 @@
 		 * @param {String} listName Name of the list.
 		 */
 		removeList: function( listName ) {
-			var g = GLOBAL,
-			    gr = g.REF;
-			var li,
-			    selectLists = [gr.selectListDelete, gr.selectListAddEmote];
+			var g = GLOBAL;
+			var gr = g.REF;
+			var selectLists = [gr.selectListDelete, gr.selectListAddEmote];
 
 			// Remove list from DOM
 			for( var key in gr.lists ) {
-				li = gr.lists[key].querySelector( "strong" );
+				var li = gr.lists[key].querySelector( 'strong' );
 
 				if( li.textContent == listName ) {
 					gr.listsCont.removeChild( gr.lists[key] );
@@ -2268,6 +2325,7 @@
 				if( !selectLists[i] ) {
 					continue;
 				}
+
 				children = selectLists[i].childNodes;
 
 				for( var j = 0; j < children.length; j++ ) {
@@ -2292,7 +2350,7 @@
 			// An attempt to reduce the false positive rate for unknown emotes.
 			window.setTimeout( function( e ) {
 				// Special emote, nevermind
-				if( emote.pathname.indexOf( "/sp" ) == 0 ) {
+				if( emote.pathname.indexOf( '/sp' ) == 0 ) {
 					return;
 				}
 
@@ -2304,11 +2362,11 @@
 				var emoteStyle = window.getComputedStyle( emote );
 
 				if(
-					( emoteStyle.width == "0px" || emoteStyle.width == "auto" ) &&
-					( emoteStyle.height == "0px" || emoteStyle.height == "auto" ) &&
-					emoteStyle.backgroundImage == "none"
+					( emoteStyle.width == '0px' || emoteStyle.width == 'auto' ) &&
+					( emoteStyle.height == '0px' || emoteStyle.height == 'auto' ) &&
+					emoteStyle.backgroundImage == 'none'
 				) {
-					emote.className += " mle-revealemote";
+					emote.className += ' mle-revealemote';
 					emote.textContent = emote.pathname;
 				}
 			}, 250 );
@@ -2317,17 +2375,18 @@
 
 		/**
 		 * Add an observer to every RES live preview element that pops up.
+		 * @param {Event} ev
 		 */
-		scanForLivePreview: function( e ) {
-			var base = Builder.getBaseForLivePreview( e.target );
+		scanForLivePreview: function( ev ) {
+			var base = Builder.getBaseForLivePreview( ev.target );
 
 			if( !base ) {
 				return;
 			}
 
-			var previewBox = base.querySelector( ".livePreview .md" );
+			var previewBox = base.querySelector( '.livePreview .md' );
 
-			if( !previewBox || previewBox.className.indexOf( "mle-lp-" + base.id ) >= 0 ) {
+			if( !previewBox || previewBox.className.indexOf( 'mle-lp-' + base.id ) >= 0 ) {
 				return;
 			}
 
@@ -2335,38 +2394,39 @@
 
 			// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
 			if( MutationObserver ) {
-				var observer = new MutationObserver( Builder.modifyEmotesMutationObserver.bind( Builder ) ),
-				    observerConfig = {
-				    	attributes: false,
-				    	childList: true,
-				    	characterData: false
-				    };
+				var observer = new MutationObserver( Builder.modifyEmotesMutationObserver.bind( Builder ) );
+				var observerConfig = {
+					attributes: false,
+					childList: true,
+					characterData: false
+				};
 
 				observer.observe( previewBox, observerConfig );
 			}
 			// ... but not in Opera, so we have to do this the deprecated way
 			else {
-				previewBox.addEventListener( "DOMNodeInserted", Builder.modifyEmotesDOMEvent.bind( Builder ), false );
+				previewBox.addEventListener( 'DOMNodeInserted', Builder.modifyEmotesDOMEvent.bind( Builder ), false );
 			}
 
-			previewBox.className += " mle-lp-" + base.id;
+			previewBox.className += ' mle-lp-' + base.id;
 		},
 
 
 		/**
 		 * Stop scrolling if top or bottom of node has been reached.
 		 * this == node
+		 * @param {Event} ev
 		 */
-		stopScrolling: function( e ) {
+		stopScrolling: function( ev ) {
 			var scrolledToBottom = ( this.scrollHeight - this.scrollTop == this.clientHeight );
 			var scrolledToTop = ( this.scrollTop == 0 );
-			var wheelDeltaY = ( e.wheelDeltaY || -e.deltaY );
+			var wheelDeltaY = ( ev.wheelDeltaY || -ev.deltaY );
 
 			if( scrolledToBottom && wheelDeltaY < 0 ) {
-				e.preventDefault();
+				ev.preventDefault();
 			}
 			else if( scrolledToTop && wheelDeltaY > 0 ) {
-				e.preventDefault();
+				ev.preventDefault();
 			}
 		},
 
@@ -2377,9 +2437,8 @@
 		 * @param {Integer} count    New number of emotes.
 		 */
 		updateEmoteCount: function( listName, count ) {
-			var counterDisplay = GLOBAL.REF.lists[listName].querySelector( "span" );
-
-			counterDisplay.textContent = count + " emotes";
+			var counterDisplay = GLOBAL.REF.lists[listName].querySelector( 'span' );
+			counterDisplay.textContent = count + ' emotes';
 		},
 
 
@@ -2389,9 +2448,8 @@
 		 * @param {String} newName New name for the list.
 		 */
 		updateListName: function( oldName, newName ) {
-			var g = GLOBAL,
-			    gr = g.REF;
-			var strong;
+			var g = GLOBAL;
+			var gr = g.REF;
 
 			gr.emoteBlocks[newName] = gr.emoteBlocks[oldName];
 			delete gr.emoteBlocks[oldName];
@@ -2404,7 +2462,7 @@
 			}
 
 			for( var name in gr.lists ) {
-				strong = gr.lists[name].querySelector( "strong" );
+				var strong = gr.lists[name].querySelector( 'strong' );
 
 				if( strong && strong.textContent == oldName ) {
 					strong.textContent = newName;
@@ -2422,15 +2480,14 @@
 		 */
 		updateListOrder: function( lists ) {
 			var g = GLOBAL;
-			var listLink,
-			    ul = g.REF.listsCont;
+			var ul = g.REF.listsCont;
 
 			removeAllChildren( ul );
 
 			g.REF.lists = {};
 
 			for( var listName in lists ) {
-				listLink = this.createListLink( listName, lists[listName].length );
+				var listLink = this.createListLink( listName, lists[listName].length );
 				ul.appendChild( listLink );
 				g.REF.lists[listName] = listLink;
 			}
@@ -2463,15 +2520,13 @@
 		 * @param {String} listName Name of the new (empty) list.
 		 */
 		updateListsAddNew: function( listName ) {
-			var d = document,
-			    g = GLOBAL;
-			var block = d.createElement( "div" ),
-			    listLink = this.createListLink( listName, 0 ),
-			    selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote],
-			    selOption;
+			var g = GLOBAL;
+			var block = document.createElement( 'div' );
+			var listLink = this.createListLink( listName, 0 );
+			var selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
 
 			// Add new block
-			block.className = "mle-block" + g.noise;
+			block.className = 'mle-block' + g.noise;
 			g.REF.emoteBlocks[listName] = block;
 
 			// Add new list
@@ -2483,9 +2538,11 @@
 				if( !selectLists[i] ) {
 					continue;
 				}
-				selOption = d.createElement( "option" );
+
+				var selOption = document.createElement( 'option' );
 				selOption.value = listName.replace( /"/g, '\\"' );
 				selOption.textContent = listName;
+
 				selectLists[i].appendChild( selOption );
 			}
 
@@ -2515,18 +2572,17 @@
 		updateManageSelects: function( oldName, newName ) {
 			var g = GLOBAL;
 			var selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
-			var newOption, options;
 
 			for( var i = 0; i < selectLists.length; i++ ) {
 				if( !selectLists[i] ) {
 					continue;
 				}
 
-				options = selectLists[i].childNodes;
+				var options = selectLists[i].childNodes;
 
 				for( var j = 0; j < options.length; j++ ) {
 					if( options[j].value == oldName ) {
-						newOption = document.createElement( "option" );
+						var newOption = document.createElement( 'option' );
 						newOption.value = newName.replace( /"/g, '\\"' );
 						newOption.textContent = newName;
 
@@ -2558,44 +2614,44 @@
 
 		/**
 		 * Remember the currently dragged around emote.
+		 * @param {Event} ev
 		 */
-		dragstartMoveEmote: function( e ) {
-			this.REF.draggedEmote = e.target;
+		dragstartMoveEmote: function( ev ) {
+			this.REF.draggedEmote = ev.target;
 		},
 
 
 		/**
 		 * Remember the currently dragged around list element.
+		 * @param {Event} ev
 		 */
-		dragstartMoveList: function( e ) {
-			this.REF.draggedList = e.target;
+		dragstartMoveList: function( ev ) {
+			this.REF.draggedList = ev.target;
 
 			// Drag&Drop won't work on the list in Firefox 14 without set data.
-			e.dataTransfer.setData( "text/plain", "" );
+			ev.dataTransfer.setData( 'text/plain', '' );
 		},
 
 
 		/**
 		 * Drop the emote into the DOM at the new place
 		 * and remove it from the old one.
+		 * @param {Event} ev
 		 */
-		dropMoveEmote: function( e ) {
+		dropMoveEmote: function( ev ) {
 			var g = GLOBAL;
-			var emoteNameSource, emoteNameTarget;
-			var list, emoteIdxSource, emoteIdxTarget;
-			var update = {};
 
-			e.preventDefault();
+			ev.preventDefault();
 
 			// Different parent means we may drag a list element.
 			// We don't drop list elements on emotes, stop it.
-			if( e.target.parentNode != this.REF.draggedEmote.parentNode ) {
+			if( ev.target.parentNode != this.REF.draggedEmote.parentNode ) {
 				this.REF.draggedList = null;
 				return;
 			}
 
-			emoteNameSource = this.REF.draggedEmote.pathname.substring( 1 );
-			emoteNameTarget = e.target.pathname.substring( 1 );
+			var emoteNameSource = this.REF.draggedEmote.pathname.substring( 1 );
+			var emoteNameTarget = ev.target.pathname.substring( 1 );
 
 			// Do nothing if source and target are the same
 			if( emoteNameSource == emoteNameTarget ) {
@@ -2603,16 +2659,16 @@
 				return;
 			}
 
-			e.target.parentNode.removeChild( this.REF.draggedEmote );
-			e.target.parentNode.insertBefore( this.REF.draggedEmote, e.target );
+			ev.target.parentNode.removeChild( this.REF.draggedEmote );
+			ev.target.parentNode.insertBefore( this.REF.draggedEmote, ev.target );
 
 			// Save new order to local storage
-			list = g.emotes[g.shownBlock];
-			emoteIdxSource = list.indexOf( emoteNameSource );
+			var list = g.emotes[g.shownBlock];
+			var emoteIdxSource = list.indexOf( emoteNameSource );
 
 			if( emoteIdxSource > -1 ) {
 				list.splice( emoteIdxSource, 1 );
-				emoteIdxTarget = list.indexOf( emoteNameTarget );
+				var emoteIdxTarget = list.indexOf( emoteNameTarget );
 
 				// Same position? Well, back where you belong.
 				if( emoteIdxTarget == -1 ) {
@@ -2621,6 +2677,7 @@
 				list.splice( emoteIdxTarget, 0, emoteNameSource );
 			}
 
+			var update = {};
 			update[g.shownBlock] = list;
 			saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
@@ -2631,46 +2688,44 @@
 		/**
 		 * Drop the list into the DOM at the new place
 		 * and remove it from the old one.
+		 * @param {Event} ev
 		 */
-		dropMoveList: function( e ) {
+		dropMoveList: function( ev ) {
 			var g = GLOBAL;
-			var e_target = e.target,
-			    nameSource,
-			    nameTarget,
-			    reordered;
+			var evTarget = ev.target;
 
-			e.preventDefault();
+			ev.preventDefault();
 
 			if( this.REF.draggedList == null ) {
 				return;
 			}
 
 			// Do nothing if source and target are the same
-			if( e_target == this.REF.draggedList ) {
+			if( evTarget == this.REF.draggedList ) {
 				this.REF.draggedList = null;
 				return;
 			}
 
 			// If we drop on an element inside of the list, go one up
-			if( isList( e_target.parentNode ) ) {
-				e_target = e_target.parentNode;
+			if( isList( evTarget.parentNode ) ) {
+				evTarget = evTarget.parentNode;
 			}
 
 			// Different parent means we may drag an emote.
 			// We don't drop emotes on lists, stop it.
-			if( e_target.parentNode != this.REF.draggedList.parentNode ) {
+			if( evTarget.parentNode != this.REF.draggedList.parentNode ) {
 				this.REF.draggedList = null;
 				return;
 			}
 
-			e_target.parentNode.removeChild( this.REF.draggedList );
-			e_target.parentNode.insertBefore( this.REF.draggedList, e_target );
+			evTarget.parentNode.removeChild( this.REF.draggedList );
+			evTarget.parentNode.insertBefore( this.REF.draggedList, evTarget );
 
 			// Reorder and save to storage
-			nameSource = this.REF.draggedList.querySelector( "strong" ).textContent;
-			nameTarget = e_target.querySelector( "strong" ).textContent;
+			var nameSource = this.REF.draggedList.querySelector( 'strong' ).textContent;
+			var nameTarget = evTarget.querySelector( 'strong' ).textContent;
 
-			reordered = reorderList( nameSource, nameTarget );
+			var reordered = reorderList( nameSource, nameTarget );
 
 			g.emotes = reordered;
 			saveChangesToStorage( BG_TASK.UPDATE_LIST_ORDER, g.emotes );
@@ -2685,9 +2740,9 @@
 		 * @param {Function}     callback Function to call in case of drop.
 		 */
 		makeDropZone: function( node, callback ) {
-			node.addEventListener( "dragenter", stopEvent, false );
-			node.addEventListener( "dragover", stopEvent, false );
-			node.addEventListener( "drop", callback.bind( this ), false );
+			node.addEventListener( 'dragenter', stopEvent, false );
+			node.addEventListener( 'dragover', stopEvent, false );
+			node.addEventListener( 'drop', callback.bind( this ), false );
 		}
 
 
@@ -2724,43 +2779,42 @@
 		 * @return {DOMElement} Context menu.
 		 */
 		create: function() {
-			var d = document,
-			    g = GLOBAL;
-			var menu = d.createElement( "ul" ),
-			    item;
+			var d = document;
+			var g = GLOBAL;
+			var menu = d.createElement( 'ul' );
 			var items = [
-					{
-						className: "out",
-						text: "Save Emote",
-						onclick: this.itemActionSaveEmote
-					},
-					{
-						className: "in",
-						text: "Delete Emote",
-						onclick: this.itemActionDeleteEmote
-					},
-					{
-						className: "in",
-						text: "Move to List",
-						onclick: this.itemActionMoveEmote
-					}
-				];
+				{
+					className: 'out',
+					text: 'Save Emote',
+					onclick: this.itemActionSaveEmote
+				},
+				{
+					className: 'in',
+					text: 'Delete Emote',
+					onclick: this.itemActionDeleteEmote
+				},
+				{
+					className: 'in',
+					text: 'Move to List',
+					onclick: this.itemActionMoveEmote
+				}
+			];
 
-			menu.id = "mle-ctxmenu" + g.noise;
+			menu.id = 'mle-ctxmenu' + g.noise;
 
 			// Add items to menu
 			for( var i = 0; i < items.length; i++ ) {
-				item = d.createElement( "li" );
-				item.className = items[i]["className"];
-				item.textContent = items[i]["text"];
-				item.addEventListener( "click", items[i]["onclick"].bind( this ), false );
+				var item = d.createElement( 'li' );
+				item.className = items[i]['className'];
+				item.textContent = items[i]['text'];
+				item.addEventListener( 'click', items[i]['onclick'].bind( this ), false );
 
 				menu.appendChild( item );
 			}
 
 			// Add listener for context menu (will only be used on emotes)
-			d.body.addEventListener( "contextmenu", this.show.bind( this ), false );
-			d.body.addEventListener( "click", this.hide.bind( this ), false );
+			d.body.addEventListener( 'contextmenu', this.show.bind( this ), false );
+			d.body.addEventListener( 'click', this.hide.bind( this ), false );
 
 			Builder.preventOverScrolling( menu );
 			this.REF.menu = menu;
@@ -2771,22 +2825,21 @@
 
 		/**
 		 * Create dialog for the option "Move Emote".
-		 * @param {Integer} x X coordinate from the left.
-		 * @param {Integer} y Y coordinate from the top.
+		 * @param {int} x X coordinate from the left.
+		 * @param {int} y Y coordinate from the top.
 		 */
 		createDialogMoveEmote: function( x, y ) {
 			if( !this.REF.dialogMoveEmote ) {
-				var d = document,
-				    emotes = GLOBAL.emotes;
-				var cont = d.createElement( "ul" ),
-				    list;
-				var listName;
+				var d = document;
+				var emotes = GLOBAL.emotes;
+				var cont = d.createElement( 'ul' );
 
 				// Add available lists
-				for( listName in emotes ) {
-					list = d.createElement( "li" );
+				for( var listName in emotes ) {
+					var list = d.createElement( 'li' );
 					list.appendChild( d.createTextNode( listName ) );
-					list.addEventListener( "click", this.moveEmoteToList.bind( this ), false );
+					list.addEventListener( 'click', this.moveEmoteToList.bind( this ), false );
+
 					cont.appendChild( list );
 				}
 
@@ -2795,9 +2848,9 @@
 				d.body.appendChild( cont );
 			}
 
-			this.REF.dialogMoveEmote.className = "diag show";
-			this.REF.dialogMoveEmote.style.left = x + "px";
-			this.REF.dialogMoveEmote.style.top = y + "px";
+			this.REF.dialogMoveEmote.className = 'diag show';
+			this.REF.dialogMoveEmote.style.left = x + 'px';
+			this.REF.dialogMoveEmote.style.top = y + 'px';
 		},
 
 
@@ -2808,16 +2861,16 @@
 		 */
 		createDialogSaveEmote: function( x, y ) {
 			if( !this.REF.dialogSaveEmote ) {
-				var d = document,
-				    emotes = GLOBAL.emotes,
-				    cont = d.createElement( "ul" );
-				var list, listName;
+				var d = document;
+				var emotes = GLOBAL.emotes;
+				var cont = d.createElement( 'ul' );
 
 				// Add available lists
-				for( listName in emotes ) {
-					list = d.createElement( "li" );
+				for( var listName in emotes ) {
+					var list = d.createElement( 'li' );
 					list.appendChild( d.createTextNode( listName ) );
-					list.addEventListener( "click", this.saveEmoteToList.bind( this ), false );
+					list.addEventListener( 'click', this.saveEmoteToList.bind( this ), false );
+
 					cont.appendChild( list );
 				}
 
@@ -2826,9 +2879,9 @@
 				d.body.appendChild( cont );
 			}
 
-			this.REF.dialogSaveEmote.className = "diag show";
-			this.REF.dialogSaveEmote.style.left = x + "px";
-			this.REF.dialogSaveEmote.style.top = y + "px";
+			this.REF.dialogSaveEmote.className = 'diag show';
+			this.REF.dialogSaveEmote.style.left = x + 'px';
+			this.REF.dialogSaveEmote.style.top = y + 'px';
 		},
 
 
@@ -2852,12 +2905,11 @@
 		/**
 		 * Get the x and y coordinate for the context sub-menu.
 		 * @param  {DOMElement} menu The ctx menu.
-		 * @return {Object} Object with the attributes "x" and "y".
+		 * @return {Object}          Object with the attributes "x" and "y".
 		 */
 		getPosForMenu: function( menu ) {
-			var x = menu.offsetLeft,
-			    y = menu.offsetTop,
-			    diffY;
+			var x = menu.offsetLeft;
+			var y = menu.offsetTop;
 
 			x += menu.offsetWidth + this.CONFIG.menuMargin;
 
@@ -2867,13 +2919,13 @@
 			}
 
 			// Correct y
-			diffY = window.innerHeight - y - this.CONFIG.menuMaxHeight;
+			var diffY = window.innerHeight - y - this.CONFIG.menuMaxHeight;
 
 			if( diffY < 0 ) {
 				y += diffY - this.CONFIG.menuMargin;
 			}
 
-			return { "x": x, "y": y };
+			return { x: x, y: y };
 		},
 
 
@@ -2884,28 +2936,30 @@
 			var ctx = this.REF;
 
 			ctx.trigger = null;
-			ctx.menu.className = "";
+			ctx.menu.className = '';
 
 			if( ctx.dialogSaveEmote ) {
-				ctx.dialogSaveEmote.className = "diag";
+				ctx.dialogSaveEmote.className = 'diag';
 			}
 			if( ctx.dialogMoveEmote ) {
-				ctx.dialogMoveEmote.className = "diag";
+				ctx.dialogMoveEmote.className = 'diag';
 			}
+
 			ctx.selectedEmote = null;
 		},
 
 
 		/**
 		 * Delete the selected emote from the list.
+		 * @param {Event} ev
 		 */
-		itemActionDeleteEmote: function( e ) {
-			var emote = this.REF.selectedEmote.pathname,
-			    list = GLOBAL.shownBlock;
+		itemActionDeleteEmote: function( ev ) {
+			var emote = this.REF.selectedEmote.pathname;
+			var list = GLOBAL.shownBlock;
 
 			// If the emote is from the search page
 			if( list == null ) {
-				list = this.REF.selectedEmote.getAttribute( "data-list" );
+				list = this.REF.selectedEmote.getAttribute( 'data-list' );
 
 				if( list == null ) {
 					return;
@@ -2918,37 +2972,40 @@
 
 		/**
 		 * Move the selected emote to another list.
+		 * @param {Event} ev
 		 */
-		itemActionMoveEmote: function( e ) {
-			var pos = this.getPosForMenu( e.target.parentNode );
+		itemActionMoveEmote: function( ev ) {
+			var pos = this.getPosForMenu( ev.target.parentNode );
 
 			this.createDialogMoveEmote( pos.x, pos.y );
-			e.stopPropagation(); // Keep context menu open.
+			ev.stopPropagation(); // Keep context menu open.
 		},
 
 
 		/**
 		 * Show available lists for the emote.
+		 * @param {Event} ev
 		 */
-		itemActionSaveEmote: function( e ) {
-			var pos = this.getPosForMenu( e.target.parentNode );
+		itemActionSaveEmote: function( ev ) {
+			var pos = this.getPosForMenu( ev.target.parentNode );
 
 			this.createDialogSaveEmote( pos.x, pos.y );
-			e.stopPropagation(); // Keep context menu open.
+			ev.stopPropagation(); // Keep context menu open.
 		},
 
 
 		/**
 		 * Move an emote to the chosen list.
+		 * @param {Event} ev
 		 */
-		moveEmoteToList: function( e ) {
-			var emote = this.REF.selectedEmote.pathname,
-			    listNew = e.target.textContent,
-			    listOld = GLOBAL.shownBlock;
+		moveEmoteToList: function( ev ) {
+			var emote = this.REF.selectedEmote.pathname;
+			var listNew = ev.target.textContent;
+			var listOld = GLOBAL.shownBlock;
 
 			// If the emote is from the search page
 			if( listOld == null ) {
-				listOld = this.REF.selectedEmote.getAttribute( "data-list" );
+				listOld = this.REF.selectedEmote.getAttribute( 'data-list' );
 
 				if( listOld == null ) {
 					return;
@@ -2962,75 +3019,76 @@
 			saveEmote( emote, listNew );
 			deleteEmote( emote, listOld );
 
-			this.REF.dialogMoveEmote.className = "diag";
+			this.REF.dialogMoveEmote.className = 'diag';
 			this.REF.selectedEmote = null;
 		},
 
 
 		/**
 		 * Save an emote to the chosen list.
+		 * @param {Event} ev
 		 */
-		saveEmoteToList: function( e ) {
-			var emote = this.REF.selectedEmote,
-			    list = e.target.textContent;
-			var data, name;
+		saveEmoteToList: function( ev ) {
+			var emote = this.REF.selectedEmote;
+			var list = ev.target.textContent;
+			var name = null;
 
 			// Regular link emote
-			if( typeof emote.pathname != "undefined" ) {
+			if( typeof emote.pathname != 'undefined' ) {
 				name = emote.pathname;
 			}
 			// Emote inside the BPM window
-			else if( !!emote.getAttribute( "data-emote" ) ) {
-				name = emote.getAttribute( "data-emote" );
+			else if( !!emote.getAttribute( 'data-emote' ) ) {
+				name = emote.getAttribute( 'data-emote' );
 			}
 
 			saveEmote( name, list );
 
-			this.REF.dialogSaveEmote.className = "diag";
+			this.REF.dialogSaveEmote.className = 'diag';
 			this.REF.selectedEmote = null;
 		},
 
 
 		/**
 		 * Show the context menu for either an emote or list element.
+		 * @param {Event} ev
 		 */
-		show: function( e ) {
-			var bIsEmote = isEmote( e.target );
+		show: function( ev ) {
+			var bIsEmote = isEmote( ev.target );
 
 			if( !bIsEmote ) {
 				this.hide();
 				return;
 			}
 
-			e.preventDefault();
+			ev.preventDefault();
 
-			var g = GLOBAL;
-
-			this.REF.trigger = e.target;
-			this.REF.menu.className = "show";
+			this.REF.trigger = ev.target;
+			this.REF.menu.className = 'show';
 
 			if( bIsEmote ) {
-				this.showDialogEmote( e );
+				this.showDialogEmote( ev );
 			}
 
-			this.REF.menu.style.left = ( e.clientX + 2 ) + "px";
-			this.REF.menu.style.top = e.clientY + "px";
+			this.REF.menu.style.left = ( ev.clientX + 2 ) + 'px';
+			this.REF.menu.style.top = ev.clientY + 'px';
 		},
 
 
 		/**
 		 * Show the context menu for an emote.
+		 * @param {Event} ev
 		 */
-		showDialogEmote: function( e ) {
-			this.REF.selectedEmote = e.target;
+		showDialogEmote: function( ev ) {
+			this.REF.selectedEmote = ev.target;
 
 			// Click occured in emote box.
 			// This changes some of the available options.
-			if( e.target.parentNode.className.indexOf( "mle-block" ) > -1 ) {
-				this.REF.menu.className += " in-box";
+			if( ev.target.parentNode.className.indexOf( 'mle-block' ) > -1 ) {
+				this.REF.menu.className += ' in-box';
 			}
 			else {
-				this.REF.menu.className += " out-of-box";
+				this.REF.menu.className += ' out-of-box';
 			}
 		}
 
@@ -3056,10 +3114,11 @@
 
 		/**
 		 * Activate the search field, because the user clicked it.
+		 * @param {Event} ev
 		 */
-		activate: function( e ) {
-			if( e.target.value == "search" ) {
-				e.target.value = "";
+		activate: function( ev ) {
+			if( ev.target.value == 'search' ) {
+				ev.target.value = '';
 			}
 		},
 
@@ -3067,21 +3126,24 @@
 		/**
 		 * Get the mode for the search.
 		 * @param  {String} firstPart The first part of the search term before a ":".
-		 * @return {Integer}          A Search.MODE. Defaults to NORMAL.
+		 * @return {int}              A Search.MODE. Defaults to NORMAL.
 		 */
 		getMode: function( firstPart ) {
-			var mode;
+			var mode = null;
 
 			switch( firstPart.trim() ) {
-				case "regex":
+				case 'regex':
 					mode = this.MODE.REGEX;
 					break;
-				case "alt":
+
+				case 'alt':
 					mode = this.MODE.ALTERNATIVES;
 					break;
-				case "tag":
+
+				case 'tag':
 					mode = this.MODE.TAG;
 					break;
+
 				default:
 					mode = this.MODE.NORMAL;
 			}
@@ -3092,22 +3154,25 @@
 
 		/**
 		 * Get the search function according to the set mode.
-		 * @param  {Integer}  mode Search.MODE
+		 * @param  {int}      mode Search.MODE
 		 * @return {Function}
 		 */
 		getSearchFunc: function( mode ) {
-			var searchFunc;
+			var searchFunc = null;
 
 			switch( mode ) {
 				case this.MODE.REGEX:
 					searchFunc = this.searchRegex;
 					break;
+
 				case this.MODE.ALTERNATIVES:
 					searchFunc = this.searchAlt;
 					break;
+
 				case this.MODE.TAG:
 					searchFunc = this.searchTag;
 					break;
+
 				default:
 					searchFunc = this.searchNormal;
 			}
@@ -3118,8 +3183,8 @@
 
 		/**
 		 * Prepare the search term according to the used mode.
-		 * @param  {Integer}       mode  Search.MODE
-		 * @param  {Array}         parts Parts of the provided search term.
+		 * @param  {int}           mode  Search.MODE
+		 * @param  {Array<String>} parts Parts of the provided search term.
 		 * @return {String|RegExp}
 		 */
 		prepareSearchTerm: function( mode, parts ) {
@@ -3130,18 +3195,19 @@
 				term = parts[0];
 			}
 			else {
-				term = parts.slice( 1 ).join( ":" );
+				term = parts.slice( 1 ).join( ':' );
 			}
 
 			term = term.toLowerCase();
 
 			switch( mode ) {
 				case this.MODE.REGEX:
-					term = new RegExp( term, "i" );
+					term = new RegExp( term, 'i' );
 					break;
+
 				case this.MODE.ALTERNATIVES:
 				case this.MODE.TAG:
-					term = term.replace( " ", "" );
+					term = term.replace( ' ', '' );
 					break;
 			}
 
@@ -3151,20 +3217,19 @@
 
 		/**
 		 * The routine for doing a search in NORMAL, REGEX or ALTERNATIVES mode.
-		 * @param  {String|RegExp} term
-		 * @param  {Function}      searchFunc
+		 * @param {String|RegExp} term
+		 * @param {Function}      searchFunc
 		 */
 		routineForNormalMode: function( term, searchFunc ) {
-			var g = GLOBAL,
-			    searchPage = g.REF.searchPage;
-			var buildEmote, emote, list, header;
+			var g = GLOBAL;
+			var searchPage = g.REF.searchPage;
 
 			for( var listName in g.emotes ) {
-				list = g.emotes[listName];
-				header = false;
+				var list = g.emotes[listName];
+				var header = false;
 
 				for( var i = 0; i < list.length; i++ ) {
-					emote = list[i];
+					var emote = list[i];
 
 					if( searchFunc( emote, term ) ) {
 						if( !header && g.config.searchGroupEmotes ) {
@@ -3172,8 +3237,8 @@
 							searchPage.appendChild( header );
 						}
 
-						buildEmote = Builder.createEmote( "/" + emote, false );
-						buildEmote.setAttribute( "data-list", listName );
+						var buildEmote = Builder.createEmote( '/' + emote, false );
+						buildEmote.setAttribute( 'data-list', listName );
 						searchPage.appendChild( buildEmote );
 					}
 				}
@@ -3183,26 +3248,25 @@
 
 		/**
 		 * The routine for doing a search in TAG mode.
-		 * @param  {String} term
+		 * @param {String} term
 		 */
 		routineForTagMode: function( term ) {
-			var g = GLOBAL,
-			    searchPage = g.REF.searchPage,
-			    taggedEmotes = this.searchTag( term );
-			var adjustedListName, buildEmote, group, header;
+			var g = GLOBAL;
+			var searchPage = g.REF.searchPage;
+			var taggedEmotes = this.searchTag( term );
 
 			for( var listName in taggedEmotes ) {
-				group = taggedEmotes[listName];
-				adjustedListName = convertListNameToConfigName( listName );
+				var group = taggedEmotes[listName];
+				var adjustedListName = convertListNameToConfigName( listName );
 
 				if( g.config.searchGroupEmotes ) {
-					header = Builder.createHeaderForSearch( adjustedListName );
+					var header = Builder.createHeaderForSearch( adjustedListName );
 					searchPage.appendChild( header );
 				}
 
 				for( var i = 0; i < group.length; i++ ) {
-					buildEmote = Builder.createEmote( "/" + group[i], false );
-					buildEmote.setAttribute( "data-list", adjustedListName );
+					var buildEmote = Builder.createEmote( '/' + group[i], false );
+					buildEmote.setAttribute( 'data-list', adjustedListName );
 					searchPage.appendChild( buildEmote );
 				}
 			}
@@ -3212,25 +3276,24 @@
 		/**
 		 * The alternative name search mode.
 		 * Includes alternative names like "a00" as well.
-		 * @param  {String} emote Emote name.
-		 * @param  {String} term  Search term.
-		 * @return {Boolean}      True if term is contained in emote or
-		 *                        an alternate name for that emote.
+		 * @param  {String}  emote Emote name.
+		 * @param  {String}  term  Search term.
+		 * @return {Boolean}       True if term is contained in emote or
+		 *                         an alternate name for that emote.
 		 */
 		searchAlt: function( emote, term ) {
-			var subEmotes = GLOBAL.sub_emotes,
-			    alternatives = [];
-			var emoteList, emoteLists, group;
+			var subEmotes = GLOBAL.sub_emotes;
+			var alternatives = [];
 
 			// Get all the alternative names of the emote
 			for( var subreddit in subEmotes ) {
-				emoteLists = subEmotes[subreddit];
+				var emoteLists = subEmotes[subreddit];
 
 				for( var i = 0; i < emoteLists.length; i++ ) {
-					emoteList = emoteLists[i];
+					var emoteList = emoteLists[i];
 
 					for( var j = 0; j < emoteList.length; j++ ) {
-						group = emoteList[j];
+						var group = emoteList[j];
 
 						// Emote is from this group, check the alternative names
 						if( group.indexOf( emote ) >= 0 ) {
@@ -3255,9 +3318,9 @@
 		/**
 		 * The normal search mode. Tests if the search
 		 * term is contained in the emote name.
-		 * @param  {String} emote Emote name.
-		 * @param  {String} term  Search term.
-		 * @return {Boolean}      True if term is contained in emote.
+		 * @param  {String}  emote Emote name.
+		 * @param  {String}  term  Search term.
+		 * @return {Boolean}       True if term is contained in emote.
 		 */
 		searchNormal: function( emote, term ) {
 			return emote.indexOf( term ) >= 0;
@@ -3267,9 +3330,9 @@
 		/**
 		 * The regex search mode. Tests if the regular
 		 * expression matches the emote name.
-		 * @param  {String} emote Emote name.
-		 * @param  {RegExp} term  Regular expression.
-		 * @return {Boolean}      True if the regexp matches the emote name.
+		 * @param  {String}  emote Emote name.
+		 * @param  {RegExp}  term  Regular expression.
+		 * @return {Boolean}       True if the regexp matches the emote name.
 		 */
 		searchRegex: function( emote, term ) {
 			return term.test( emote );
@@ -3278,8 +3341,8 @@
 
 		/**
 		 * The tag search mode. Gives all emotes that have the given tag.
-		 * @param  {String} tag  A tag like "happy" or "sad".
-		 * @return {Object}      List of all the emotes tagged with the given tag, organized by list.
+		 * @param  {String} tag A tag like "happy" or "sad".
+		 * @return {Object}     List of all the emotes tagged with the given tag, organized by list.
 		 */
 		searchTag: function( tag ) {
 			if( !TAGS.hasOwnProperty( tag ) ) {
@@ -3305,11 +3368,8 @@
 		 * @param {DOMElement} searchInput The search field.
 		 */
 		start: function( searchInput ) {
-			var d = document,
-			    g = GLOBAL;
-			var searchPage = g.REF.searchPage,
-			    term = searchInput.value.trim();
-			var mode, parts, searchFunc;
+			var searchPage = GLOBAL.REF.searchPage;
+			var term = searchInput.value.trim();
 
 			if( term.length == 0 ) {
 				return;
@@ -3318,11 +3378,11 @@
 			removeAllChildren( searchPage );
 
 			// Determine the search mode to use
-			parts = term.split( ":" );
-			mode = this.getMode( parts[0].toLowerCase() );
+			var parts = term.split( ':' );
+			var mode = this.getMode( parts[0].toLowerCase() );
 
 			// Set the search method according to the mode
-			searchFunc = this.getSearchFunc( mode );
+			var searchFunc = this.getSearchFunc( mode );
 			term = this.prepareSearchTerm( mode, parts );
 
 			// Special search routine for tags
@@ -3335,18 +3395,19 @@
 			}
 
 			if( searchPage.childNodes.length == 0 ) {
-				searchPage.appendChild( d.createTextNode( "No emotes found." ) );
+				searchPage.appendChild( document.createTextNode( 'No emotes found.' ) );
 			}
 		},
 
 
 		/**
 		 * If the enter key has beend pressed, submit the search value.
+		 * @param {KeyEvent} ev
 		 */
-		submit: function( e ) {
-			if( e.keyCode == 13 ) { // 13 = Enter
+		submit: function( ev ) {
+			if( ev.keyCode == 13 ) { // [Enter]
 				this.show();
-				this.start( e.target );
+				this.start( ev.target );
 			}
 		}
 
@@ -3365,7 +3426,7 @@
 
 
 		// Hostnames where this extension should be active.
-		ALLOWED_HOSTNAMES: ["reddit.com"],
+		ALLOWED_HOSTNAMES: ['reddit.com'],
 
 
 		/**
@@ -3394,12 +3455,11 @@
 		 * @return {Boolean}
 		 */
 		isAllowedHostname: function() {
-			var hn = window.location.hostname,
-			    sliceLen;
+			var hn = window.location.hostname;
 
 			// FIXME: Only a workaround for .co.uk TLDs. What about others?
-			sliceLen = ( hn.substr( hn.length - 6 ) == ".co.uk" ) ? -3 : -2;
-			hn = hn.split( "." ).slice( sliceLen ).join( "." );
+			var sliceLen = ( hn.substr( hn.length - 6 ) == '.co.uk' ) ? -3 : -2;
+			hn = hn.split( '.' ).slice( sliceLen ).join( '.' );
 
 			return ( this.ALLOWED_HOSTNAMES.indexOf( hn ) > -1 );
 		},
@@ -3410,8 +3470,8 @@
 		 * @return {Boolean}
 		 */
 		isRedditDown: function() {
-			var title = document.getElementsByTagName( "title" )[0].textContent;
-			return ( title == "reddit is down" || title == "Ow! -- reddit.com" );
+			var title = document.getElementsByTagName( 'title' )[0].textContent;
+			return ( title == 'reddit is down' || title == 'Ow! -- reddit.com' );
 		},
 
 
@@ -3420,16 +3480,16 @@
 		 */
 		registerForBackgroundMessages: function() {
 			// Opera
-			if( typeof opera != "undefined" ) {
+			if( typeof opera != 'undefined' ) {
 			    opera.extension.onmessage = handleBackgroundMessages;
 			}
 			// Chrome
-			else if( typeof chrome != "undefined" ) {
+			else if( typeof chrome != 'undefined' ) {
 				chrome.extension.onMessage.addListener( handleBackgroundMessages );
 			}
 			// probably Firefox
 			else {
-			    self.on( "message", handleBackgroundMessages );
+			    self.on( 'message', handleBackgroundMessages );
 			}
 		},
 
@@ -3447,7 +3507,7 @@
 				}
 				// Our script is too early. Wait until the DOM has been loaded.
 				else {
-					window.addEventListener( "DOMContentLoaded", this.initStep1.bind( this ), false );
+					window.addEventListener( 'DOMContentLoaded', this.initStep1.bind( this ), false );
 				}
 			}
 		}
@@ -3467,309 +3527,315 @@
 	 */
 	var TAGS = {
 		// mood/feeling
-		"happy": {
-			"A": ["twipride", "twibeam", "raritydaww", "ajhappy", "lunateehee", "scootacheer"],
-			"B": ["rdsmile", "soawesome", "dj", "dumbfabric", "flutterwink", "flutteryay", "spikenervous", "raritydress"],
-			"C": ["joy", "hahaha", "ohhi", "party", "celestia", "zecora", "twismile", "derpyhappy", "scootaloo", "rdhappy", "rdsitting", "twidaw", "cadencesmile"],
-			"E": ["awwyeah", "cheerilee", "dealwithit", "sotrue", "spitfire", "colgate", "absmile", "happyluna", "bonbon", "lyra", "cutealoo", "huhhuh", "wahaha", "maud"],
-			"Plounge": ["fillyrarity", "dishappy", "amazingmagic", "sweetiedance", "scootadance", "lunadance", "raritydance", "ajdance", "abdance", "trixiedance", "filly"]
+		'happy': {
+			'A': ['twipride', 'twibeam', 'raritydaww', 'ajhappy', 'lunateehee', 'scootacheer'],
+			'B': ['rdsmile', 'soawesome', 'dj', 'dumbfabric', 'flutterwink', 'flutteryay', 'spikenervous', 'raritydress'],
+			'C': ['joy', 'hahaha', 'ohhi', 'party', 'celestia', 'zecora', 'twismile', 'derpyhappy', 'scootaloo', 'rdhappy', 'rdsitting', 'twidaw', 'cadencesmile'],
+			'E': ['awwyeah', 'cheerilee', 'dealwithit', 'sotrue', 'spitfire', 'colgate', 'absmile', 'happyluna', 'bonbon', 'lyra', 'cutealoo', 'huhhuh', 'wahaha', 'maud', 'sunsetshimmer', 'twisecret', 'spikehappy'],
+			'Plounge': ['fillyrarity', 'dishappy', 'amazingmagic', 'sweetiedance', 'scootadance', 'lunadance', 'raritydance', 'ajdance', 'abdance', 'trixiedance', 'filly']
 		},
-		"sad": {
-			"A": ["rdcry", "paperbagderpy", "lunawait"],
-			"C": ["trixiesad", "lunasad", "raritysad", "fluttercry"],
-			"E": ["macintears", "twisad", "discordsad", "maud"]
+		'sad': {
+			'A': ['rdcry', 'paperbagderpy', 'lunawait'],
+			'C': ['trixiesad', 'lunasad', 'raritysad', 'fluttercry'],
+			'E': ['macintears', 'twisad', 'discordsad', 'maud', 'scootablue']
 		},
-		"angry": {
-			"A": ["silverspoon", "cadence", "grannysmith", "ohcomeon"],
-			"B": ["rdcool", "twirage", "cockatrice", "fluttersrs"],
-			"C": ["angel", "rdannoyed", "louder", "loveme"],
-			"E": ["snails", "discentia", "lunamad", "maud"],
-			"Plounge": ["karmastare"]
+		'angry': {
+			'A': ['silverspoon', 'cadence', 'grannysmith', 'ohcomeon'],
+			'B': ['rdcool', 'twirage', 'cockatrice', 'fluttersrs'],
+			'C': ['angel', 'rdannoyed', 'louder', 'loveme'],
+			'E': ['snails', 'discentia', 'lunamad', 'maud'],
+			'Plounge': ['karmastare']
 		},
-		"incredulous": {
-			"A": ["rarityreally", "raritypaper", "sbbook", "spikemeh", "celestiamad", "abmeh"],
-			"B": ["twisquint", "facehoof", "ajugh", "squintyjack", "rarityannoyed", "raritywut", "rarityjudge"],
-			"C": ["whattheflut", "ppreally"],
-			"E": ["spikewtf", "abhuh", "rdhuh", "pinkiepout", "maud"],
-			"Plounge": ["twidurr"]
+		'incredulous': {
+			'A': ['rarityreally', 'raritypaper', 'sbbook', 'spikemeh', 'celestiamad', 'abmeh'],
+			'B': ['twisquint', 'facehoof', 'ajugh', 'squintyjack', 'rarityannoyed', 'raritywut', 'rarityjudge'],
+			'C': ['whattheflut', 'ppreally'],
+			'E': ['spikewtf', 'abhuh', 'rdhuh', 'pinkiepout', 'maud'],
+			'Plounge': ['twidurr']
 		},
-		"scared": {
-			"A": ["ppfear"],
-			"B": ["abwut", "ajcower", "flutterfear"],
-			"C": ["rdscared"],
-			"E": ["lily", "maud"]
+		'scared': {
+			'A': ['ppfear'],
+			'B': ['abwut', 'ajcower', 'flutterfear'],
+			'C': ['rdscared'],
+			'E': ['lily', 'maud']
 		},
-		"shocked": {
-			"A": ["rarishock", "applegasp", "pinkieawe", "celestiawut", "flutterwhoa"],
-			"B": ["ajwut"],
-			"C": ["lunagasp", "derpyshock", "fluttercry"],
-			"E": ["ajconfused", "maud"]
+		'shocked': {
+			'A': ['rarishock', 'applegasp', 'pinkieawe', 'celestiawut', 'flutterwhoa'],
+			'B': ['ajwut'],
+			'C': ['lunagasp', 'derpyshock', 'fluttercry'],
+			'E': ['ajconfused', 'maud']
 		},
-		"crazed": {
-			"A": ["applederp", "scootaderp", "twicrazy"],
-			"B": ["rdwut"],
-			"C": ["pinkamina"],
-			"Plounge": ["twidurr", "dashdance"]
+		'crazed': {
+			'A': ['applederp', 'scootaderp', 'twicrazy'],
+			'B': ['rdwut'],
+			'C': ['pinkamina'],
+			'Plounge': ['twidurr', 'dashdance']
 		},
-		"thoughtful": {
-			"A": ["scootaplease"],
-			"C": ["hmmm"],
-			"E": ["twiponder", "pinkiepout", "maud"]
+		'thoughtful': {
+			'A': ['scootaplease'],
+			'C': ['hmmm'],
+			'E': ['twiponder', 'pinkiepout', 'maud']
 		},
-		"sarcastic": {
-			"A": ["flutterroll", "flutterjerk", "ppcute", "twiright", "ajsup", "ajlie"],
-			"B": ["ajsly", "ppboring", "trixiesmug", "rarityprimp"],
-			"C": ["twismug"],
-			"E": ["octavia", "maud"]
+		'sarcastic': {
+			'A': ['flutterroll', 'flutterjerk', 'ppcute', 'twiright', 'ajsup', 'ajlie'],
+			'B': ['ajsly', 'ppboring', 'trixiesmug', 'rarityprimp'],
+			'C': ['twismug'],
+			'E': ['octavia', 'maud']
 		},
-		"bashful": {
-			"A": ["shiningarmor"],
-			"B": ["fluttershy", "fluttershh"],
-			"C": ["flutterblush", "derp"],
-			"E": ["whooves", "maud"]
+		'bashful': {
+			'A': ['shiningarmor'],
+			'B': ['fluttershy', 'fluttershh'],
+			'C': ['flutterblush', 'derp'],
+			'E': ['whooves', 'maud']
 		},
-		"determined": {
-			"A": ["swagintosh"],
-			"C": ["sneakybelle"],
-			"E": ["rdsalute", "fillytgap", "lunamad", "maud"],
-			"Plounge": ["karmasalute", "karmastare"]
+		'determined': {
+			'A': ['swagintosh'],
+			'C': ['sneakybelle'],
+			'E': ['rdsalute', 'fillytgap', 'lunamad', 'maud', 'sunsetsneaky'],
+			'Plounge': ['karmasalute', 'karmastare']
 		},
-		"evil": {
-			"A": ["chrysalis", "priceless"],
-			"C": ["changeling"],
-			"E": ["gilda", "nmm", "maud"]
+		'evil': {
+			'A': ['chrysalis', 'priceless'],
+			'C': ['changeling'],
+			'E': ['gilda', 'nmm', 'maud', 'sunsetsneaky']
 		},
-		"distraught": {
-			"B": ["rarityyell", "raritywhine", "raritywhy", "noooo"],
-			"E": ["maud"]
+		'distraught': {
+			'B': ['rarityyell', 'raritywhine', 'raritywhy', 'noooo'],
+			'E': ['maud']
 		},
-		"blank": {
-			"B": ["ppseesyou", "eeyup"],
-			"C": ["twistare", "photofinish", "ajfrown"],
-			"E": ["sbstare", "maud"]
+		'blank': {
+			'B': ['ppseesyou', 'eeyup'],
+			'C': ['twistare', 'photofinish', 'ajfrown'],
+			'E': ['sbstare', 'maud']
 		},
-		"misc": {
-			"A": ["abbored"],
-			"B": ["takealetter", "manspike", "spikepushy", "ppshrug"],
-			"C": ["fabulous", "gross", "allmybits"],
-			"E": ["berry"],
-			"Plounge": ["smooze", "ohnoes"]
+		'misc': {
+			'A': ['abbored'],
+			'B': ['takealetter', 'manspike', 'spikepushy', 'ppshrug'],
+			'C': ['fabulous', 'gross', 'allmybits'],
+			'E': ['berry'],
+			'Plounge': ['smooze', 'ohnoes']
 		},
 		// pony names
-		"applebloom": {
-			"A": ["abbored", "abmeh"],
-			"B": ["abwut"],
-			"E": ["absmile", "abhuh"],
-			"Plounge": ["abdance"]
+		'applebloom': {
+			'A': ['abbored', 'abmeh'],
+			'B': ['abwut'],
+			'E': ['absmile', 'abhuh'],
+			'Plounge': ['abdance']
 		},
-		"angel": {
-			"C": ["angel"]
+		'angel': {
+			'C': ['angel']
 		},
-		"applejack": {
-			"A": ["ajhappy", "ajsup", "applegasp", "applederp", "ajlie"],
-			"B": ["squintyjack", "ajsly", "ajcower", "ajugh", "ajwut"],
-			"C": ["ajfrown", "hmmm"],
-			"E": ["ajconfused"],
-			"Plounge": ["ajdance"]
+		'applejack': {
+			'A': ['ajhappy', 'ajsup', 'applegasp', 'applederp', 'ajlie'],
+			'B': ['squintyjack', 'ajsly', 'ajcower', 'ajugh', 'ajwut'],
+			'C': ['ajfrown', 'hmmm'],
+			'E': ['ajconfused'],
+			'Plounge': ['ajdance']
 		},
-		"berrypunch": {
-			"E": ["berry"]
+		'berrypunch': {
+			'E': ['berry']
 		},
-		"bonbon": {
-			"E": ["bonbon"]
+		'bonbon': {
+			'E': ['bonbon']
 		},
-		"cadence": {
-			"A": ["cadence"],
-			"C": ["cadencesmile"]
+		'cadence': {
+			'A': ['cadence'],
+			'C': ['cadencesmile']
 		},
-		"celestia": {
-			"A": ["celestiawut", "celestiamad"],
-			"C": ["celestia"]
+		'celestia': {
+			'A': ['celestiawut', 'celestiamad'],
+			'C': ['celestia']
 		},
-		"changeling": {
-			"A": ["chrysalis"],
-			"C": ["changeling"]
+		'changeling': {
+			'A': ['chrysalis'],
+			'C': ['changeling']
 		},
-		"cheerilee": {
-			"E": ["cheerilee"]
+		'cheerilee': {
+			'E': ['cheerilee']
 		},
-		"colgate": {
-			"E": ["colgate"]
+		'colgate': {
+			'E': ['colgate']
 		},
-		"derpy": {
-			"A": ["paperbagderpy"],
-			"C": ["derpyhappy", "derp", "derpyshock"]
+		'derpy': {
+			'A': ['paperbagderpy'],
+			'C': ['derpyhappy', 'derp', 'derpyshock']
 		},
-		"discentia": {
-			"E": ["discentia"],
-			"Plounge": ["dishappy"]
+		'discentia': {
+			'E': ['discentia'],
+			'Plounge': ['dishappy']
 		},
-		"discord": {
-			"A": ["priceless"],
-			"E": ["discordsad"]
+		'discord': {
+			'A': ['priceless'],
+			'E': ['discordsad']
 		},
-		"fluttershy": {
-			"A": ["flutterwhoa", "flutterroll", "flutterjerk"],
-			"B": ["fluttershh", "fluttershy", "fluttersrs", "flutterfear", "flutterwink", "flutteryay"],
-			"C": ["flutterblush", "loveme", "whattheflut", "fluttercry"]
+		'fluttershy': {
+			'A': ['flutterwhoa', 'flutterroll', 'flutterjerk'],
+			'B': ['fluttershh', 'fluttershy', 'fluttersrs', 'flutterfear', 'flutterwink', 'flutteryay'],
+			'C': ['flutterblush', 'loveme', 'whattheflut', 'fluttercry']
 		},
-		"gilda": {
-			"E": ["gilda"]
+		'gilda': {
+			'E': ['gilda']
 		},
-		"grannysmith": {
-			"A": ["grannysmith"]
+		'grannysmith': {
+			'A': ['grannysmith']
 		},
-		"karma": {
-			"E": ["dealwithit"],
-			"Plounge": ["karmasalute", "karmastare"]
+		'karma': {
+			'E': ['dealwithit'],
+			'Plounge': ['karmasalute', 'karmastare']
 		},
-		"lily": {
-			"E": ["lily"]
+		'lily': {
+			'E': ['lily']
 		},
-		"luna": {
-			"A": ["lunateehee", "lunawait"],
-			"C": ["lunasad", "lunagasp"],
-			"E": ["happyluna", "nmm", "lunamad"],
-			"Plounge": ["lunadance"]
+		'luna': {
+			'A': ['lunateehee', 'lunawait'],
+			'C': ['lunasad', 'lunagasp'],
+			'E': ['happyluna', 'nmm', 'lunamad'],
+			'Plounge': ['lunadance']
 		},
-		"lyra": {
-			"E": ["lyra"]
+		'lyra': {
+			'E': ['lyra']
 		},
-		"macintosh": {
-			"A": ["swagintosh"],
-			"B": ["eeyup"],
-			"E": ["macintears"]
+		'macintosh': {
+			'A': ['swagintosh'],
+			'B': ['eeyup'],
+			'E': ['macintears']
 		},
-		"maud": {
-			"E": ["maud"]
+		'maud': {
+			'E': ['maud']
 		},
-		"octavia": {
-			"E": ["octavia"]
+		'octavia': {
+			'E': ['octavia']
 		},
-		"photofinish": {
-			"C": ["photofinish"]
+		'photofinish': {
+			'C': ['photofinish']
 		},
-		"pinkie": {
-			"A": ["ppfear", "ppcute", "pinkieawe"],
-			"B": ["ppseesyou", "ppshrug", "ppboring"],
-			"C": ["ohhi", "party", "hahaha", "joy", "pinkamina", "ppreally"],
-			"E": ["huhhuh", "pinkiepout"],
-			"Plounge": ["pinkiedance"]
+		'pinkie': {
+			'A': ['ppfear', 'ppcute', 'pinkieawe'],
+			'B': ['ppseesyou', 'ppshrug', 'ppboring'],
+			'C': ['ohhi', 'party', 'hahaha', 'joy', 'pinkamina', 'ppreally'],
+			'E': ['huhhuh', 'pinkiepout'],
+			'Plounge': ['pinkiedance']
 		},
-		"rainbow": {
-			"A": ["rdcry"],
-			"B": ["rdcool", "rdsmile", "soawesome", "rdwut"],
-			"C": ["rdsitting", "rdhappy", "rdannoyed", "gross", "louder", "rdscared"],
-			"E": ["rdhuh", "rdsalute", "awwyeah"],
-			"Plounge": ["dashdance"]
+		'rainbow': {
+			'A': ['rdcry'],
+			'B': ['rdcool', 'rdsmile', 'soawesome', 'rdwut'],
+			'C': ['rdsitting', 'rdhappy', 'rdannoyed', 'gross', 'louder', 'rdscared'],
+			'E': ['rdhuh', 'rdsalute', 'awwyeah'],
+			'Plounge': ['dashdance']
 		},
-		"rarity": {
-			"A": ["raritypaper", "raritydaww", "rarityreally", "rarishock"],
-			"B": ["rarityyell", "raritywhine", "raritydress", "rarityannoyed", "raritywut", "raritywhy", "rarityjudge", "rarityprimp"],
-			"C": ["raritysad", "fabulous"],
-			"E": ["wahaha"],
-			"Plounge": ["fillyrarity", "raritydance"]
+		'rarity': {
+			'A': ['raritypaper', 'raritydaww', 'rarityreally', 'rarishock'],
+			'B': ['rarityyell', 'raritywhine', 'raritydress', 'rarityannoyed', 'raritywut', 'raritywhy', 'rarityjudge', 'rarityprimp'],
+			'C': ['raritysad', 'fabulous'],
+			'E': ['wahaha'],
+			'Plounge': ['fillyrarity', 'raritydance']
 		},
-		"scootaloo": {
-			"A": ["scootaderp", "scootaplease", "scootacheer"],
-			"C": ["scootaloo"],
-			"E": ["cutealoo"],
-			"Plounge": ["scootadance"]
+		'scootaloo': {
+			'A': ['scootaderp', 'scootaplease', 'scootacheer'],
+			'C': ['scootaloo'],
+			'E': ['cutealoo', 'scootablue'],
+			'Plounge': ['scootadance']
 		},
-		"shiningarmor": {
-			"A": ["shiningarmor"],
-			"E": ["shiningpride"]
+		'shiningarmor': {
+			'A': ['shiningarmor'],
+			'E': ['shiningpride']
 		},
-		"silverspoon": {
-			"A": ["silverspoon"]
+		'silverspoon': {
+			'A': ['silverspoon']
 		},
-		"snails": {
-			"E": ["snails"]
+		'snails': {
+			'E': ['snails']
 		},
-		"spike": {
-			"A": ["spikemeh"],
-			"B": ["spikenervous", "takealetter", "noooo", "spikepushy", "manspike"],
-			"C": ["allmybits"],
-			"E": ["spikewtf"]
+		'spike': {
+			'A': ['spikemeh'],
+			'B': ['spikenervous', 'takealetter', 'noooo', 'spikepushy', 'manspike'],
+			'C': ['allmybits'],
+			'E': ['spikewtf', 'spikehappy']
 		},
-		"spitfire": {
-			"E": ["spitfire"]
+		'spitfire': {
+			'E': ['spitfire']
 		},
-		"stevenmagnet": {
-			"E": ["sotrue"]
+		'stevenmagnet': {
+			'E': ['sotrue']
 		},
-		"sweetie": {
-			"A": ["ohcomeon", "sbbook"],
-			"B": ["dumbfabric"],
-			"C": ["sneakybelle"],
-			"E": ["sbstare"],
-			"Plounge": ["sweetiedance"]
+		'sunsetshimmer': {
+			'E': ['sunsetshimmer', 'sunsetsneaky']
 		},
-		"trixie": {
-			"B": ["trixiesmug"],
-			"C": ["trixiesad"],
-			"E": ["fillytgap"],
-			"Plounge": ["amazingmagic", "trixiedance"]
+		'sweetie': {
+			'A': ['ohcomeon', 'sbbook'],
+			'B': ['dumbfabric'],
+			'C': ['sneakybelle'],
+			'E': ['sbstare'],
+			'Plounge': ['sweetiedance']
 		},
-		"twilight": {
-			"A": ["twipride", "twiright", "twibeam", "twicrazy"],
-			"B": ["facehoof", "twisquint", "twirage"],
-			"C": ["twistare", "twismug", "twismile", "twidaw"],
-			"E": ["twiponder", "twisad"],
-			"Plounge": ["twidurr"]
+		'trixie': {
+			'B': ['trixiesmug'],
+			'C': ['trixiesad'],
+			'E': ['fillytgap'],
+			'Plounge': ['amazingmagic', 'trixiedance']
 		},
-		"vinyl": {
-			"B": ["dj"]
+		'twilight': {
+			'A': ['twipride', 'twiright', 'twibeam', 'twicrazy'],
+			'B': ['facehoof', 'twisquint', 'twirage'],
+			'C': ['twistare', 'twismug', 'twismile', 'twidaw'],
+			'E': ['twiponder', 'twisad', 'twisecret'],
+			'Plounge': ['twidurr']
 		},
-		"whooves": {
-			"E": ["whooves"]
+		'vinyl': {
+			'B': ['dj']
 		},
-		"zecora": {
-			"C": ["zecora"]
+		'whooves': {
+			'E': ['whooves']
+		},
+		'zecora': {
+			'C': ['zecora']
 		}
 	};
 
 	// Alternative names for certain tags
-	TAGS["derped"] = TAGS["crazed"];
-	TAGS["malicious"] = TAGS["evil"];
-	TAGS["smug"] = TAGS["sarcastic"];
+	TAGS['derped'] = TAGS['crazed'];
+	TAGS['malicious'] = TAGS['evil'];
+	TAGS['smug'] = TAGS['sarcastic'];
 
 	// Alternative names for certain ponies
-	TAGS["ab"] = TAGS["applebloom"];
-	TAGS["aj"] = TAGS["applejack"];
-	TAGS["berry"] = TAGS["berrypunch"];
-	TAGS["bon-bon"] = TAGS["bonbon"];
-	TAGS["tia"] = TAGS["celestia"];
-	TAGS["chrysalis"] = TAGS["changeling"];
-	TAGS["minuette"] = TAGS["colgate"];
-	TAGS["derpyhooves"] = TAGS["derpy"];
-	TAGS["ditzy"] = TAGS["derpy"];
-	TAGS["fs"] = TAGS["fluttershy"];
-	TAGS["griffin"] = TAGS["gilda"];
-	TAGS["heartstrings"] = TAGS["lyra"];
-	TAGS["bigmac"] = TAGS["macintosh"];
-	TAGS["bigmacintosh"] = TAGS["macintosh"];
-	TAGS["pinkiepie"] = TAGS["pinkie"];
-	TAGS["pp"] = TAGS["pinkie"];
-	TAGS["dash"] = TAGS["rainbow"];
-	TAGS["rainbowdash"] = TAGS["rainbow"];
-	TAGS["rd"] = TAGS["rainbow"];
-	TAGS["sc"] = TAGS["scootaloo"];
-	TAGS["steven"] = TAGS["stevenmagnet"];
-	TAGS["sb"] = TAGS["sweetie"];
-	TAGS["sweetiebelle"] = TAGS["sweetie"];
-	TAGS["tgap"] = TAGS["trixie"];
-	TAGS["ts"] = TAGS["twilight"];
-	TAGS["twi"] = TAGS["twilight"];
-	TAGS["twilightsparkle"] = TAGS["twilight"];
-	TAGS["djpon3"] = TAGS["vinyl"];
-	TAGS["djpon-3"] = TAGS["vinyl"];
-	TAGS["vinylscratch"] = TAGS["vinyl"];
-	TAGS["vs"] = TAGS["vinyl"];
-	TAGS["doctor"] = TAGS["whooves"];
-	TAGS["doctorwhooves"] = TAGS["whooves"];
+	TAGS['ab'] = TAGS['applebloom'];
+	TAGS['aj'] = TAGS['applejack'];
+	TAGS['berry'] = TAGS['berrypunch'];
+	TAGS['bon-bon'] = TAGS['bonbon'];
+	TAGS['tia'] = TAGS['celestia'];
+	TAGS['chrysalis'] = TAGS['changeling'];
+	TAGS['minuette'] = TAGS['colgate'];
+	TAGS['derpyhooves'] = TAGS['derpy'];
+	TAGS['ditzy'] = TAGS['derpy'];
+	TAGS['fs'] = TAGS['fluttershy'];
+	TAGS['griffin'] = TAGS['gilda'];
+	TAGS['heartstrings'] = TAGS['lyra'];
+	TAGS['bigmac'] = TAGS['macintosh'];
+	TAGS['bigmacintosh'] = TAGS['macintosh'];
+	TAGS['pinkiepie'] = TAGS['pinkie'];
+	TAGS['pp'] = TAGS['pinkie'];
+	TAGS['dash'] = TAGS['rainbow'];
+	TAGS['rainbowdash'] = TAGS['rainbow'];
+	TAGS['rd'] = TAGS['rainbow'];
+	TAGS['sc'] = TAGS['scootaloo'];
+	TAGS['steven'] = TAGS['stevenmagnet'];
+	TAGS['sb'] = TAGS['sweetie'];
+	TAGS['shimmer'] = TAGS['sunsetshimmer'];
+	TAGS['ss'] = TAGS['sunsetshimmer'];
+	TAGS['sunset'] = TAGS['sunsetshimmer'];
+	TAGS['sweetiebelle'] = TAGS['sweetie'];
+	TAGS['tgap'] = TAGS['trixie'];
+	TAGS['ts'] = TAGS['twilight'];
+	TAGS['twi'] = TAGS['twilight'];
+	TAGS['twilightsparkle'] = TAGS['twilight'];
+	TAGS['djpon3'] = TAGS['vinyl'];
+	TAGS['djpon-3'] = TAGS['vinyl'];
+	TAGS['vinylscratch'] = TAGS['vinyl'];
+	TAGS['vs'] = TAGS['vinyl'];
+	TAGS['doctor'] = TAGS['whooves'];
+	TAGS['doctorwhooves'] = TAGS['whooves'];
 
-	TAGS["bestpony"] = TAGS["applejack"];
+	TAGS['bestpony'] = TAGS['applejack'];
 
 
 } )();

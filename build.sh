@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CFX=~/.firefox-addon-sdk-1.16/bin/cfx
+CFX=~/.firefox-addon-sdk-1.17/bin/cfx
 MCCOY=~/.mccoy/mccoy
 CHROME=google-chrome
 
