@@ -1,3 +1,6 @@
+'use strict';
+
+
 // Browser
 var BROWSER = {
 	CHROME: 1,
@@ -5,35 +8,43 @@ var BROWSER = {
 	OPERA: 3
 };
 var I_AM = BROWSER.FIREFOX;
-if( typeof opera != "undefined" ) {
+if( typeof opera != 'undefined' ) {
 	I_AM = BROWSER.OPERA;
 }
-else if( typeof chrome != "undefined" ) {
+else if( typeof chrome != 'undefined' ) {
 	I_AM = BROWSER.CHROME;
 }
+
+
+// In strict mode code, functions may be declared only at
+// top level or immediately within another function.
+// These functions will be implemented in the following
+// conditional branch for Firefox.
+var forgetWorker = null;
+var handleOnAttach = null;
 
 
 // Firefox only.
 // Include content scripts, handle messaging and add options page.
 if( I_AM == BROWSER.FIREFOX ) {
 
-	var pageMod = require( "sdk/page-mod" );
-	var Request = require( "sdk/request" ).Request;
-	var self = require( "sdk/self" );
-	var sprefs = require( "sdk/simple-prefs" );
-	var ss = require( "sdk/simple-storage" );
-	var tabs = require( "sdk/tabs" );
-	var Timer = require( "sdk/timers" );
+	var pageMod = require( 'sdk/page-mod' );
+	var Request = require( 'sdk/request' ).Request;
+	var self = require( 'sdk/self' );
+	var sprefs = require( 'sdk/simple-prefs' );
+	var ss = require( 'sdk/simple-storage' );
+	var tabs = require( 'sdk/tabs' );
+	var Timer = require( 'sdk/timers' );
 
 	var workers = [];
 
 	var csfWebpage = [
-		self.data.url( "mle-codes.js" ),
-		self.data.url( "my-little-emotebox.js" )
+		self.data.url( 'mle-codes.js' ),
+		self.data.url( 'my-little-emotebox.js' )
 	];
 	var csfOptionsPage = [
-		self.data.url( "mle-codes.js" ),
-		self.data.url( "options.js" )
+		self.data.url( 'mle-codes.js' ),
+		self.data.url( 'options.js' )
 	];
 
 
@@ -41,13 +52,13 @@ if( I_AM == BROWSER.FIREFOX ) {
 	 * Forget a worker that has been detached.
 	 * @param {Object} worker Detached worker.
 	 */
-	function forgetWorker( worker ) {
+	forgetWorker = function( worker ) {
 		var idx = workers.indexOf( worker );
 
 		if( idx >= 0 ) {
 			workers.splice( idx, 1 );
 		}
-	}
+	};
 
 
 	/**
@@ -55,21 +66,21 @@ if( I_AM == BROWSER.FIREFOX ) {
 	 * together with the worker to respond to.
 	 * @param {Object} worker
 	 */
-	function handleOnAttach( worker ) {
-		worker.on( "message", function( msg ) {
+	handleOnAttach = function( worker ) {
+		worker.on( 'message', function( msg ) {
 			handleMessage( msg, worker );
 		} );
-		worker.on( "detach", function() {
+		worker.on( 'detach', function() {
 			forgetWorker( this );
 		} );
-	}
+	};
 
 
 	// Add content scripts to web pages
 	pageMod.PageMod( {
-		include: "*",
-		attachTo: ["existing", "top"],
-		contentScriptWhen: "ready",
+		include: '*',
+		attachTo: ['existing', 'top'],
+		contentScriptWhen: 'ready',
 		contentScriptFile: csfWebpage,
 		onAttach: handleOnAttach
 	} );
@@ -77,9 +88,9 @@ if( I_AM == BROWSER.FIREFOX ) {
 	// Add scripts to options page. Has to be done this way instead of
 	// a parameter for "tabs.open", so the "self" object can be used.
 	pageMod.PageMod( {
-		include: self.data.url( "options.html" ),
-		attachTo: ["existing", "top"],
-		contentScriptWhen: "ready",
+		include: self.data.url( 'options.html' ),
+		attachTo: ['existing', 'top'],
+		contentScriptWhen: 'ready',
 		contentScriptFile: csfOptionsPage,
 		onAttach: handleOnAttach
 	} );
@@ -87,9 +98,9 @@ if( I_AM == BROWSER.FIREFOX ) {
 
 	// Open options page when button in addon manager is clicked.
 	// @see package.json
-	sprefs.on( "optionsPage", function() {
+	sprefs.on( 'optionsPage', function() {
 		tabs.open( {
-			url: self.data.url( "options.html" )
+			url: self.data.url( 'options.html' )
 		} );
 	} );
 
@@ -124,10 +135,10 @@ else if( I_AM == BROWSER.CHROME ) {
 			var flagMLE = false;
 
 			for( var i = 0; i < headers.length; i++ ) {
-				if( headers[i].name == "MLE-Chrome" ) {
+				if( headers[i].name == 'MLE-Chrome' ) {
 					flagMLE = true;
 				}
-				else if( headers[i].name.toLowerCase() == "user-agent" ) {
+				else if( headers[i].name.toLowerCase() == 'user-agent' ) {
 					headers[i].value = Updater.xhrUserAgent;
 				}
 			};
@@ -136,10 +147,10 @@ else if( I_AM == BROWSER.CHROME ) {
 		},
 		// filter
 		{
-			urls: ["<all_urls>"],
-			types: ["xmlhttprequest"]
+			urls: ['<all_urls>'],
+			types: ['xmlhttprequest']
 		},
-		["requestHeaders", "blocking"]
+		['requestHeaders', 'blocking']
 	);
 
 }
@@ -148,16 +159,16 @@ else if( I_AM == BROWSER.CHROME ) {
 
 // Keys
 var PREF = {
-	CONFIG: "mle.config",
-	EMOTES: "mle.emotes",
-	META: "mle.meta",
-	SUBREDDIT_CSS: "mle.subreddit.css",
-	SUBREDDIT_EMOTES: "mle.subreddit.emotes"
+	CONFIG: 'mle.config',
+	EMOTES: 'mle.emotes',
+	META: 'mle.meta',
+	SUBREDDIT_CSS: 'mle.subreddit.css',
+	SUBREDDIT_EMOTES: 'mle.subreddit.emotes'
 };
 
 
-var DEFAULT_SUB_CSS = {},
-    DEFAULT_SUB_EMOTES = {};
+var DEFAULT_SUB_CSS = {};
+var DEFAULT_SUB_EMOTES = {};
 
 
 // Information that the user won't need to backup
@@ -172,105 +183,106 @@ var DEFAULT_CONFIG = {
 	adjustEmotesInInbox: true, // Adjust Plounge emotes in user overview and inbox
 	adjustForBetterPonymotes: true,
 	adjustForGrEmB: false,
-	boxAlign: "left", // "left" or "right"
+	boxAlign: 'left', // "left" or "right"
 	boxAnimationSpeed: 420, // [ms]
-	boxBgColor: "#f4f4f4", // CSS valid color, examples: "#f6f6f6", "rgba(20,20,20,0.6)"
-	boxEmoteBorder: "#ffffff", // CSS valid color
+	boxBgColor: '#f4f4f4', // CSS valid color, examples: "#f6f6f6", "rgba(20,20,20,0.6)"
+	boxEmoteBorder: '#ffffff', // CSS valid color
 	boxHeight: 330, // [px]
-	boxLabelMinimized: "Emotes",
+	boxLabelMinimized: 'Emotes',
 	boxPosTop: 60, // [px]
 	boxPosX: 5, // [px]
-	boxScrollbar: "left", // "left" or "right"
-	boxTrigger: "button", // "float" or "button"
+	boxScrollbar: 'left', // "left" or "right"
+	boxTrigger: 'button', // "float" or "button"
 	boxWidth: 650, // [px]
 	boxWidthMinimized: 70, // [px]
 	boxUnderHeader: true,
 	ctxMenu: true,
-	ctxStyleBgColor: "#ffffff",
-	ctxStyleBorderColor: "#d0d0d0",
-	ctxStyleColor: "#101010",
-	ctxStyleHoverColor: "#cee3f8",
+	ctxStyleBgColor: '#ffffff',
+	ctxStyleBorderColor: '#d0d0d0',
+	ctxStyleColor: '#101010',
+	ctxStyleHoverColor: '#cee3f8',
 	displayEmotesOutOfSub: true,
 	injectEmoteCSS: true,
 	intervalToCheckCSS: 43200000, // [ms] // Default is 12 hours.
 	keyReverse: 17, // ctrl
-	listNameTableA: "A", // Name of the list for the emotes of table A
-	listNameTableB: "B", // Name of the list for the emotes of table B
-	listNameTableC: "C", // Name of the list for the emotes of table C
-	listNameTableE: "E", // Name of the list for the emotes of table E
-	listNamePlounge: "Plounge", // Name of the list for the non-table emotes of the Plounge
+	listNameTableA: 'A', // Name of the list for the emotes of table A
+	listNameTableB: 'B', // Name of the list for the emotes of table B
+	listNameTableC: 'C', // Name of the list for the emotes of table C
+	listNameTableE: 'E', // Name of the list for the emotes of table E
+	listNamePlounge: 'Plounge', // Name of the list for the non-table emotes of the Plounge
 	msgAnimationSpeed: 1000, // [ms]
-	msgPosition: "top", // "top" or "bottom"
+	msgPosition: 'top', // "top" or "bottom"
 	msgTimeout: 7000, // [ms] // How long a popup message is displayed.
-	revealStyleBgColor: "#ffffff",
-	revealStyleBorderColor: "#e0e0e0",
-	revealStyleColor: "#808080",
+	revealStyleBgColor: '#ffffff',
+	revealStyleBorderColor: '#e0e0e0',
+	revealStyleColor: '#808080',
 	revealUnknownEmotes: true,
 	searchGroupEmotes: true, // Group emotes by table/subreddit
 	showEmoteTitleText: false,
 	showTitleConvertURLs: true,
-	showTitleStyleBgColor: "rgba(255,255,255,0.0)",
-	showTitleStyleBorderColor: "rgba(255,255,255,0.0)",
-	showTitleStyleColor: "#808080",
-	showTitleStyleDisplay: "block", // "block" or "float"
+	showTitleStyleBgColor: 'rgba(255,255,255,0.0)',
+	showTitleStyleBorderColor: 'rgba(255,255,255,0.0)',
+	showTitleStyleColor: '#808080',
+	showTitleStyleDisplay: 'block', // "block" or "float"
 	stopEmoteLinkFollowing: true
 };
 
 
 // Default emotes of r/mylittlepony and r/MLPLounge
 var DEFAULT_EMOTES = {
-	"A": [
-		"twipride", "twicrazy", "twiright", "twibeam", "spikemeh",
-		"celestiawut", "celestiamad", "lunateehee", "lunawait", "paperbagderpy",
-		"ppfear", "ppcute", "pinkieawe", "ajhappy", "ajsup",
-		"applegasp", "applederp", "ajlie", "abbored", "abmeh",
-		"swagintosh", "grannysmith", "flutterwhoa", "flutterroll", "flutterjerk",
-		"rdcry", "scootaderp", "scootaplease", "scootacheer", "ohcomeon",
-		"sbbook", "raritypaper", "raritydaww", "rarityreally", "rarishock",
-		"shiningarmor", "cadence", "chrysalis", "priceless", "silverspoon"
+	'A': [
+		'twipride', 'twicrazy', 'twiright', 'twibeam', 'spikemeh',
+		'celestiawut', 'celestiamad', 'lunateehee', 'lunawait', 'paperbagderpy',
+		'ppfear', 'ppcute', 'pinkieawe', 'ajhappy', 'ajsup',
+		'applegasp', 'applederp', 'ajlie', 'abbored', 'abmeh',
+		'swagintosh', 'grannysmith', 'flutterwhoa', 'flutterroll', 'flutterjerk',
+		'rdcry', 'scootaderp', 'scootaplease', 'scootacheer', 'ohcomeon',
+		'sbbook', 'raritypaper', 'raritydaww', 'rarityreally', 'rarishock',
+		'shiningarmor', 'cadence', 'chrysalis', 'priceless', 'silverspoon'
 	],
-	"B": [
-		"ppseesyou", "ppshrug", "ppboring", "rdcool", "rdsmile",
-		"soawesome", "rdwut", "squintyjack", "ajsly", "ajcower",
-		"ajugh", "ajwut", "abwut", "eeyup", "fluttershh",
-		"fluttershy", "fluttersrs", "flutterfear", "flutterwink", "flutteryay",
-		"spikenervous", "takealetter", "noooo", "spikepushy", "manspike",
-		"facehoof", "twisquint", "twirage", "dumbfabric", "rarityyell",
-		"raritywhine", "raritydress", "rarityannoyed", "raritywut", "raritywhy",
-		"rarityjudge", "rarityprimp", "trixiesmug", "dj", "cockatrice"
+	'B': [
+		'ppseesyou', 'ppshrug', 'ppboring', 'rdcool', 'rdsmile',
+		'soawesome', 'rdwut', 'squintyjack', 'ajsly', 'ajcower',
+		'ajugh', 'ajwut', 'abwut', 'eeyup', 'fluttershh',
+		'fluttershy', 'fluttersrs', 'flutterfear', 'flutterwink', 'flutteryay',
+		'spikenervous', 'takealetter', 'noooo', 'spikepushy', 'manspike',
+		'facehoof', 'twisquint', 'twirage', 'dumbfabric', 'rarityyell',
+		'raritywhine', 'raritydress', 'rarityannoyed', 'raritywut', 'raritywhy',
+		'rarityjudge', 'rarityprimp', 'trixiesmug', 'dj', 'cockatrice'
 	],
-	"C": [
-		"rdsitting", "rdhappy", "rdannoyed", "gross", "louder",
-		"rdscared", "twistare", "twismug", "twismile", "twidaw",
-		"ohhi", "party", "hahaha", "joy", "pinkamina",
-		"ppreally", "ajfrown", "hmmm", "flutterblush", "loveme",
-		"whattheflut", "fluttercry", "raritysad", "fabulous", "sneakybelle",
-		"scootaloo", "derpyhappy", "derp", "derpyshock", "lunasad",
-		"lunagasp", "celestia", "cadencesmile", "shiningpride", "angel",
-		"allmybits", "zecora", "photofinish", "trixiesad", "changeling"
+	'C': [
+		'rdsitting', 'rdhappy', 'rdannoyed', 'gross', 'louder',
+		'rdscared', 'twistare', 'twismug', 'twismile', 'twidaw',
+		'ohhi', 'party', 'hahaha', 'joy', 'pinkamina',
+		'ppreally', 'ajfrown', 'hmmm', 'flutterblush', 'loveme',
+		'whattheflut', 'fluttercry', 'raritysad', 'fabulous', 'sneakybelle',
+		'scootaloo', 'derpyhappy', 'derp', 'derpyshock', 'lunasad',
+		'lunagasp', 'celestia', 'cadencesmile', 'shiningpride', 'angel',
+		'allmybits', 'zecora', 'photofinish', 'trixiesad', 'changeling'
 	],
-	"E": [
-		"fillytgap", "rdhuh", "rdsalute", "awwyeah", "twiponder",
-		"twisad", "spikewtf", "huhhuh", "wahaha", "sbstare",
-		"cutealoo", "ajconfused", "absmile", "abhuh", "macintears",
-		"lyra", "bonbon", "spitfire", "happyluna", "sotrue",
-		"nmm", "berry", "whooves", "octavia", "colgate",
-		"cheerilee", "lily", "gilda", "snails", "dealwithit",
-		"discentia", "maud", "discordsad", "lunamad", "pinkiepout"
+	'E': [
+		'fillytgap', 'rdhuh', 'rdsalute', 'awwyeah', 'twiponder',
+		'twisad', 'spikewtf', 'huhhuh', 'wahaha', 'sbstare',
+		'cutealoo', 'ajconfused', 'absmile', 'abhuh', 'macintears',
+		'lyra', 'bonbon', 'spitfire', 'happyluna', 'sotrue',
+		'nmm', 'berry', 'whooves', 'octavia', 'colgate',
+		'cheerilee', 'lily', 'gilda', 'snails', 'dealwithit',
+		'discentia', 'maud', 'discordsad', 'lunamad', 'pinkiepout',
+		'twisecret', 'spikehappy', 'scootablue', 'sunsetshimmer', 'sunsetsneaky'
 	],
-	"Plounge": [
-		"ajdance", "pinkiedance", "sweetiedance", "dashdance", "scootadance",
-		"lunadance", "raritydance", "abdance", "smooze", "fillyrarity",
-		"twidurr", "amazingmagic", "karmasalute", "dishappy", "karmastare",
-		"ohnoes", "trixiedance", "filly"
+	'Plounge': [
+		'ajdance', 'pinkiedance', 'sweetiedance', 'dashdance', 'scootadance',
+		'lunadance', 'raritydance', 'abdance', 'smooze', 'fillyrarity',
+		'twidurr', 'amazingmagic', 'karmasalute', 'dishappy', 'karmastare',
+		'ohnoes', 'trixiedance', 'filly'
 	]
 };
 
-var CURRENT_CONFIG = null,
-    CURRENT_EMOTES = null,
-    META = null,
-    SUBREDDIT_CSS = null,
-    SUBREDDIT_EMOTES = null;
+var CURRENT_CONFIG = null;
+var CURRENT_EMOTES = null;
+var META = null;
+var SUBREDDIT_CSS = null;
+var SUBREDDIT_EMOTES = null;
 
 
 
@@ -291,7 +303,6 @@ var BrowserOpera = {
 	 */
 	broadcast: function( source, msg ) {
 		var remove = [];
-		var idx;
 
 		for( var i = 0; i < this.tabSources.length; i++ ) {
 			if( this.tabSources[i] != source ) {
@@ -309,7 +320,7 @@ var BrowserOpera = {
 
 		// Remove failed sources
 		for( var j = 0; j < remove.length; j++ ) {
-			idx = this.tabSources.indexOf( remove[j] );
+			var idx = this.tabSources.indexOf( remove[j] );
 
 			if( idx >= 0 ) {
 				this.tabSources.splice( idx, 1 );
@@ -333,24 +344,24 @@ var BrowserOpera = {
 		}
 
 		CURRENT_CONFIG = wpref[PREF.CONFIG]
-				? JSON.parse( wpref[PREF.CONFIG] )
-				: saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+		               ? JSON.parse( wpref[PREF.CONFIG] )
+		               : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
 
 		CURRENT_EMOTES = wpref[PREF.EMOTES]
-				? JSON.parse( wpref[PREF.EMOTES] )
-				: saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+		               ? JSON.parse( wpref[PREF.EMOTES] )
+		               : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
 		META = wpref[PREF.META]
-				? JSON.parse( wpref[PREF.META] )
-				: saveDefaultToStorage( PREF.META, DEFAULT_META );
+		     ? JSON.parse( wpref[PREF.META] )
+		     : saveDefaultToStorage( PREF.META, DEFAULT_META );
 
 		SUBREDDIT_CSS = wpref[PREF.SUBREDDIT_CSS]
-				? JSON.parse( wpref[PREF.SUBREDDIT_CSS] )
-				: saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
+		              ? JSON.parse( wpref[PREF.SUBREDDIT_CSS] )
+		              : saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
 
 		SUBREDDIT_EMOTES = wpref[PREF.SUBREDDIT_EMOTES]
-				? JSON.parse( wpref[PREF.SUBREDDIT_EMOTES] )
-				: saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
+		                 ? JSON.parse( wpref[PREF.SUBREDDIT_EMOTES] )
+		                 : saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
 
 		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( META, DEFAULT_META, PREF.META );
@@ -359,6 +370,7 @@ var BrowserOpera = {
 		response.emotes = CURRENT_EMOTES;
 		response.sub_css = SUBREDDIT_CSS;
 		response.sub_emotes = SUBREDDIT_EMOTES;
+
 		if( loadMeta ) {
 			response.meta = META;
 		}
@@ -386,7 +398,7 @@ var BrowserOpera = {
 	 */
 	openOptions: function() {
 		opera.extension.tabs.create( {
-			url: "options.html",
+			url: 'options.html',
 			focused: true
 		} );
 	},
@@ -423,17 +435,17 @@ var BrowserOpera = {
 
 	/**
 	 * Send a XMLHttpRequest.
-	 * @param  {String}   method    POST or GET.
-	 * @param  {String}   url       URL to send the request to.
-	 * @param  {Boolean}  async     If to make the request async.
-	 * @param  {String}   userAgent The User-Agent to sent.
-	 * @param  {Function} callback  Callback function to handle the response.
+	 * @param {String}   method    POST or GET.
+	 * @param {String}   url       URL to send the request to.
+	 * @param {Boolean}  async     If to make the request async.
+	 * @param {String}   userAgent The User-Agent to sent.
+	 * @param {Function} callback  Callback function to handle the response.
 	 */
 	sendRequest: function( method, url, async, userAgent, callback ) {
 		var xhr = new XMLHttpRequest();
 
 		xhr.open( method, url, async );
-		xhr.setRequestHeader( "User-Agent", userAgent );
+		xhr.setRequestHeader( 'User-Agent', userAgent );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
 	}
@@ -472,28 +484,28 @@ var BrowserChrome = {
 	 * CHROME ONLY.
 	 * Handle the items loaded from the storage.
 	 * (this == binded object with variables)
-	 * @param  {Object} items Loaded items in key/value pairs.
+	 * @param {Object} items Loaded items in key/value pairs.
 	 */
 	handleLoadedItems: function( items ) {
 		CURRENT_CONFIG = !items[PREF.CONFIG]
-				? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG )
-				: JSON.parse( items[PREF.CONFIG] );
+		               ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG )
+		               : JSON.parse( items[PREF.CONFIG] );
 
 		CURRENT_EMOTES = !items[PREF.EMOTES]
-				? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES )
-				: JSON.parse( items[PREF.EMOTES] );
+		               ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES )
+		               : JSON.parse( items[PREF.EMOTES] );
 
 		META = !items[PREF.META]
-				? saveDefaultToStorage( PREF.META, DEFAULT_META )
-				: JSON.parse( items[PREF.META] );
+		     ? saveDefaultToStorage( PREF.META, DEFAULT_META )
+		     : JSON.parse( items[PREF.META] );
 
 		SUBREDDIT_CSS = !items[PREF.SUBREDDIT_CSS]
-				? saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS )
-				: JSON.parse( items[PREF.SUBREDDIT_CSS] );
+		              ? saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS )
+		              : JSON.parse( items[PREF.SUBREDDIT_CSS] );
 
 		SUBREDDIT_EMOTES = !items[PREF.SUBREDDIT_EMOTES]
-				? saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES )
-				: JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
+		                 ? saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES )
+		                 : JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
 
 		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( META, DEFAULT_META, PREF.META );
@@ -502,6 +514,7 @@ var BrowserChrome = {
 		this.response.emotes = CURRENT_EMOTES;
 		this.response.sub_css = SUBREDDIT_CSS;
 		this.response.sub_emotes = SUBREDDIT_EMOTES;
+
 		if( this.loadMeta ) {
 			this.response.meta = META;
 		}
@@ -576,7 +589,7 @@ var BrowserChrome = {
 	 */
 	openOptions: function() {
 		chrome.tabs.create( {
-			url: chrome.extension.getURL( "options.html" ),
+			url: chrome.extension.getURL( 'options.html' ),
 			active: true
 		} );
 	},
@@ -617,17 +630,17 @@ var BrowserChrome = {
 
 	/**
 	 * Send a XMLHttpRequest.
-	 * @param  {String}   method    POST or GET.
-	 * @param  {String}   url       URL to send the request to.
-	 * @param  {Boolean}  async     If to make the request async.
-	 * @param  {String}   userAgent The User-Agent to sent. (NOT USED IN CHROME.)
-	 * @param  {Function} callback  Callback function to handle the response.
+	 * @param {String}   method    POST or GET.
+	 * @param {String}   url       URL to send the request to.
+	 * @param {Boolean}  async     If to make the request async.
+	 * @param {String}   userAgent The User-Agent to sent. (NOT USED IN CHROME.)
+	 * @param {Function} callback  Callback function to handle the response.
 	 */
 	sendRequest: function( method, url, async, userAgent, callback ) {
 		var xhr = new XMLHttpRequest();
 
 		xhr.open( method, url, async );
-		xhr.setRequestHeader( "MLE-Chrome", "1" );
+		xhr.setRequestHeader( 'MLE-Chrome', '1' );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
 	}
@@ -677,24 +690,24 @@ var BrowserFirefox = {
 		}
 
 		CURRENT_CONFIG = ss.storage[PREF.CONFIG]
-				? JSON.parse( ss.storage[PREF.CONFIG] )
-				: saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+		               ? JSON.parse( ss.storage[PREF.CONFIG] )
+		               : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
 
 		CURRENT_EMOTES = ss.storage[PREF.EMOTES]
-				? JSON.parse( ss.storage[PREF.EMOTES] )
-				: saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+		               ? JSON.parse( ss.storage[PREF.EMOTES] )
+		               : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
 		META = ss.storage[PREF.META]
-				? JSON.parse( ss.storage[PREF.META] )
-				: saveDefaultToStorage( PREF.META, DEFAULT_META );
+		     ? JSON.parse( ss.storage[PREF.META] )
+		     : saveDefaultToStorage( PREF.META, DEFAULT_META );
 
 		SUBREDDIT_CSS = ss.storage[PREF.SUBREDDIT_CSS]
-				? JSON.parse( ss.storage[PREF.SUBREDDIT_CSS] )
-				: saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
+		              ? JSON.parse( ss.storage[PREF.SUBREDDIT_CSS] )
+		              : saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
 
 		SUBREDDIT_EMOTES = ss.storage[PREF.SUBREDDIT_EMOTES]
-				? JSON.parse( ss.storage[PREF.SUBREDDIT_EMOTES] )
-				: saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
+		                 ? JSON.parse( ss.storage[PREF.SUBREDDIT_EMOTES] )
+		                 : saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
 
 		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( META, DEFAULT_META, PREF.META );
@@ -703,6 +716,7 @@ var BrowserFirefox = {
 		response.emotes = CURRENT_EMOTES;
 		response.sub_css = SUBREDDIT_CSS;
 		response.sub_emotes = SUBREDDIT_EMOTES;
+
 		if( loadMeta ) {
 			response.meta = META;
 		}
@@ -730,7 +744,7 @@ var BrowserFirefox = {
 	 */
 	openOptions: function() {
 		tabs.open( {
-			url: self.data.url( "options.html" )
+			url: self.data.url( 'options.html' )
 		} );
 	},
 
@@ -769,24 +783,24 @@ var BrowserFirefox = {
 	/**
 	 * Send a XMLHttpRequest.
 	 * ONLY USEABLE FOR THE UPDATER AT THIS MOMENT!
-	 * @param  {String}   method    POST or GET.
-	 * @param  {String}   url       URL to send the request to.
-	 * @param  {Boolean}  async     If to make the request async.
-	 * @param  {String}   userAgent The User-Agent to sent.
-	 * @param  {Function} callback  Callback function to handle the response. (NOT USED IN FIREFOX.)
+	 * @param {String}   method    POST or GET.
+	 * @param {String}   url       URL to send the request to.
+	 * @param {Boolean}  async     If to make the request async.
+	 * @param {String}   userAgent The User-Agent to sent.
+	 * @param {Function} callback  Callback function to handle the response. (NOT USED IN FIREFOX.)
 	 */
 	sendRequest: function( method, url, async, userAgent, callback ) {
 		var req = new Request( {
 			url: url,
 			onComplete: function( response ) {
-				var lastModified = response.headers["Last-Modified"],
-				    contentType = response.headers["Content-Type"];
+				var lastModified = response.headers['Last-Modified'],
+				    contentType = response.headers['Content-Type'];
 
 				lastModified = Date.parse( lastModified );
 				callback( true, response.text, lastModified, contentType );
 			},
 			headers: {
-				"User-Agent": userAgent
+				'User-Agent': userAgent
 			}
 		} );
 
@@ -832,9 +846,9 @@ var Updater = {
 
 	// Config
 	xhrAsync: true,
-	xhrMethod: "GET",
-	xhrTargets: ["r/mylittlepony", "r/mlplounge"],
-	xhrUserAgent: "MLE/2.9.5 (by meinstuhlknarrt)",
+	xhrMethod: 'GET',
+	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
+	xhrUserAgent: 'MLE/2.9.5 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -880,13 +894,12 @@ var Updater = {
 	 * @return {Object}     Emotes ordered by table.
 	 */
 	extractEmotesStep1: function( css ) {
-		var cssCopy = css,
-		    emoteCSS = [],
-		    needleImage = "background-image",
-		    needlePosition = "background-position",
-		    needleTransform = "transform",
-		    selectors = [];
-		var eCSS, idx, needleLength, record, selector;
+		var cssCopy = css;
+		var emoteCSS = [];
+		var needleImage = 'background-image';
+		var needlePosition = 'background-position';
+		var needleTransform = 'transform';
+		var selectors = [];
 
 
 		// CSS code for reversing emotes
@@ -915,6 +928,8 @@ var Updater = {
 			idxTransform = ( idxTransform < 0 ) ? Infinity : idxTransform;
 
 			var firstIdx = Math.min( idxImage, idxPosition, idxTransform );
+			var idx = -1;
+			var needleLength = 0;
 
 			if( firstIdx == idxImage ) {
 				idx = idxImage;
@@ -931,9 +946,9 @@ var Updater = {
 				ignoreSelectors = true;
 			}
 
-			selector = [];
-			eCSS = [];
-			record = false;
+			var selector = [];
+			var eCSS = [];
+			var record = false;
 
 			// Get the selectors and part of the CSS
 			for( var i = idx; i > 0; i-- ) {
@@ -975,20 +990,18 @@ var Updater = {
 	 * Extract the emote names.
 	 */
 	extractEmotesStep2: function() {
-		var emotesCurrent = this.emotes[this.xhrCurrentTarget],
-		    cssCurrent = this.emoteCSS[this.xhrCurrentTarget];
-		var emotes = [],
-		    idx = -1,
-		    purgedCSS = [];
-		var css, emote, selector, subEmoteList;
+		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
+		var cssCurrent = this.emoteCSS[this.xhrCurrentTarget];
+		var emotes = [];
+		var idx = -1;
 
 		// Extract emote names
 		for( var i = 0; i < emotesCurrent.length; i++ ) {
-			selector = emotesCurrent[i].split( "," );
-			subEmoteList = [];
+			var selector = emotesCurrent[i].split( "," );
+			var subEmoteList = [];
 
 			for( var j = 0; j < selector.length; j++ ) {
-				emote = selector[j].trim();
+				var emote = selector[j].trim();
 				idx = emote.indexOf( this.linkStart );
 
 				if( idx == -1 ) {
@@ -1055,7 +1068,7 @@ var Updater = {
 		this.xhrProgress++;
 
 		// Fetch a small page which uses the subreddit CSS.
-		var url = "https://www.reddit.com/" + this.xhrCurrentTarget;
+		var url = 'https://www.reddit.com/' + this.xhrCurrentTarget;
 
 		MyBrowser.sendRequest(
 			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.getCSSURLsCallback
@@ -1087,12 +1100,12 @@ var Updater = {
 
 			url = url[0];
 			url = url.substr( 6 );
-			url = url.replace( '" title="applied_subreddit_stylesheet"', "" );
+			url = url.replace( '" title="applied_subreddit_stylesheet"', '' );
 
 			Updater.xhrTargetsCSS.push( url );
 
 			// Get the next CSS URL.
-			if( typeof setTimeout != "undefined" ) {
+			if( typeof setTimeout != 'undefined' ) {
 				setTimeout( Updater.getCSSURLs.bind( Updater ), Updater.xhrWait );
 			}
 			else {
@@ -1110,12 +1123,12 @@ var Updater = {
 	 * @return {String}          Extracted CSS.
 	 */
 	getRestOfCSS: function( cssCopy, idx ) {
-		var css = "";
+		var css = '';
 
 		for( var i = idx + 1; i < cssCopy.length; i++ ) {
 			css += cssCopy[i];
 
-			if( cssCopy[i] == "}" ) {
+			if( cssCopy[i] == '}' ) {
 				break;
 			}
 		}
@@ -1135,7 +1148,7 @@ var Updater = {
 
 		if( idxReverse >= 0 ) {
 			rCSS = css.substr( idxReverse );
-			var idxEnd = rCSS.indexOf( "}" );
+			var idxEnd = rCSS.indexOf( '}' );
 			rCSS = rCSS.substr( 0, idxEnd + 1 );
 		}
 
@@ -1149,20 +1162,16 @@ var Updater = {
 	 */
 	groupSameEmotes: function() {
 		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
-		var newEmoteList = [],
-		    nonTableEmotes = [],
-		    noDoubles = [];
-		var belongsToTable, ecCopy, emote, emote2, emote2Found,
-		    group, newEmoteSubList, originalFound;
+		var newEmoteList = [];
+		var nonTableEmotes = [];
 
 
 		// Get a list of lists with all the emotes that share the same background position
 		var emotesCurrentCSS = this.emoteCSS[this.xhrCurrentTarget].split( "\n" );
-		var line;
 		var lineEmotes = [];
 
 		for( var i = 0; i < emotesCurrentCSS.length; i++ ) {
-			line = emotesCurrentCSS[i];
+			var line = emotesCurrentCSS[i];
 
 			if( line.indexOf( "background-position:" ) == -1 ) {
 				continue;
@@ -1177,24 +1186,24 @@ var Updater = {
 
 		// Iterate over (presumably) emote tables
 		for( var i = 0; i < emotesCurrent.length; i++ ) {
-			newEmoteSubList = [];
-			ecCopy = emotesCurrent[i].slice( 0 );
+			var newEmoteSubList = [];
+			var ecCopy = emotesCurrent[i].slice( 0 );
 
 			// Iterate over emotes of a table
 			for( var j = 0; j < emotesCurrent[i].length; j++ ) {
-				emote = emotesCurrent[i][j];
+				var emote = emotesCurrent[i][j];
 
 				// Emote has already been checked and was an alternate name for another one
 				if( ecCopy.indexOf( emote ) == -1 ) {
 					continue;
 				}
 
-				group = [emote];
+				var group = [emote];
 
 				for( var k = 0; k < ecCopy.length; k++ ) {
-					emote2 = ecCopy[k];
-					originalFound = false;
-					emote2Found = false;
+					var emote2 = ecCopy[k];
+					var originalFound = false;
+					var emote2Found = false;
 
 					if( emote2 == emote ) {
 						continue;
@@ -1225,7 +1234,7 @@ var Updater = {
 				}
 
 				// Remove already grouped emotes
-				belongsToTable = false;
+				var belongsToTable = false;
 
 				for( var rem = 0; rem < group.length; rem++ ) {
 					if( !belongsToTable && this.isTableCode( group[rem] ) ) {
@@ -1247,6 +1256,8 @@ var Updater = {
 			}
 		}
 
+		var noDoubles = [];
+
 		if( nonTableEmotes.length > 0 ) {
 			// Remove doubled emotes
 			for( var i = 0; i < nonTableEmotes.length; i++ ) {
@@ -1265,13 +1276,13 @@ var Updater = {
 	/**
 	 * After receiving the stylesheet, start extracting the emotes.
 	 * @param {String}  responseText Response to the request.
-	 * @param {Integer} lastModified A timestamp when the stylesheet has been last modified.
+	 * @param {int}     lastModified A timestamp when the stylesheet has been last modified.
 	 *                               (At least according to what the server tells us.)
 	 * @param {String}  contentType  Content-Type of the received resource. We need "text/css".
 	 */
 	handleCSS: function( responseText, lastModified, contentType ) {
 		// Don't process if it isn't CSS.
-		if( contentType == "text/css" ) {
+		if( contentType == 'text/css' ) {
 			// Only process the stylesheet if something changed since the last check
 			// or it is a forced update.
 			if( this.forceUpdate || lastModified >= META.lastSubredditCheck ) {
@@ -1298,7 +1309,7 @@ var Updater = {
 			// Firefox doesn't know window.setTimeout in main.js.
 			// Great. But it has require( "timers" ).setTimeout which
 			// does EXACTLY THE SAME. Go figure.
-			if( typeof setTimeout != "undefined" ) {
+			if( typeof setTimeout != 'undefined' ) {
 				setTimeout( this.getCSS.bind( this ), this.xhrWait );
 			}
 			else {
@@ -1314,6 +1325,10 @@ var Updater = {
 	/**
 	 * After receiving the stylesheet, start extracting the emotes.
 	 * (Callback function for browser who use XMLHttpRequest.)
+	 * @param {Boolean} hasReadyState4
+	 * @param {String}  responseText
+	 * @param {int}     lastModified
+	 * @param {String}  contentType
 	 */
 	handleCSSCallback: function( hasReadyState4, responseText, lastModified, contentType ) {
 		// Firefox
@@ -1322,8 +1337,8 @@ var Updater = {
 		}
 		// The rest
 		else if( this.readyState == 4 ) {
-			var lastModified = this.getResponseHeader( "Last-Modified" ),
-			    contentType = this.getResponseHeader( "Content-Type" );
+			var lastModified = this.getResponseHeader( 'Last-Modified' );
+			var contentType = this.getResponseHeader( 'Content-Type' );
 
 			lastModified = Date.parse( lastModified );
 			Updater.handleCSS( this.responseText, lastModified, contentType );
@@ -1374,34 +1389,36 @@ var Updater = {
 	 */
 	mergeSubredditEmotesIntoLists: function() {
 		var cfg = CURRENT_CONFIG;
-		var add, emoteCluster, group, table;
-		var r_mlp = this.emotes["r/mylittlepony"],
-		    r_plounge = this.emotes["r/mlplounge"];
+		var r_mlp = this.emotes['r/mylittlepony'];
+		var r_plounge = this.emotes['r/mlplounge'];
 
 		// r/mylittlepony
 		// Different tables to take care of.
 		for( var i = 0; i < r_mlp.length; i++ ) {
-			emoteCluster = r_mlp[i];
+			var emoteCluster = r_mlp[i];
 
 			for( var j = 0; j < emoteCluster.length; j++ ) {
-				group = emoteCluster[j];
-				table = this.identifyTableOfEmoteGroup( group );
+				var group = emoteCluster[j];
+				var table = this.identifyTableOfEmoteGroup( group );
 
 				if( table === false ) {
 					continue;
 				}
 
 				switch( table ) {
-					case "A":
+					case 'A':
 						table = cfg.listNameTableA;
 						break;
-					case "B":
+
+					case 'B':
 						table = cfg.listNameTableB;
 						break;
-					case "C":
+
+					case 'C':
 						table = cfg.listNameTableC;
 						break;
-					case "E":
+
+					case 'E':
 						table = cfg.listNameTableE;
 						break;
 				}
@@ -1412,7 +1429,7 @@ var Updater = {
 				}
 
 				// Add emote to the table if not in there already
-				add = false;
+				var add = false;
 
 				for( var k = 0; k < group.length; k++ ) {
 					if( group.length > 1 && this.isTableCode( group[k] ) ) {
@@ -1435,11 +1452,11 @@ var Updater = {
 		// r/mlplounge
 		// No tables, but additional emotes.
 		for( var i = 0; i < r_plounge.length; i++ ) {
-			emoteCluster = r_plounge[i];
+			var emoteCluster = r_plounge[i];
 
 			for( var j = 0; j < emoteCluster.length; j++ ) {
-				group = emoteCluster[j];
-				table = this.identifyTableOfEmoteGroup( group );
+				var group = emoteCluster[j];
+				var table = this.identifyTableOfEmoteGroup( group );
 
 				if( table !== false ) {
 					continue;
@@ -1466,34 +1483,33 @@ var Updater = {
 	 */
 	removeNonEmoteCSS: function( css ) {
 		var purgedCSS = [];
-		var idx, idxFilly, parts, purged, s, selectors;
 
 		for( var i = 0; i < css.length; i++ ) {
-			purged = css[i];
-			idx = purged.indexOf( this.linkStart );
-			idxFilly = purged.indexOf( 'a[href="/filly"]' );
-			// idxReverse = purged.indexOf( this.linkStartReverse );
+			var purged = css[i];
+			var idx = purged.indexOf( this.linkStart );
+			var idxFilly = purged.indexOf( 'a[href="/filly"]' );
+			// var idxReverse = purged.indexOf( this.linkStartReverse );
 
 			// Alrighty, there is at least one emote selector in there
 			if( idx >= 0 || idxFilly >= 0 ) {
 
 				// Remove the non-emote selectors ...
-				parts = purged.split( "{" );
-				selectors = parts[0].split( "," );
-				purged = "";
+				var parts = purged.split( '{' );
+				var selectors = parts[0].split( ',' );
+				purged = '';
 
 				// ... by only keeping the emote selectors
 				for( var j = 0; j < selectors.length; j++ ) {
-					s = selectors[j];
+					var s = selectors[j];
 					idx = s.indexOf( this.linkStart );
 					idxFilly = s.indexOf( 'a[href="/filly"]' );
 
 					if( idx >= 0 || idxFilly >= 0 ) {
-						purged += "," + s;
+						purged += ',' + s;
 					}
 				}
 
-				purged = purged.substring( 1 ) + "{" + parts[1];
+				purged = purged.substring( 1 ) + '{' + parts[1];
 				purgedCSS.push( purged );
 			}
 			// else if( idxReverse >= 0 ) {
@@ -1501,7 +1517,7 @@ var Updater = {
 			// }
 		}
 
-		return purgedCSS.join( "\n" );
+		return purgedCSS.join( '\n' );
 	},
 
 
@@ -1510,9 +1526,8 @@ var Updater = {
 	 */
 	removeReverseEmotes: function() {
 		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
-		var flatCopy = [],
-		    newEmoteList = [];
-		var emote, idx;
+		var flatCopy = [];
+		var newEmoteList = [];
 
 		// Create a flat copy of the emotes for easier searching.
 		for( var i = 0; i < emotesCurrent.length; i++ ) {
@@ -1524,11 +1539,11 @@ var Updater = {
 			newEmoteList[i] = [];
 
 			for( var j = 0; j < emotesCurrent[i].length; j++ ) {
-				emote = emotesCurrent[i][j];
+				var emote = emotesCurrent[i][j];
 
 				// If the emote doesn't start with "r" or does, but the
 				// part after the first "r" isn't a known emote: keep it
-				if( emote[0] != "r" || flatCopy.indexOf( emote.substr( 1 ) ) == -1 ) {
+				if( emote[0] != 'r' || flatCopy.indexOf( emote.substr( 1 ) ) == -1 ) {
 					newEmoteList[i].push( emote );
 				}
 			}
@@ -1597,19 +1612,19 @@ var Updater = {
 
 /**
  * Receive message from inline script and answer back.
- * @param {Event} e
+ * @param {Event}  ev
  * @param {Object} sender (Chrome and Firefox only)
  * @param {Object} sendResponse (Chrome only)
  */
-function handleMessage( e, sender, sendResponse ) {
-	var response = {},
-	    data = e.data ? e.data : e,
-	    source = sender ? sender : e.source,
-	    broadcast = false;
+function handleMessage( ev, sender, sendResponse ) {
+	var response = {};
+	var data = ev.data ? ev.data : ev;
+	var source = sender ? sender : ev.source;
+	var broadcast = false;
 
 	// Only handle messages which come with a set task.
 	if( !data.task ) {
-		MyBrowser.logError( "Background process: No task specified." );
+		MyBrowser.logError( 'Background process: No task specified.' );
 		return;
 	}
 
@@ -1690,7 +1705,7 @@ function handleMessage( e, sender, sendResponse ) {
 			return;
 
 		default:
-			MyBrowser.logError( "Background process: Unknown task given - \"" + data.task + "\"." );
+			MyBrowser.logError( 'Background process: Unknown task given - "' + data.task + '".' );
 			return;
 	}
 
@@ -1742,7 +1757,7 @@ function loadConfigAndEmotes( response, sender, loadMeta ) {
 		response = MyBrowser.loadConfigAndEmotes( response, sender, loadMeta );
 	}
 	catch( err ) {
-		MyBrowser.logError( "Background process: Could not load preferences." );
+		MyBrowser.logError( 'Background process: Could not load preferences.' );
 		MyBrowser.logError( err );
 	}
 
@@ -1770,21 +1785,21 @@ function mergeEmotesWithUpdate( emotes ) {
  * @return {Object}
  */
 function mergeWithConfig( obj ) {
-	var key, obj_new = {};
+	var obj_new = {};
 
 	if( CURRENT_CONFIG == null ) {
 		loadConfigAndEmotes( {} ); // This part may cause trouble in Chrome for some use cases.
 	}
 
 	// Remove unknown config keys
-	for( key in obj ) {
+	for( var key in obj ) {
 		if( CURRENT_CONFIG.hasOwnProperty( key ) ) {
 			obj_new[key] = obj[key];
 		}
 	}
 
 	// Add missing config keys
-	for( key in CURRENT_CONFIG ) {
+	for( var key in CURRENT_CONFIG ) {
 		if( !obj_new.hasOwnProperty( key ) ) {
 			obj_new[key] = CURRENT_CONFIG[key];
 		}
@@ -1796,15 +1811,15 @@ function mergeWithConfig( obj ) {
 
 /**
  * Save a default value to the extension storage.
- * @param  {Integer} key Key to save the object under.
+ * @param  {int}     key Key to save the object under.
  * @param  {Object}  obj Default value to save.
  * @return {Object}      Default value. Same as parameter "obj".
  */
 function saveDefaultToStorage( key, obj ) {
 	var r = saveToStorage( key, obj );
 	var msg = r.success
-			? "Background process: \"" + key + "\" not in extension preferences yet. Created default."
-			: "Background process: Could not save default value.";
+	        ? 'Background process: "' + key + '" not in extension preferences yet. Created default.'
+	        : 'Background process: Could not save default value.';
 
 	MyBrowser.logError( msg );
 
@@ -1814,7 +1829,7 @@ function saveDefaultToStorage( key, obj ) {
 
 /**
  * Save to the extension storage.
- * @param  {Integer} key Key to save the object under.
+ * @param  {int}     key Key to save the object under.
  * @param  {Object}  obj Object to save.
  * @return {Object}      Contains key "success" with a boolean value.
  */

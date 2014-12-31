@@ -1,9 +1,9 @@
-"use strict";
+'use strict';
 
 
-var CONFIG = null,
-    EMOTES = null,
-    META = null;
+var CONFIG = null;
+var EMOTES = null;
+var META = null;
 
 var OPT_CFG = {
 	MSG_TIMEOUT: 8000 // [ms]
@@ -13,9 +13,10 @@ var OPT_CFG = {
 
 /**
  * Export current config.
+ * @param {Event} ev
  */
-function exportConfig( e ) {
-	var ta = document.getElementById( "export-config-ta" );
+function exportConfig( ev ) {
+	var ta = document.getElementById( 'export-config-ta' );
 
 	ta.value = JSON.stringify( CONFIG );
 }
@@ -23,23 +24,25 @@ function exportConfig( e ) {
 
 /**
  * Export emotes in JSON.
+ * @param {Event} ev
  */
-function exportEmotes( e ) {
-	var ta = document.getElementById( "export-emotes-ta" );
+function exportEmotes( ev ) {
+	var ta = document.getElementById( 'export-emotes-ta' );
 
 	ta.value = JSON.stringify( EMOTES );
-	showMsg( ta.value.length + " bytes", "info" );
+	showMsg( ta.value.length + ' bytes', 'info' );
 }
 
 
 /**
  * Tell the background process to get and parse the sub-reddit stylesheets.
+ * @param {Event} ev
  */
-function forceUpdate( e ) {
+function forceUpdate( ev ) {
 	// Disable button until page reload to avoid
 	// multiple updates in a short time interval.
-	e.target.removeEventListener( "click", forceUpdate, false );
-	e.target.setAttribute( "readonly", "readonly" );
+	ev.target.removeEventListener( 'click', forceUpdate, false );
+	ev.target.setAttribute( 'readonly', 'readonly' );
 
 	postMessage( { task: BG_TASK.UPDATE_CSS } );
 }
@@ -47,6 +50,7 @@ function forceUpdate( e ) {
 
 /**
  * Get the value of the currently selected <option>.
+ * @param {DOMElement} select
  */
 function getOptionValue( select ) {
 	return select.options[select.selectedIndex].value;
@@ -55,12 +59,13 @@ function getOptionValue( select ) {
 
 /**
  * Handle messages from the background process.
+ * @param {Event} ev
  */
-function handleBackgroundMessages( e ) {
-	var data = e.data ? e.data : e;
+function handleBackgroundMessages( ev ) {
+	var data = ev.data ? ev.data : ev;
 
 	if( !data.task ) {
-		console.warn( "MyLittleEmotebox: Message from background process didn't contain the handled task." );
+		console.warn( 'MyLittleEmotebox: Message from background process didn\'t contain the handled task.' );
 		return;
 	}
 
@@ -79,7 +84,7 @@ function handleBackgroundMessages( e ) {
 			break;
 
 		case BG_TASK.UPDATE_CSS:
-			showMsg( "Force update finished.", "info" );
+			showMsg( 'Force update finished.', 'info' );
 			break;
 	}
 }
@@ -89,22 +94,23 @@ function handleBackgroundMessages( e ) {
  * Hide the message box.
  */
 function hideMsg() {
-	var msg_box = document.getElementById( "msgbox" );
+	var msg_box = document.getElementById( 'msgbox' );
 
-	msg_box.className = "";
+	msg_box.className = '';
 }
 
 
 /**
  * Import a config in JSON.
+ * @param {Event} ev
  */
-function importConfig( e ) {
+function importConfig( ev ) {
 	var ta = document.getElementById( "import-config-ta" );
 	var cfg = ta.value.trim();
 
-	if( cfg == "" ) {
-		showMsg( "Nothing to import.", "err" );
-		console.error( "MyLittleEmotebox: Nothing to import." );
+	if( cfg == '' ) {
+		showMsg( 'Nothing to import.', 'err' );
+		console.error( 'MyLittleEmotebox: Nothing to import.' );
 		return;
 	}
 
@@ -112,32 +118,31 @@ function importConfig( e ) {
 		cfg = JSON.parse( cfg );
 	}
 	catch( err ) {
-		showMsg( "Input not parsable as JSON.<br />Config remains unchanged.", "err" );
-		console.error( "MyLittleEmotebox: Could not parse input as JSON." );
+		showMsg( 'Input not parsable as JSON.<br />Config remains unchanged.', 'err' );
+		console.error( 'MyLittleEmotebox: Could not parse input as JSON.' );
 		console.error( err );
 		return;
 	}
 
 	postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
-	ta.value = "";
-	showMsg( "Import (probably) successful.<br />Changes show after next page load.", "info" );
+	ta.value = '';
+	showMsg( 'Import (probably) successful.<br />Changes show after next page load.', 'info' );
 }
 
 
 /**
  * Import emotes in JSON.
+ * @param {Event} ev
  */
-function importEmotes( e ) {
-	var importField = document.getElementById( "import-emotes-ta" );
-	var imported = null,
-	    ele,
-	    count = 0;
+function importEmotes( ev ) {
+	var importField = document.getElementById( 'import-emotes-ta' );
+	var imported = null;
 
 	importField.value = importField.value.trim();
 
 	// Nothing to do if empty
 	if( importField.value.length == 0 ) {
-		showMsg( "Nothing to import.", "err" );
+		showMsg( 'Nothing to import.', 'err' );
 		return;
 	}
 
@@ -146,21 +151,23 @@ function importEmotes( e ) {
 		imported = JSON.parse( importField.value );
 	}
 	catch( err ) {
-		showMsg( "Input not parsable as JSON.<br />Emotes remain unchanged.", "err" );
-		console.error( "MyLittleEmotebox: Could not JSON-parse import." );
+		showMsg( 'Input not parsable as JSON.<br />Emotes remain unchanged.', 'err' );
+		console.error( 'MyLittleEmotebox: Could not JSON-parse import.' );
 		console.error( err );
 		return;
 	}
 
+	var count = 0;
+
 	// Parsing successful, but empty?
-	for( ele in imported ) {
+	for( var ele in imported ) {
 		if( imported.hasOwnProperty( ele ) ) {
 			count++;
 			break;
 		}
 	}
 	if( count == 0 ) {
-		showMsg( "Imported emote list is empty?<br />Emotes remain unchanged.", "err" );
+		showMsg( 'Imported emote list is empty?<br />Emotes remain unchanged.', 'err' );
 		return;
 	}
 
@@ -168,8 +175,8 @@ function importEmotes( e ) {
 	EMOTES = imported;
 	saveEmotes( EMOTES );
 
-	showMsg( "Import (probably) successful.<br />Changes show after next page load.", "info" );
-	importField.value = "";
+	showMsg( 'Import (probably) successful.<br />Changes show after next page load.', 'info' );
+	importField.value = '';
 }
 
 
@@ -177,19 +184,19 @@ function importEmotes( e ) {
  * Insert the META data where it should be displayed.
  */
 function insertMetaData() {
-	var lastCheck = document.getElementById( "lastSubredditCheck" ),
-	    date = new Date( META.lastSubredditCheck );
-	var month = date.getMonth() + 1,
-	    day = date.getDate(),
-	    hours = date.getHours(),
-	    minutes = date.getMinutes();
+	var lastCheck = document.getElementById( 'lastSubredditCheck' );
+	var date = new Date( META.lastSubredditCheck );
+	var month = date.getMonth() + 1;
+	var day = date.getDate();
+	var hours = date.getHours();
+	var minutes = date.getMinutes();
 
-	if( month < 10 ) { month = "0" + month; }
-	if( day < 10 ) { day = "0" + day; }
-	if( hours < 10 ) { hours = "0" + hours; }
-	if( minutes < 10 ) { minutes = "0" + minutes; }
+	if( month < 10 ) { month = '0' + month; }
+	if( day < 10 ) { day = '0' + day; }
+	if( hours < 10 ) { hours = '0' + hours; }
+	if( minutes < 10 ) { minutes = '0' + minutes; }
 
-	lastCheck.value = date.getFullYear() + "-" + month + "-" + day + " " + hours + ":" + minutes;
+	lastCheck.value = date.getFullYear() + '-' + month + '-' + day + ' ' + hours + ':' + minutes;
 }
 
 
@@ -199,7 +206,7 @@ function insertMetaData() {
  * @return {Boolean} True if the value is a color, false otherwise.
  */
 function isColor( color ) {
-	if( color == "transparent" ) {
+	if( color == 'transparent' ) {
 		return true;
 	}
 	if( color.match( /^#[0-9a-f]{6}$/ ) ) {
@@ -225,14 +232,15 @@ function loadConfig() {
 
 /**
  * Send a message to the background process.
+ * @param {Object} msg Message to send.
  */
 function postMessage( msg ) {
 	// Opera
-	if( typeof opera != "undefined" ) {
+	if( typeof opera != 'undefined' ) {
 		opera.extension.postMessage( msg );
 	}
 	// Chrome
-	else if( typeof chrome != "undefined" ) {
+	else if( typeof chrome != 'undefined' ) {
 		chrome.extension.sendMessage( msg, handleBackgroundMessages );
 	}
 	// probably Firefox
@@ -248,27 +256,26 @@ function postMessage( msg ) {
  */
 function registerEventSettingChanged() {
 	var d = document;
-	var selects = d.querySelectorAll( "select" ),
-	    checkboxes = d.querySelectorAll( "input[type='checkbox']" ),
-	    numbers = d.querySelectorAll( "input[type='number']" ),
-	    texts = d.querySelectorAll( "input[type='text']" );
-	var exportEmotesBtn = d.getElementById( "export-emotes" ),
-	    importEmotesBtn = d.getElementById( "import-emotes" ),
-	    resetEmotesBtn = d.getElementById( "reset-emotes" ),
-	    forceUpdateBtn = d.getElementById( "force-update" ),
-	    exportCfg = d.getElementById( "export-config" ),
-	    importCfg = d.getElementById( "import-config" ),
-	    resetCfg = d.getElementById( "reset-config" );
-	var val, select, chkbox, nmbr, txt;
-
+	var selects = d.querySelectorAll( 'select' );
+	var checkboxes = d.querySelectorAll( 'input[type="checkbox"]' );
+	var numbers = d.querySelectorAll( 'input[type="number"]' );
+	var texts = d.querySelectorAll( 'input[type="text"]' );
+	var exportEmotesBtn = d.getElementById( 'export-emotes' );
+	var importEmotesBtn = d.getElementById( 'import-emotes' );
+	var resetEmotesBtn = d.getElementById( 'reset-emotes' );
+	var forceUpdateBtn = d.getElementById( 'force-update' );
+	var exportCfg = d.getElementById( 'export-config' );
+	var importCfg = d.getElementById( 'import-config' );
+	var resetCfg = d.getElementById( 'reset-config' );
 
 	// <select>s
 	for( var i = 0; i < selects.length; i++ ) {
-		select = selects[i];
-		if( select.hasAttribute( "data-meta" ) ) {
+		var select = selects[i];
+
+		if( select.hasAttribute( 'data-meta' ) ) {
 			continue;
 		}
-		select.addEventListener( "change", saveSetting, false );
+		select.addEventListener( 'change', saveSetting, false );
 
 		// Select currently set <option>
 		for( var j = 0; j < select.options.length; j++ ) {
@@ -280,46 +287,49 @@ function registerEventSettingChanged() {
 
 	// <input type="checkbox">s
 	for( var i = 0; i < checkboxes.length; i++ ) {
-		chkbox = checkboxes[i];
-		if( chkbox.hasAttribute( "data-meta" ) ) {
+		var chkbox = checkboxes[i];
+
+		if( chkbox.hasAttribute( 'data-meta' ) ) {
 			continue;
 		}
-		chkbox.addEventListener( "change", saveSetting, false );
+		chkbox.addEventListener( 'change', saveSetting, false );
 		chkbox.checked = CONFIG[chkbox.id];
 	}
 
 	// <input type="number">s
 	for( var i = 0; i < numbers.length; i++ ) {
-		nmbr = numbers[i];
-		if( nmbr.hasAttribute( "data-meta" ) ) {
+		var nmbr = numbers[i];
+
+		if( nmbr.hasAttribute( 'data-meta' ) ) {
 			continue;
 		}
-		nmbr.addEventListener( "change", saveSetting, false );
+		nmbr.addEventListener( 'change', saveSetting, false );
 		nmbr.value = CONFIG[nmbr.id];
 	}
 
 	// <input type="text">s
 	for( var i = 0; i < texts.length; i++ ) {
-		txt = texts[i];
-		if( txt.hasAttribute( "data-meta" ) ) {
+		var txt = texts[i];
+
+		if( txt.hasAttribute( 'data-meta' ) ) {
 			continue;
 		}
-		txt.addEventListener( "change", saveSetting, false );
+		txt.addEventListener( 'change', saveSetting, false );
 		txt.value = CONFIG[txt.id];
 	}
 
 	// Force stylesheet update
-	forceUpdateBtn.addEventListener( "click", forceUpdate, false );
+	forceUpdateBtn.addEventListener( 'click', forceUpdate, false );
 
 	// export/import/reset
 	// Emotes
-	exportEmotesBtn.addEventListener( "click", exportEmotes, false );
-	importEmotesBtn.addEventListener( "click", importEmotes, false );
-	resetEmotesBtn.addEventListener( "click", resetEmotes, false );
+	exportEmotesBtn.addEventListener( 'click', exportEmotes, false );
+	importEmotesBtn.addEventListener( 'click', importEmotes, false );
+	resetEmotesBtn.addEventListener( 'click', resetEmotes, false );
 	// Config
-	exportCfg.addEventListener( "click", exportConfig, false );
-	importCfg.addEventListener( "click", importConfig, false );
-	resetCfg.addEventListener( "click", resetConfig, false );
+	exportCfg.addEventListener( 'click', exportConfig, false );
+	importCfg.addEventListener( 'click', importConfig, false );
+	resetCfg.addEventListener( 'click', resetConfig, false );
 }
 
 
@@ -327,11 +337,10 @@ function registerEventSettingChanged() {
  * Register click event on nav elements.
  */
 function registerEventToggleNav() {
-	var nav = document.querySelectorAll( "nav label" );
-	var i;
+	var nav = document.querySelectorAll( 'nav label' );
 
-	for( i = 0; i < nav.length; i++ ) {
-		nav[i].addEventListener( "click", toggleNav, false );
+	for( var i = 0; i < nav.length; i++ ) {
+		nav[i].addEventListener( 'click', toggleNav, false );
 	}
 }
 
@@ -341,32 +350,33 @@ function registerEventToggleNav() {
  */
 function registerForBackgroundMessages() {
 	// Opera
-	if( typeof opera != "undefined" ) {
+	if( typeof opera != 'undefined' ) {
 	    opera.extension.onmessage = handleBackgroundMessages;
 	}
 	// Chrome
-	else if( typeof chrome != "undefined" ) {
+	else if( typeof chrome != 'undefined' ) {
 		chrome.extension.onMessage.addListener( handleBackgroundMessages );
 	}
 	// probably Firefox
 	else {
-	    self.on( "message", handleBackgroundMessages );
+	    self.on( 'message', handleBackgroundMessages );
 	}
 }
 
 
 /**
  * Reset the config back to the default values.
+ * @param {Event} ev
  */
-function resetConfig( e ) {
-	if( window.confirm( "Do you really want to reset the config?" ) ) {
+function resetConfig( ev ) {
+	if( window.confirm( 'Do you really want to reset the config?' ) ) {
 		exportConfig();
 		postMessage( { task: BG_TASK.RESET_CONFIG } );
 		showMsg(
-			"Config has been reset.<br />"
-			+ "There is an export from right before the reset,<br />"
-			+ "that you can still save before reloading the page. Think about it.",
-			"info"
+			'Config has been reset.<br />' +
+			'There is an export from right before the reset,<br />' +
+			'that you can still save before reloading the page. Think about it.',
+			'info'
 		);
 	}
 }
@@ -374,16 +384,17 @@ function resetConfig( e ) {
 
 /**
  * Reset all lists/emotes to the default.
+ * @param {Event} ev
  */
-function resetEmotes( e ) {
-	if( window.confirm( "Do you really want to reset all lists and emotes?" ) ) {
+function resetEmotes( ev ) {
+	if( window.confirm( 'Do you really want to reset all lists and emotes?' ) ) {
 		exportEmotes();
 		postMessage( { task: BG_TASK.RESET_EMOTES } );
 		showMsg(
-			"Lists and emotes have been reset.<br />"
-			+ "There is an export from right before the reset,<br />"
-			+ "that you can still save before reloading the page. Think about it.",
-			"info"
+			'Lists and emotes have been reset.<br />' +
+			'There is an export from right before the reset,<br />' +
+			'that you can still save before reloading the page. Think about it.',
+			'info'
 		);
 	}
 }
@@ -391,7 +402,7 @@ function resetEmotes( e ) {
 
 /**
  * Save emotes to storage.
- * @param {Object} emotes [description]
+ * @param {Object} emotes
  */
 function saveEmotes( emotes ) {
 	postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
@@ -400,28 +411,29 @@ function saveEmotes( emotes ) {
 
 /**
  * Get the config value of a changed <input>.
- * @throws {Boolean} If no valid config value can be extracted.
- * @return {mixed} String, boolean or integer.
+ * @param  {Event}   ev
+ * @return {mixed}      String, boolean or integer.
+ * @throws {Boolean}    If no valid config value can be extracted.
  */
-function saveHandleInput( e ) {
-	var val;
+function saveHandleInput( ev ) {
+	var val = null;
 
-	switch( e.target.type ) {
-		case "checkbox":
-			val = e.target.checked;
+	switch( ev.target.type ) {
+		case 'checkbox':
+			val = ev.target.checked;
 			break;
 
-		case "number":
-			val = parseInt( e.target.value );
+		case 'number':
+			val = parseInt( ev.target.value );
 			if( isNaN( val ) || val < 0 ) {
-				e.target.value = CONFIG[cfgName];
+				ev.target.value = CONFIG[cfgName];
 				throw false;
 			}
 			break;
 
-		case "text":
-			val = e.target.value;
-			if( e.target.className == "color" ) {
+		case 'text':
+			val = ev.target.value;
+			if( ev.target.className == 'color' ) {
 				val = val.replace( / /g, '' );
 				val = val.toLowerCase();
 
@@ -438,13 +450,14 @@ function saveHandleInput( e ) {
 
 /**
  * Get the config value of a changed <select>.
- * @return {mixed} String or boolean.
+ * @param  {Event} ev
+ * @return {mixed}    String or boolean.
  */
-function saveHandleSelect( e ) {
-	var val = getOptionValue( e.target );
+function saveHandleSelect( ev ) {
+	var val = getOptionValue( ev.target );
 
-	if( e.target.id == "ctxMenu" ) {
-		val = ( val == "true" );
+	if( ev.target.id == 'ctxMenu' ) {
+		val = ( val == 'true' );
 	}
 	return val;
 }
@@ -452,21 +465,22 @@ function saveHandleSelect( e ) {
 
 /**
  * Save a setting that just changed.
+ * @param {Event} ev
  */
-function saveSetting( e ) {
-	var htmlTag = e.target.tagName.toLowerCase(),
-	    cfgName = e.target.id;
-	var val = null,
-	    cfg = {};
+function saveSetting( ev ) {
+	var htmlTag = ev.target.tagName.toLowerCase();
+	var cfgName = ev.target.id;
+	var val = null;
+	var cfg = {};
 
 	switch( htmlTag ) {
-		case "select":
-			val = saveHandleSelect( e );
+		case 'select':
+			val = saveHandleSelect( ev );
 			break;
 
-		case "input":
+		case 'input':
 			try {
-				val = saveHandleInput( e );
+				val = saveHandleInput( ev );
 			}
 			catch( err ) { return; }
 			break;
@@ -485,29 +499,29 @@ function saveSetting( e ) {
  * @param {String} mtype "err" or "info".
  */
 function showMsg( msg, mtype ) {
-	var msg_paragraph = document.getElementById( "msg" );
+	var msg_paragraph = document.getElementById( 'msg' );
 
 	msg_paragraph.innerHTML = msg;
 	msg_paragraph.className = mtype;
-	msg_paragraph.parentNode.className = "show";
+	msg_paragraph.parentNode.className = 'show';
 	window.setTimeout( hideMsg, OPT_CFG.MSG_TIMEOUT );
 }
 
 
 /**
  * Changes the class of the chosen nav element to "active".
+ * @param {Event} ev
  */
-function toggleNav( e ) {
-	var nav = document.querySelectorAll( "nav label" );
-	var i;
+function toggleNav( ev ) {
+	var nav = document.querySelectorAll( 'nav label' );
 
-	for( i = 0; i < nav.length; i++ ) {
-		if( nav[i] != e.target ) {
-			nav[i].className = "";
+	for( var i = 0; i < nav.length; i++ ) {
+		if( nav[i] != ev.target ) {
+			nav[i].className = '';
 		}
 	}
 
-	e.target.className = "active";
+	ev.target.className = 'active';
 }
 
 
@@ -536,5 +550,5 @@ if( document.body ) {
 	init();
 }
 else {
-	window.addEventListener( "DOMContentLoaded", init, false );
+	window.addEventListener( 'DOMContentLoaded', init, false );
 }

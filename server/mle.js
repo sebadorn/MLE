@@ -6,11 +6,10 @@
  * Register click event on nav elements.
  */
 function registerEventToggleNav() {
-	var nav = document.querySelectorAll( "nav label" );
-	var i;
+	var nav = document.querySelectorAll( 'nav label' );
 
-	for( i = 0; i < nav.length; i++ ) {
-		nav[i].addEventListener( "click", toggleNav, false );
+	for( var i = 0; i < nav.length; i++ ) {
+		nav[i].addEventListener( 'click', toggleNav, false );
 	}
 }
 
@@ -19,17 +18,17 @@ function registerEventToggleNav() {
  * Add-on install trigger for Firefox.
  */
 function setFirefoxInstallTrigger() {
-	if( typeof InstallTrigger != "undefined" ) {
-		var lff = document.getElementById( "link_firefox" );
+	if( typeof InstallTrigger != 'undefined' ) {
+		var lff = document.getElementById( 'link_firefox' );
 
-		lff.addEventListener( "click", function( e ) {
-			e.preventDefault();
+		lff.addEventListener( 'click', function( ev ) {
+			ev.preventDefault();
 
 			var params = {
-				"MLE": {
-					URL: e.target.href,
-					IconURL: "http://sebadorn.de/mlp/mle/MLE_32.png",
-					Hash: "sha256:d4fad4dc2230189e932b13e1ca94b9da182d26ab315f416dba31daba1fc669b2",
+				'MLE': {
+					URL: ev.target.href,
+					IconURL: 'http://sebadorn.de/mlp/mle/MLE_32.png',
+					Hash: 'sha256:85bbaa56a08e214e667e9e944ed263ed0f347165397f9299c36bfb3755c63886',
 					toString: function() { return this.URL; }
 				}
 			};
@@ -44,25 +43,25 @@ function setFirefoxInstallTrigger() {
  * Set current version of MLE in headline.
  */
 function setVersion() {
-	var v = document.getElementById( "version" );
-	v.textContent = "2.9.4";
+	var v = document.getElementById( 'version' );
+	v.textContent = '2.9.5';
 }
 
 
 /**
  * Changes the class of the chosen nav element to "active".
+ * @param {Event} ev
  */
-function toggleNav( e ) {
-	var nav = document.querySelectorAll( "nav label" );
-	var i;
+function toggleNav( ev ) {
+	var nav = document.querySelectorAll( 'nav label' );
 
-	for( i = 0; i < nav.length; i++ ) {
-		if( nav[i] != e.target ) {
-			nav[i].className = "";
+	for( var i = 0; i < nav.length; i++ ) {
+		if( nav[i] != ev.target ) {
+			nav[i].className = '';
 		}
 	}
 
-	e.target.className = "active";
+	ev.target.className = 'active';
 }
 
 
@@ -80,5 +79,5 @@ if( document.body ) {
 	init();
 }
 else {
-	window.addEventListener( "DOMContentLoaded", init, false );
+	window.addEventListener( 'DOMContentLoaded', init, false );
 }

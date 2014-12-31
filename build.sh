@@ -1,18 +1,18 @@
 #!/bin/bash
 
-CFX=~/.firefox-addon-sdk-1.16/bin/cfx
-MCCOY=~/.mccoy/mccoy
-CHROME=google-chrome
+CFX="/home/$USER/.firefox-addon-sdk-1.17/bin/cfx"
+MCCOY="/home/$USER/.mccoy/mccoy"
+CHROME="google-chrome"
 
 PROJECT_URL="http://sebadorn.de/mlp/mle"
-ABSOLUTE_PATH="/home/seba/programming/My Little Emotebox"
+ABSOLUTE_PATH="/home/$USER/programming/My Little Emotebox"
 
-export LD_LIBRARY_PATH=/home/seba/.mccoy/xulrunner/
+export LD_LIBRARY_PATH="/home/$USER/.mccoy/xulrunner/"
 
 
 function set_version_and_url {
-	sed -i "s;%MLE_VERSION%;$VERSION;g" $1
-	sed -i "s;%MLE_URL%;$PROJECT_URL;g" $1
+	sed -i "s;%MLE_VERSION%;$VERSION;g" "$1"
+	sed -i "s;%MLE_URL%;$PROJECT_URL;g" "$1"
 }
 
 
@@ -64,7 +64,7 @@ function build_firefox {
 
 	# Generate addon install file (XPI)
 	set_version_and_url package.json
-	$CFX xpi --update-url $PROJECT_URL/updates-firefox.rdf --force-mobile
+	$CFX xpi --update-url "$PROJECT_URL/updates-firefox.rdf" --force-mobile
 
 	# Insert our public key into the generated install.rdf
 	unzip mle.xpi install.rdf
@@ -97,9 +97,9 @@ function build_firefox {
 
 function hint_firefox {
 	echo " ---------- ---------- ---------- "
-	echo "Remember to update Firefox SDK if a new version becomes available."
-	echo "Currently using $CFX."
-	echo "Current Firefox: $(firefox -v)"
+	echo " Remember to update Firefox SDK if a new version becomes available."
+	echo " Currently using $CFX."
+	echo " Current Firefox: $(firefox -v)"
 }
 
 
@@ -113,7 +113,7 @@ function build_page {
 }
 
 
-if [ $# -ge 1 ] && [ $1 == "clean" ]; then
+if [ $# -ge 1 ] && [ "$1" == "clean" ]; then
 	cd build
 	rm mle.xpi mle.crx mle.oex updates-*.xml updates-*.rdf
 	cd ../
@@ -127,22 +127,22 @@ if [ $# -lt 2 ]; then
 	exit
 fi
 
-BROWSER=$1
-VERSION=$2
+BROWSER="$1"
+VERSION="$2"
 
-if [ $BROWSER == "all" ]; then
+if [ "$BROWSER" == "all" ]; then
 	build_opera
 	build_chrome
 	build_chrome_store
 	build_firefox
 	hint_firefox
-elif [ $BROWSER == "opera" ]; then
+elif [ "$BROWSER" == "opera" ]; then
 	build_opera
-elif [ $BROWSER == "chrome" ]; then
+elif [ "$BROWSER" == "chrome" ]; then
 	build_chrome
-elif [ $BROWSER == "chrome_store" ]; then
+elif [ "$BROWSER" == "chrome_store" ]; then
 	build_chrome_store
-elif [ $BROWSER == "firefox" ]; then
+elif [ "$BROWSER" == "firefox" ]; then
 	build_firefox
 	hint_firefox
 fi
@@ -150,3 +150,4 @@ fi
 build_page
 
 echo " ---------- ---------- ---------- "
+echo " Done."
