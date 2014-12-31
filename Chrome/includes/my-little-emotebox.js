@@ -250,9 +250,10 @@
 			return;
 		}
 
-		var listName = getOptionValue( g.REF.selectListDelete );
+		var listNameEscaped = getOptionValue( g.REF.selectListDelete );
+		var listName = listNameEscaped.replace( /\\"/g, '"' );
+
 		var listToDel = g.REF.lists[listName];
-		listName = listName.replace( /\\"/g, '"' );
 
 		// Delete from emote lists
 		delete g.emotes[listName];
@@ -268,7 +269,7 @@
 			var children = selectLists[i].childNodes;
 
 			for( var j = 0; j < children.length; j++ ) {
-				if( children[j].value == listName ) {
+				if( children[j].value == listNameEscaped ) {
 					selectLists[i].removeChild( children[j] );
 					break;
 				}
@@ -2645,7 +2646,11 @@
 
 			// Different parent means we may drag a list element.
 			// We don't drop list elements on emotes, stop it.
-			if( ev.target.parentNode != this.REF.draggedEmote.parentNode ) {
+			if(
+				!ev.target.parentNode ||
+				!this.REF.draggedEmote ||
+				ev.target.parentNode != this.REF.draggedEmote.parentNode
+			) {
 				this.REF.draggedList = null;
 				return;
 			}
@@ -2700,20 +2705,23 @@
 				return;
 			}
 
+			// If we drop on an element inside of the list, go one up
+			if( isList( evTarget.parentNode ) ) {
+				evTarget = evTarget.parentNode;
+			}
+
 			// Do nothing if source and target are the same
 			if( evTarget == this.REF.draggedList ) {
 				this.REF.draggedList = null;
 				return;
 			}
 
-			// If we drop on an element inside of the list, go one up
-			if( isList( evTarget.parentNode ) ) {
-				evTarget = evTarget.parentNode;
-			}
-
 			// Different parent means we may drag an emote.
 			// We don't drop emotes on lists, stop it.
-			if( evTarget.parentNode != this.REF.draggedList.parentNode ) {
+			if(
+				evTarget.parentNode == null ||
+				evTarget.parentNode != this.REF.draggedList.parentNode
+			) {
 				this.REF.draggedList = null;
 				return;
 			}

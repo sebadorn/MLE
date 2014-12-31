@@ -25,9 +25,9 @@ Locally, I have an additional directory called `common resources/` where I store
 
 ## Build it
 
-In order to build the browser extensions I wrote the *build.sh* script. It takes two parameters; one for the browser (all, opera, chrome, firefox) and one for the version (for example "2.5"). Example:
+In order to build the browser extensions I wrote the *build.sh* script. It takes two parameters; one for the browser (all, opera, chrome, firefox) and one for the version (for example "2.9.5"). Example:
 
-    ./build.sh all 2.5
+    ./build.sh all 2.9.5
 
 There are some variables inside of some files, that will be replaced while building the extension:
 
@@ -84,5 +84,4 @@ Some of it has already been covered in the *Build it* chapter. MLE – as I hand
 
 ## Notes
 
-* Opera will switch engines from *Presto* to *Blink* (same as Chrome) at some point in 2013. This also means, that all Opera extensions won't work anymore. However, they plan on realising a tool to help with the conversion from OEX to the new extension format … or something like that. Well, if it is the same as a Chrome extension, there won't be much of a problem, since MLE already has that.
-* Firefox SDK automatically sets a min and max Firefox version number. That shouldn't be a problem if everyone keeps their browser up-to-date. If you want to change it, have a look at `addon-sdk-1.14/app-extension/install.rdf`.
+* Firefox SDK automatically sets a min and max Firefox version number. That shouldn't be a problem if everyone keeps their browser up-to-date. If you want to change it, have a look at `addon-sdk-1.17/app-extension/install.rdf`.
