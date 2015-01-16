@@ -1258,12 +1258,12 @@
 				 #mle-ctxmenu%':
 						'font: 12px Verdana, Arial, Helvetica, "DejaVu Sans", sans-serif; line-height: 14px; text-align: left;',
 				'#mle% .mle-btn':
-						'background-color: #808080; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; display: none; font-weight: bold; padding: 5px 0 6px; position: absolute; text-align: center; top: -1px;',
+						'background-color: #808080; border-radius: 0 0 1px 1px; border-top: 1px solid #ffffff; color: #ffffff; cursor: default; display: none; font-weight: bold; padding: 4px 0 5px; position: absolute; text-align: center; top: 0;',
 				'#mle% .mle-btn:hover':
 						'background-color: #404040;',
 				// Inactive state
 				'#mle%':
-						'background-color: ' + cfg.boxBgColor + '; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; z-index: ' + zIndex + '; width: ' + cfg.boxWidthMinimized + 'px;',
+						'background-color: ' + cfg.boxBackgroundColor + '; border-bottom: 2px solid ' + cfg.boxBottomBorder + '; border-radius: 0 0 2px 2px; box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.2); box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; z-index: ' + zIndex + '; width: ' + cfg.boxWidthMinimized + 'px;',
 				'#mle%.transition':
 						'-moz-transition: width ' + cfg.boxAnimationSpeed + 'ms; -webkit-transition: width ' + cfg.boxAnimationSpeed + 'ms; -o-transition: width ' + cfg.boxAnimationSpeed + 'ms; transition: width ' + cfg.boxAnimationSpeed + 'ms;',
 				// Active state
@@ -1320,11 +1320,9 @@
 				'#mle% ul':
 						'direction: ' + listDir + '; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;',
 				'#mle% li':
-						'background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;',
-				'#mle% li:first-child':
-						'border-top-width: 0;',
+						'border-left: 4px solid #ffffff; color: #101010; cursor: default; direction: ltr; margin: 0 0 2px; padding: 6px 12px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;',
 				'#mle% li:last-child':
-						'border-bottom-width: 0;',
+						'margin-bottom: 0;',
 				'#mle% li:hover':
 						'background-color: #d0d0d0;',
 				'#mle% li.activelist':
@@ -1334,17 +1332,17 @@
 				'#mle% li strong':
 						'font-weight: normal; padding-right: 16px; white-space: nowrap;',
 				'#mle% li span':
-						'color: #909090; display: block; font-size: 9px; font-weight: normal !important; white-space: nowrap;',
+						'color: #707070; display: block; font-size: 9px; font-weight: normal !important; white-space: nowrap;',
 				'#mle% li input':
 						'box-sizing: border-box; -moz-box-sizing: border-box; width: 100%;',
 				// Blocks and pages
 				'.mle-block%,\
 				 .mle-manage%,\
 				 .mle-search%':
-						'box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;',
+						'box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 0 10px;',
 				// Emote blocks
 				'.mle-block% a':
-						'display: inline-block !important; float: none !important; border: 1px solid ' + cfg.boxEmoteBorder + '; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;',
+						'display: inline-block !important; float: none !important; background-color: ' + cfg.boxEmoteBackground + '; border: 1px solid ' + cfg.boxEmoteBorder + '; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;',
 				'.mle-block% a:hover':
 						'border-color: #96BFE9;',
 				'.mle-warning':

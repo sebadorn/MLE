@@ -185,7 +185,9 @@ var DEFAULT_CONFIG = {
 	adjustForGrEmB: false,
 	boxAlign: 'left', // "left" or "right"
 	boxAnimationSpeed: 420, // [ms]
-	boxBgColor: '#f4f4f4', // CSS valid color, examples: "#f6f6f6", "rgba(20,20,20,0.6)"
+	boxBackgroundColor: '#f0f0f0', // CSS valid color, examples: "#f6f6f6", "rgba(20,20,20,0.6)"
+	boxBottomBorder: '#00b0f0', // CSS valid color
+	boxEmoteBackground: '#ffffff', // CSS valid color
 	boxEmoteBorder: '#ffffff', // CSS valid color
 	boxHeight: 330, // [px]
 	boxLabelMinimized: 'Emotes',
@@ -1788,7 +1790,7 @@ function mergeWithConfig( obj ) {
 	var obj_new = {};
 
 	if( CURRENT_CONFIG == null ) {
-		loadConfigAndEmotes( {} ); // This part may cause trouble in Chrome for some use cases.
+		loadConfigAndEmotes( {} );
 	}
 
 	// Remove unknown config keys
