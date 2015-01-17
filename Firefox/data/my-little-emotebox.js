@@ -397,10 +397,9 @@
 			emote += ' ';
 		}
 
+		// Insert emote
 		var taLen = ta.value.length;
-		ta.value = ta.value.substring( 0, selStart );
-		ta.value += emote;
-		ta.value += ta.value.substring( selEnd, taLen );
+		ta.value = ta.value.substring( 0, selStart ) + emote + ta.value.substring( selEnd, taLen );
 
 		// Focus to the textarea
 		ta.focus();

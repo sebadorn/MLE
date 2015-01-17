@@ -18,16 +18,16 @@ I really try to re-use content as much as possible. One assurance for this proje
 * `options.html`, `options.css`, `options.js`
 * and every image
 
-… are the same, no matter where you encounter them. Additionally, `Firefox/lib/main.js` is the same as `my-little-emotebox.js`.
+… are the same, no matter where you encounter them. Additionally, `Firefox/lib/main.js` is the same as `background.js`.
 
-Locally, I have an additional directory called `common resources/` where I store all the files that are shared cross-browser. From there I just hardlink them to their respective places (`ln`).
+The directory `common resources/` is where I store all the files that are shared cross-browser. From there I just hardlink them to their respective places (`ln`). The script `link.sh` does this (and overwrites existing files by the same name!).
 
 
 ## Build it
 
-In order to build the browser extensions I wrote the *build.sh* script. It takes two parameters; one for the browser (all, opera, chrome, firefox) and one for the version (for example "2.9.5"). Example:
+In order to build the browser extensions I wrote the *build.sh* script. It takes two parameters; one for the browser (all, opera, chrome, firefox) and one for the version (for example "2.9.6"). Example:
 
-    ./build.sh all 2.9.5
+    ./build.sh all 2.9.6
 
 There are some variables inside of some files, that will be replaced while building the extension:
 

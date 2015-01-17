@@ -793,8 +793,8 @@ var BrowserFirefox = {
 		var req = new Request( {
 			url: url,
 			onComplete: function( response ) {
-				var lastModified = response.headers['Last-Modified'],
-				    contentType = response.headers['Content-Type'];
+				var lastModified = response.headers['Last-Modified'];
+				var contentType = response.headers['Content-Type'];
 
 				lastModified = Date.parse( lastModified );
 				callback( true, response.text, lastModified, contentType );
@@ -848,7 +848,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: 'GET',
 	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
-	xhrUserAgent: 'MLE/2.9.5 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.9.6 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -1337,8 +1337,8 @@ var Updater = {
 		}
 		// The rest
 		else if( this.readyState == 4 ) {
-			var lastModified = this.getResponseHeader( 'Last-Modified' );
-			var contentType = this.getResponseHeader( 'Content-Type' );
+			lastModified = this.getResponseHeader( 'Last-Modified' );
+			contentType = this.getResponseHeader( 'Content-Type' );
 
 			lastModified = Date.parse( lastModified );
 			Updater.handleCSS( this.responseText, lastModified, contentType );
@@ -1788,7 +1788,7 @@ function mergeWithConfig( obj ) {
 	var obj_new = {};
 
 	if( CURRENT_CONFIG == null ) {
-		loadConfigAndEmotes( {} ); // This part may cause trouble in Chrome for some use cases.
+		loadConfigAndEmotes( {} );
 	}
 
 	// Remove unknown config keys

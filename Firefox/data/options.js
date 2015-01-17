@@ -351,7 +351,7 @@ function registerEventToggleNav() {
 function registerForBackgroundMessages() {
 	// Opera
 	if( typeof opera != 'undefined' ) {
-	    opera.extension.onmessage = handleBackgroundMessages;
+		opera.extension.onmessage = handleBackgroundMessages;
 	}
 	// Chrome
 	else if( typeof chrome != 'undefined' ) {
@@ -359,7 +359,7 @@ function registerForBackgroundMessages() {
 	}
 	// probably Firefox
 	else {
-	    self.on( 'message', handleBackgroundMessages );
+		self.on( 'message', handleBackgroundMessages );
 	}
 }
 
