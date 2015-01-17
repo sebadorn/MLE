@@ -1,5 +1,5 @@
-# Files whose hardlinks are used for the different browser extensions
-common resources/*
+# Editor files
+*.sublime-*
 
 # Some data, mostly JSON
 debug/*

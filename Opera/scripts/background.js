@@ -185,9 +185,7 @@ var DEFAULT_CONFIG = {
 	adjustForGrEmB: false,
 	boxAlign: 'left', // "left" or "right"
 	boxAnimationSpeed: 420, // [ms]
-	boxBackgroundColor: '#f0f0f0', // CSS valid color, examples: "#f6f6f6", "rgba(20,20,20,0.6)"
-	boxBottomBorder: '#00b0f0', // CSS valid color
-	boxEmoteBackground: '#ffffff', // CSS valid color
+	boxBgColor: '#f4f4f4', // CSS valid color, examples: "#f6f6f6", "rgba(20,20,20,0.6)"
 	boxEmoteBorder: '#ffffff', // CSS valid color
 	boxHeight: 330, // [px]
 	boxLabelMinimized: 'Emotes',
@@ -795,8 +793,8 @@ var BrowserFirefox = {
 		var req = new Request( {
 			url: url,
 			onComplete: function( response ) {
-				var lastModified = response.headers['Last-Modified'],
-				    contentType = response.headers['Content-Type'];
+				var lastModified = response.headers['Last-Modified'];
+				var contentType = response.headers['Content-Type'];
 
 				lastModified = Date.parse( lastModified );
 				callback( true, response.text, lastModified, contentType );
@@ -850,7 +848,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: 'GET',
 	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
-	xhrUserAgent: 'MLE/2.9.5 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.9.6 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -1339,8 +1337,8 @@ var Updater = {
 		}
 		// The rest
 		else if( this.readyState == 4 ) {
-			var lastModified = this.getResponseHeader( 'Last-Modified' );
-			var contentType = this.getResponseHeader( 'Content-Type' );
+			lastModified = this.getResponseHeader( 'Last-Modified' );
+			contentType = this.getResponseHeader( 'Content-Type' );
 
 			lastModified = Date.parse( lastModified );
 			Updater.handleCSS( this.responseText, lastModified, contentType );
