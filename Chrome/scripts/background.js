@@ -141,7 +141,7 @@ else if( I_AM == BROWSER.CHROME ) {
 				else if( headers[i].name.toLowerCase() == 'user-agent' ) {
 					headers[i].value = Updater.xhrUserAgent;
 				}
-			};
+			}
 
 			return { requestHeaders: flagMLE ? headers: details.requestHeaders };
 		},
@@ -343,25 +343,25 @@ var BrowserOpera = {
 			this.tabSources.push( sender );
 		}
 
-		CURRENT_CONFIG = wpref[PREF.CONFIG]
-		               ? JSON.parse( wpref[PREF.CONFIG] )
-		               : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+		CURRENT_CONFIG = wpref[PREF.CONFIG] ?
+		                 JSON.parse( wpref[PREF.CONFIG] ) :
+		                 saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
 
-		CURRENT_EMOTES = wpref[PREF.EMOTES]
-		               ? JSON.parse( wpref[PREF.EMOTES] )
-		               : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+		CURRENT_EMOTES = wpref[PREF.EMOTES] ?
+		                 JSON.parse( wpref[PREF.EMOTES] ) :
+		                 saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
-		META = wpref[PREF.META]
-		     ? JSON.parse( wpref[PREF.META] )
-		     : saveDefaultToStorage( PREF.META, DEFAULT_META );
+		META = wpref[PREF.META] ?
+		       JSON.parse( wpref[PREF.META] ) :
+		       saveDefaultToStorage( PREF.META, DEFAULT_META );
 
-		SUBREDDIT_CSS = wpref[PREF.SUBREDDIT_CSS]
-		              ? JSON.parse( wpref[PREF.SUBREDDIT_CSS] )
-		              : saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
+		SUBREDDIT_CSS = wpref[PREF.SUBREDDIT_CSS] ?
+		                JSON.parse( wpref[PREF.SUBREDDIT_CSS] ) :
+		                saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
 
-		SUBREDDIT_EMOTES = wpref[PREF.SUBREDDIT_EMOTES]
-		                 ? JSON.parse( wpref[PREF.SUBREDDIT_EMOTES] )
-		                 : saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
+		SUBREDDIT_EMOTES = wpref[PREF.SUBREDDIT_EMOTES] ?
+		                   JSON.parse( wpref[PREF.SUBREDDIT_EMOTES] ) :
+		                   saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
 
 		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( META, DEFAULT_META, PREF.META );
@@ -406,7 +406,7 @@ var BrowserOpera = {
 
 	/**
 	 * Register a function to handle messaging between pages.
-	 * @param {function} handler
+	 * @param {Function} handler
 	 */
 	registerMessageHandler: function( handler ) {
 		opera.extension.onmessage = handler;
@@ -487,25 +487,25 @@ var BrowserChrome = {
 	 * @param {Object} items Loaded items in key/value pairs.
 	 */
 	handleLoadedItems: function( items ) {
-		CURRENT_CONFIG = !items[PREF.CONFIG]
-		               ? saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG )
-		               : JSON.parse( items[PREF.CONFIG] );
+		CURRENT_CONFIG = !items[PREF.CONFIG] ?
+		                 saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) :
+		                 JSON.parse( items[PREF.CONFIG] );
 
-		CURRENT_EMOTES = !items[PREF.EMOTES]
-		               ? saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES )
-		               : JSON.parse( items[PREF.EMOTES] );
+		CURRENT_EMOTES = !items[PREF.EMOTES] ?
+		                 saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) :
+		                 JSON.parse( items[PREF.EMOTES] );
 
-		META = !items[PREF.META]
-		     ? saveDefaultToStorage( PREF.META, DEFAULT_META )
-		     : JSON.parse( items[PREF.META] );
+		META = !items[PREF.META] ?
+		       saveDefaultToStorage( PREF.META, DEFAULT_META ) :
+		       JSON.parse( items[PREF.META] );
 
-		SUBREDDIT_CSS = !items[PREF.SUBREDDIT_CSS]
-		              ? saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS )
-		              : JSON.parse( items[PREF.SUBREDDIT_CSS] );
+		SUBREDDIT_CSS = !items[PREF.SUBREDDIT_CSS] ?
+		                saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS ) :
+		                JSON.parse( items[PREF.SUBREDDIT_CSS] );
 
-		SUBREDDIT_EMOTES = !items[PREF.SUBREDDIT_EMOTES]
-		                 ? saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES )
-		                 : JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
+		SUBREDDIT_EMOTES = !items[PREF.SUBREDDIT_EMOTES] ?
+		                   saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES ) :
+		                   JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
 
 		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( META, DEFAULT_META, PREF.META );
@@ -572,8 +572,8 @@ var BrowserChrome = {
 	/**
 	 * Called when a tab is closed.
 	 * A CHROME ONLY FUNCTION.
-	 * @param {Integer} tabId ID of the removed tab.
-	 * @param {Object}  info
+	 * @param {Number} tabId ID of the removed tab.
+	 * @param {Object} info
 	 */
 	onTabRemove: function( tabId, info ) {
 		var idx = this.tabs.indexOf( tabId );
@@ -597,7 +597,7 @@ var BrowserChrome = {
 
 	/**
 	 * Register a function to handle messaging between pages.
-	 * @param {function} handler
+	 * @param {Function} handler
 	 */
 	registerMessageHandler: function( handler ) {
 		chrome.extension.onMessage.addListener( handler );
@@ -689,25 +689,25 @@ var BrowserFirefox = {
 			workers.push( sender );
 		}
 
-		CURRENT_CONFIG = ss.storage[PREF.CONFIG]
-		               ? JSON.parse( ss.storage[PREF.CONFIG] )
-		               : saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+		CURRENT_CONFIG = ss.storage[PREF.CONFIG] ?
+		                 JSON.parse( ss.storage[PREF.CONFIG] ) :
+		                 saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
 
-		CURRENT_EMOTES = ss.storage[PREF.EMOTES]
-		               ? JSON.parse( ss.storage[PREF.EMOTES] )
-		               : saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+		CURRENT_EMOTES = ss.storage[PREF.EMOTES] ?
+		                 JSON.parse( ss.storage[PREF.EMOTES] ) :
+		                 saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
 
-		META = ss.storage[PREF.META]
-		     ? JSON.parse( ss.storage[PREF.META] )
-		     : saveDefaultToStorage( PREF.META, DEFAULT_META );
+		META = ss.storage[PREF.META] ?
+		       JSON.parse( ss.storage[PREF.META] ) :
+		       saveDefaultToStorage( PREF.META, DEFAULT_META );
 
-		SUBREDDIT_CSS = ss.storage[PREF.SUBREDDIT_CSS]
-		              ? JSON.parse( ss.storage[PREF.SUBREDDIT_CSS] )
-		              : saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
+		SUBREDDIT_CSS = ss.storage[PREF.SUBREDDIT_CSS] ?
+		                JSON.parse( ss.storage[PREF.SUBREDDIT_CSS] ) :
+		                saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
 
-		SUBREDDIT_EMOTES = ss.storage[PREF.SUBREDDIT_EMOTES]
-		                 ? JSON.parse( ss.storage[PREF.SUBREDDIT_EMOTES] )
-		                 : saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
+		SUBREDDIT_EMOTES = ss.storage[PREF.SUBREDDIT_EMOTES] ?
+		                   JSON.parse( ss.storage[PREF.SUBREDDIT_EMOTES] ) :
+		                   saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
 
 		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( META, DEFAULT_META, PREF.META );
@@ -753,7 +753,7 @@ var BrowserFirefox = {
 	 * Register a function to handle messaging between pages.
 	 * THIS IS JUST A DUMMY FUNCTION.
 	 * @see   handleOnAttach()
-	 * @param {function} handler
+	 * @param {Function} handler
 	 */
 	registerMessageHandler: function( handler ) {
 		// pass
@@ -906,7 +906,7 @@ var Updater = {
 
 		var rCSS = this.getReverseEmotesCSS( css );
 
-		if( rCSS != false ) {
+		if( rCSS !== false ) {
 			emoteCSS.push( rCSS );
 		}
 
@@ -952,14 +952,14 @@ var Updater = {
 
 			// Get the selectors and part of the CSS
 			for( var i = idx; i > 0; i-- ) {
-				if( cssCopy[i] == "}" ) {
+				if( cssCopy[i] == '}' ) {
 					break;
 				}
 				// Avoid doubled selectors by only collecting them once.
 				if( !ignoreSelectors && record ) {
 					selector.push( cssCopy[i] );
 				}
-				if( cssCopy[i] == "{" ) {
+				if( cssCopy[i] == '{' ) {
 					record = true;
 				}
 
@@ -967,12 +967,12 @@ var Updater = {
 			}
 
 			// Get the rest of the relevant CSS part
-			eCSS = eCSS.reverse().join( "" );
+			eCSS = eCSS.reverse().join( '' );
 			eCSS += this.getRestOfCSS( cssCopy, idx );
 			emoteCSS.push( eCSS );
 
 			if( !ignoreSelectors ) {
-				selector = selector.reverse().join( "" );
+				selector = selector.reverse().join( '' );
 				selectors.push( selector );
 			}
 
@@ -997,7 +997,7 @@ var Updater = {
 
 		// Extract emote names
 		for( var i = 0; i < emotesCurrent.length; i++ ) {
-			var selector = emotesCurrent[i].split( "," );
+			var selector = emotesCurrent[i].split( ',' );
 			var subEmoteList = [];
 
 			for( var j = 0; j < selector.length; j++ ) {
@@ -1054,7 +1054,7 @@ var Updater = {
 	 */
 	getCSSURLs: function() {
 		// Just getting started. Prepare list for CSS URLs.
-		if( this.xhrProgress == 0 ) {
+		if( this.xhrProgress === 0 ) {
 			this.xhrTargetsCSS = [];
 		}
 		// We have all CSS URLs. Proceed with requesting the CSS files.
@@ -1079,22 +1079,24 @@ var Updater = {
 	/**
 	 * Handle the XHR callback for the request for a page from
 	 * which we can extract the CSS URL.
-	 * @param {boolean} hasReadyState4 Workaround for Firefox.
+	 * @param {Boolean} hasReadyState4 Workaround for Firefox.
 	 * @param {String}  responseText   Workaround for Firefox.
 	 */
 	getCSSURLsCallback: function( hasReadyState4, responseText ) {
+		var responseContent = '';
+
 		if( hasReadyState4 === true ) {
-			var responseContent = responseText;
+			responseContent = responseText;
 		}
 		else if( this.readyState == 4 ) {
-			var responseContent = this.responseText;
+			responseContent = this.responseText;
 		}
 
 		if( hasReadyState4 === true || this.readyState == 4 ) {
 			var url = responseContent.match( /href="[a-zA-Z0-9\/.:\-_+]+" title="applied_subreddit_stylesheet"/ );
 
 			if( !url ) {
-				MyBrowser.logError( "No CSS URL found." );
+				MyBrowser.logError( 'No CSS URL found.' );
 				return;
 			}
 
@@ -1118,9 +1120,9 @@ var Updater = {
 	/**
 	 * Get the rest of the relevant CSS part starting from
 	 * the found needle position to the end of the rule.
-	 * @param  {String}  cssCopy Current part of the CSS.
-	 * @param  {Integer} idx     Index of the found needle.
-	 * @return {String}          Extracted CSS.
+	 * @param  {String} cssCopy Current part of the CSS.
+	 * @param  {Number} idx     Index of the found needle.
+	 * @return {String}         Extracted CSS.
 	 */
 	getRestOfCSS: function( cssCopy, idx ) {
 		var css = '';
@@ -1140,7 +1142,7 @@ var Updater = {
 	/**
 	 * Get CSS code for reversing emotes.
 	 * @param  {String}         css The CSS.
-	 * @return {String|boolean}     The relevant CSS part or false if nothing could be found.
+	 * @return {String|Boolean}     The relevant CSS part or false if nothing could be found.
 	 */
 	getReverseEmotesCSS: function( css ) {
 		var rCSS = false;
@@ -1167,20 +1169,20 @@ var Updater = {
 
 
 		// Get a list of lists with all the emotes that share the same background position
-		var emotesCurrentCSS = this.emoteCSS[this.xhrCurrentTarget].split( "\n" );
+		var emotesCurrentCSS = this.emoteCSS[this.xhrCurrentTarget].split( '\n' );
 		var lineEmotes = [];
 
 		for( var i = 0; i < emotesCurrentCSS.length; i++ ) {
 			var line = emotesCurrentCSS[i];
 
-			if( line.indexOf( "background-position:" ) == -1 ) {
+			if( line.indexOf( 'background-position:' ) == -1 ) {
 				continue;
 			}
 
-			line = line.substr( 0, line.indexOf( "{" ) ) + ",";
-			line = line.replace( /a\[href\|="\/([a-zA-Z0-9-_]+)"\],/g, "$1::" );
+			line = line.substr( 0, line.indexOf( '{' ) ) + ',';
+			line = line.replace( /a\[href\|="\/([a-zA-Z0-9-_]+)"\],/g, '$1::' );
 			line = line.substr( 0, line.length - 2 );
-			lineEmotes.push( line.split( "::" ) );
+			lineEmotes.push( line.split( '::' ) );
 		}
 
 
@@ -1275,10 +1277,10 @@ var Updater = {
 
 	/**
 	 * After receiving the stylesheet, start extracting the emotes.
-	 * @param {String}  responseText Response to the request.
-	 * @param {int}     lastModified A timestamp when the stylesheet has been last modified.
-	 *                               (At least according to what the server tells us.)
-	 * @param {String}  contentType  Content-Type of the received resource. We need "text/css".
+	 * @param {String} responseText Response to the request.
+	 * @param {Number} lastModified A timestamp when the stylesheet has been last modified.
+	 *                              (At least according to what the server tells us.)
+	 * @param {String} contentType  Content-Type of the received resource. We need "text/css".
 	 */
 	handleCSS: function( responseText, lastModified, contentType ) {
 		// Don't process if it isn't CSS.
@@ -1327,7 +1329,7 @@ var Updater = {
 	 * (Callback function for browser who use XMLHttpRequest.)
 	 * @param {Boolean} hasReadyState4
 	 * @param {String}  responseText
-	 * @param {int}     lastModified
+	 * @param {Number}  lastModified
 	 * @param {String}  contentType
 	 */
 	handleCSSCallback: function( hasReadyState4, responseText, lastModified, contentType ) {
@@ -1348,8 +1350,8 @@ var Updater = {
 
 	/**
 	 * Get the table name (A/B/C/E) for a given emote and its alternative names.
-	 * @param  {Array}  group Emote and its names.
-	 * @return {String}       Table name of the emote or false if it cannot be identified.
+	 * @param  {Array<String>} group Emote and its names.
+	 * @return {String}              Table name of the emote or false if it cannot be identified.
 	 */
 	identifyTableOfEmoteGroup: function( group ) {
 		var emote, table;
@@ -1379,7 +1381,7 @@ var Updater = {
 	 * @return {Boolean}       True if the emote is in table code form, false otherwise.
 	 */
 	isTableCode: function( emote ) {
-		return ( emote.match( this.tableCodeRegex ) != null );
+		return ( emote.match( this.tableCodeRegex ) !== null );
 	},
 
 
@@ -1478,7 +1480,7 @@ var Updater = {
 
 	/**
 	 * Remove wrongly identified CSS.
-	 * @param  {Array}  css
+	 * @param  {Array<String>} css
 	 * @return {String}
 	 */
 	removeNonEmoteCSS: function( css ) {
@@ -1573,7 +1575,7 @@ var Updater = {
 		for( var i = 0; i < this.xhrTargets.length; i++ ) {
 			if(
 				!this.emotes.hasOwnProperty( this.xhrTargets[i] ) ||
-				this.emotes[this.xhrTargets[i]].length == 0
+				this.emotes[this.xhrTargets[i]].length === 0
 			) {
 				flagUpdateSuccess = false;
 			}
@@ -1787,7 +1789,7 @@ function mergeEmotesWithUpdate( emotes ) {
 function mergeWithConfig( obj ) {
 	var obj_new = {};
 
-	if( CURRENT_CONFIG == null ) {
+	if( !CURRENT_CONFIG ) {
 		loadConfigAndEmotes( {} );
 	}
 
@@ -1811,15 +1813,15 @@ function mergeWithConfig( obj ) {
 
 /**
  * Save a default value to the extension storage.
- * @param  {int}     key Key to save the object under.
- * @param  {Object}  obj Default value to save.
- * @return {Object}      Default value. Same as parameter "obj".
+ * @param  {Number} key Key to save the object under.
+ * @param  {Object} obj Default value to save.
+ * @return {Object}     Default value. Same as parameter "obj".
  */
 function saveDefaultToStorage( key, obj ) {
 	var r = saveToStorage( key, obj );
-	var msg = r.success
-	        ? 'Background process: "' + key + '" not in extension preferences yet. Created default.'
-	        : 'Background process: Could not save default value.';
+	var msg = r.success ?
+	          'Background process: "' + key + '" not in extension preferences yet. Created default.' :
+	          'Background process: Could not save default value.';
 
 	MyBrowser.logError( msg );
 
@@ -1829,14 +1831,14 @@ function saveDefaultToStorage( key, obj ) {
 
 /**
  * Save to the extension storage.
- * @param  {int}     key Key to save the object under.
- * @param  {Object}  obj Object to save.
- * @return {Object}      Contains key "success" with a boolean value.
+ * @param  {Number} key Key to save the object under.
+ * @param  {Object} obj Object to save.
+ * @return {Object}     Contains key "success" with a boolean value.
  */
 function saveToStorage( key, obj ) {
 	var obj_json;
 
-	if( obj == null ) {
+	if( !obj ) {
 		return { success: false };
 	}
 

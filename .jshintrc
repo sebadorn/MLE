@@ -1,0 +1,15 @@
+{
+	"browser": true,
+	"expr": true,
+	"multistr": true,
+	"node": true, // I don't use node, but it suppresses the "use function form of use strict" message.
+	"predef": [
+		"BG_TASK",
+		"chrome",
+		"InstallTrigger",
+		"opera",
+		"self",
+		"widget"
+	],
+	"shadow": true
+}

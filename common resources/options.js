@@ -108,7 +108,7 @@ function importConfig( ev ) {
 	var ta = document.getElementById( "import-config-ta" );
 	var cfg = ta.value.trim();
 
-	if( cfg == '' ) {
+	if( cfg.length === 0 ) {
 		showMsg( 'Nothing to import.', 'err' );
 		console.error( 'MyLittleEmotebox: Nothing to import.' );
 		return;
@@ -141,7 +141,7 @@ function importEmotes( ev ) {
 	importField.value = importField.value.trim();
 
 	// Nothing to do if empty
-	if( importField.value.length == 0 ) {
+	if( importField.value.length === 0 ) {
 		showMsg( 'Nothing to import.', 'err' );
 		return;
 	}
@@ -166,7 +166,7 @@ function importEmotes( ev ) {
 			break;
 		}
 	}
-	if( count == 0 ) {
+	if( count === 0 ) {
 		showMsg( 'Imported emote list is empty?<br />Emotes remain unchanged.', 'err' );
 		return;
 	}
@@ -416,6 +416,7 @@ function saveEmotes( emotes ) {
  * @throws {Boolean}    If no valid config value can be extracted.
  */
 function saveHandleInput( ev ) {
+	var cfgName = ev.target.id;
 	var val = null;
 
 	switch( ev.target.type ) {
@@ -486,7 +487,7 @@ function saveSetting( ev ) {
 			break;
 	}
 
-	if( val != null ) {
+	if( val !== null ) {
 		cfg[cfgName] = val;
 		postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
 	}
