@@ -209,6 +209,7 @@ var DEFAULT_CONFIG = {
 	listNameTableB: 'B', // Name of the list for the emotes of table B
 	listNameTableC: 'C', // Name of the list for the emotes of table C
 	listNameTableE: 'E', // Name of the list for the emotes of table E
+	listNameTableF: 'F', // Name of the list for the emotes of table F
 	listNamePlounge: 'Plounge', // Name of the list for the non-table emotes of the Plounge
 	msgAnimationSpeed: 1000, // [ms]
 	msgPosition: 'top', // "top" or "bottom"
@@ -269,6 +270,10 @@ var DEFAULT_EMOTES = {
 		'cheerilee', 'lily', 'gilda', 'snails', 'dealwithit',
 		'discentia', 'maud', 'discordsad', 'lunamad', 'pinkiepout',
 		'twisecret', 'spikehappy', 'scootablue', 'sunsetshimmer', 'sunsetsneaky'
+	],
+	'F': [
+		'pinkiesad', 'diamondtiara', 'sombra', 'sbshocked', 'guard',
+		'abstern', 'apathia'
 	],
 	'Plounge': [
 		'ajdance', 'pinkiedance', 'sweetiedance', 'dashdance', 'scootadance',
@@ -848,7 +853,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: 'GET',
 	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
-	xhrUserAgent: 'MLE/2.9.6 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.10 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -864,7 +869,7 @@ var Updater = {
 
 	linkStart: 'a[href|="/',
 	linkStartReverse: 'a[href^="/r"]',
-	tableCodeRegex: /^[abce][0-9]{2}$/i,
+	tableCodeRegex: /^[abcef][0-9]{2}$/i,
 
 	emoteCSS: {},
 	emotes: {},
@@ -1422,6 +1427,10 @@ var Updater = {
 
 					case 'E':
 						table = cfg.listNameTableE;
+						break;
+
+					case 'F':
+						table = cfg.listNameTableF;
 						break;
 				}
 
