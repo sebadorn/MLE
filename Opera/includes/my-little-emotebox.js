@@ -170,6 +170,9 @@
 			case 'E':
 				return cfg.listNameTableE;
 
+			case 'F':
+				return cfg.listNameTableF;
+
 			case 'Plounge':
 				return cfg.listNamePlounge;
 
@@ -188,14 +191,14 @@
 		var g = GLOBAL;
 
 		// Emotes don't have a leading slash
-		if( emote.indexOf( '/' ) == 0 ) {
+		if( emote.indexOf( '/' ) === 0 ) {
 			emote = emote.substring( 1 );
 		}
 
 		// Remove from locale storage
 		var idx = g.emotes[list].indexOf( emote );
 
-		if( idx == -1 ) {
+		if( idx === -1 ) {
 			return;
 		}
 
@@ -453,7 +456,7 @@
 
 		// Links that are a normal part of reddit.
 		for( var i = 0; i < GLOBAL.ignoreLinks.length; i++ ) {
-			if( node.pathname.indexOf( GLOBAL.ignoreLinks[i] ) == 0 ) {
+			if( node.pathname.indexOf( GLOBAL.ignoreLinks[i] ) === 0 ) {
 				return false;
 			}
 		}
@@ -475,6 +478,7 @@
 			cfg.listNameTableB,
 			cfg.listNameTableC,
 			cfg.listNameTableE,
+			cfg.listNameTableF,
 			cfg.listNamePlounge
 		];
 
@@ -689,7 +693,7 @@
 	function removeAllBlocksAndPages() {
 		var g = GLOBAL;
 
-		if( g.shownBlock != null ) {
+		if( g.shownBlock !== null ) {
 			g.REF.mainCont.removeChild( g.REF.emoteBlocks[g.shownBlock] );
 			g.shownBlock = null;
 		}
@@ -787,13 +791,13 @@
 		var g = GLOBAL;
 
 		// Ignore empty
-		if( emote.length == 0 ) {
+		if( emote.length === 0 ) {
 			showMsg( 'That ain\'t no emote, sugarcube.' );
 			return;
 		}
 
 		// Emotes are saved without leading slash
-		if( emote.indexOf( '/' ) == 0 ) {
+		if( emote.indexOf( '/' ) === 0 ) {
 			emote = emote.substring( 1 );
 		}
 
@@ -867,7 +871,7 @@
 		var listName = inputField.value.trim();
 
 		// Ignore empty
-		if( listName.length == 0 ) {
+		if( listName.length === 0 ) {
 			showMsg( 'That ain\'t no valid name for a list.' );
 			return;
 		}
@@ -916,7 +920,7 @@
 	function showMsg( text ) {
 		var g = GLOBAL;
 
-		if( !g.REF.msg || g.REF.msg == null ) {
+		if( !g.REF.msg ) {
 			return;
 		}
 
@@ -950,6 +954,7 @@
 		var evTarget = ev.target;
 
 		// In case a child element was clicked instead of the (parent) list element container
+		/* jshint validthis: true */
 		if( evTarget != this ) {
 			evTarget = evTarget.parentNode;
 		}
@@ -1170,7 +1175,7 @@
 		var preview = document.getElementById( previewId );
 		var emoteLink = ev.target.value;
 
-		if( emoteLink.indexOf( '/' ) != 0 ) {
+		if( emoteLink.indexOf( '/' ) !== 0 ) {
 			emoteLink = '/' + emoteLink;
 		}
 		if( emoteLink == preview.href ) {
@@ -1680,7 +1685,7 @@
 				// Display a little warning for the Plounge emote list, if opened in
 				// r/mylittlepony since those emotes won't be visible for not-pony-script-users.
 				if(
-					here.indexOf( '/r/mylittlepony/' ) == 0 &&
+					here.indexOf( '/r/mylittlepony/' ) === 0 &&
 					listName == g.config.listNamePlounge
 				) {
 					var warn = document.createElement( 'p' );
@@ -1693,7 +1698,7 @@
 				emoteBlock.appendChild( this.createEmotesOfList( emoteList ) );
 
 				// Display first emote section per default
-				if( countBlocks == 0 ) {
+				if( countBlocks === 0 ) {
 					listLink.className = 'activelist';
 					g.shownBlock = listName;
 					fragmentNode.appendChild( emoteBlock );
@@ -1925,7 +1930,7 @@
 			var pathNoFlags = emote.pathname.split( '-' )[0];
 
 			if(
-				emote.title.length == 0 ||
+				emote.title.length === 0 ||
 				pathNoFlags == '/spoiler' ||
 				pathNoFlags == '/s'
 			) {
@@ -1976,7 +1981,7 @@
 						continue;
 					}
 
-					if( from.indexOf( '/r/mlplounge/' ) == 0 ) {
+					if( from.indexOf( '/r/mlplounge/' ) === 0 ) {
 						var emotes = target.querySelectorAll( '.md a' );
 						this.ploungeEmotesAddClass( emotes );
 					}
@@ -2110,7 +2115,7 @@
 			}
 
 			// Not a link and no child nodes, so there can't be any emotes
-			if( ev.target.children.length == 0 ) {
+			if( ev.target.children.length === 0 ) {
 				return;
 			}
 
@@ -2326,7 +2331,7 @@
 					continue;
 				}
 
-				children = selectLists[i].childNodes;
+				var children = selectLists[i].childNodes;
 
 				for( var j = 0; j < children.length; j++ ) {
 					if( children[j].value == listName ) {
@@ -2348,9 +2353,9 @@
 		revealUnknownEmote: function( emote ) {
 			// Give other scripts (BPM) a little time to apply CSS to emotes.
 			// An attempt to reduce the false positive rate for unknown emotes.
-			window.setTimeout( function( e ) {
+			window.setTimeout( function( ev ) {
 				// Special emote, nevermind
-				if( emote.pathname.indexOf( '/sp' ) == 0 ) {
+				if( emote.pathname.indexOf( '/sp' ) === 0 ) {
 					return;
 				}
 
@@ -2419,7 +2424,7 @@
 		 */
 		stopScrolling: function( ev ) {
 			var scrolledToBottom = ( this.scrollHeight - this.scrollTop == this.clientHeight );
-			var scrolledToTop = ( this.scrollTop == 0 );
+			var scrolledToTop = ( this.scrollTop === 0 );
 			var wheelDeltaY = ( ev.wheelDeltaY || -ev.deltaY );
 
 			if( scrolledToBottom && wheelDeltaY < 0 ) {
@@ -2700,7 +2705,7 @@
 
 			ev.preventDefault();
 
-			if( this.REF.draggedList == null ) {
+			if( !this.REF.draggedList ) {
 				return;
 			}
 
@@ -2718,7 +2723,7 @@
 			// Different parent means we may drag an emote.
 			// We don't drop emotes on lists, stop it.
 			if(
-				evTarget.parentNode == null ||
+				!evTarget.parentNode ||
 				evTarget.parentNode != this.REF.draggedList.parentNode
 			) {
 				this.REF.draggedList = null;
@@ -2812,9 +2817,9 @@
 			// Add items to menu
 			for( var i = 0; i < items.length; i++ ) {
 				var item = d.createElement( 'li' );
-				item.className = items[i]['className'];
-				item.textContent = items[i]['text'];
-				item.addEventListener( 'click', items[i]['onclick'].bind( this ), false );
+				item.className = items[i].className;
+				item.textContent = items[i].text;
+				item.addEventListener( 'click', items[i].onclick.bind( this ), false );
 
 				menu.appendChild( item );
 			}
@@ -2832,8 +2837,8 @@
 
 		/**
 		 * Create dialog for the option "Move Emote".
-		 * @param {int} x X coordinate from the left.
-		 * @param {int} y Y coordinate from the top.
+		 * @param {Number} x X coordinate from the left.
+		 * @param {Number} y Y coordinate from the top.
 		 */
 		createDialogMoveEmote: function( x, y ) {
 			if( !this.REF.dialogMoveEmote ) {
@@ -2965,10 +2970,10 @@
 			var list = GLOBAL.shownBlock;
 
 			// If the emote is from the search page
-			if( list == null ) {
+			if( list === null ) {
 				list = this.REF.selectedEmote.getAttribute( 'data-list' );
 
-				if( list == null ) {
+				if( list === null ) {
 					return;
 				}
 			}
@@ -3011,10 +3016,10 @@
 			var listOld = GLOBAL.shownBlock;
 
 			// If the emote is from the search page
-			if( listOld == null ) {
+			if( listOld === null ) {
 				listOld = this.REF.selectedEmote.getAttribute( 'data-list' );
 
-				if( listOld == null ) {
+				if( listOld === null ) {
 					return;
 				}
 			}
@@ -3133,7 +3138,7 @@
 		/**
 		 * Get the mode for the search.
 		 * @param  {String} firstPart The first part of the search term before a ":".
-		 * @return {int}              A Search.MODE. Defaults to NORMAL.
+		 * @return {Number}           A Search.MODE. Defaults to NORMAL.
 		 */
 		getMode: function( firstPart ) {
 			var mode = null;
@@ -3161,7 +3166,7 @@
 
 		/**
 		 * Get the search function according to the set mode.
-		 * @param  {int}      mode Search.MODE
+		 * @param  {Number}   mode Search.MODE
 		 * @return {Function}
 		 */
 		getSearchFunc: function( mode ) {
@@ -3190,7 +3195,7 @@
 
 		/**
 		 * Prepare the search term according to the used mode.
-		 * @param  {int}           mode  Search.MODE
+		 * @param  {Number}        mode  Search.MODE
 		 * @param  {Array<String>} parts Parts of the provided search term.
 		 * @return {String|RegExp}
 		 */
@@ -3378,7 +3383,7 @@
 			var searchPage = GLOBAL.REF.searchPage;
 			var term = searchInput.value.trim();
 
-			if( term.length == 0 ) {
+			if( term.length === 0 ) {
 				return;
 			}
 
@@ -3401,7 +3406,7 @@
 				this.routineForNormalMode( term, searchFunc );
 			}
 
-			if( searchPage.childNodes.length == 0 ) {
+			if( searchPage.childNodes.length === 0 ) {
 				searchPage.appendChild( document.createTextNode( 'No emotes found.' ) );
 			}
 		},
@@ -3539,18 +3544,21 @@
 			'B': ['rdsmile', 'soawesome', 'dj', 'dumbfabric', 'flutterwink', 'flutteryay', 'spikenervous', 'raritydress'],
 			'C': ['joy', 'hahaha', 'ohhi', 'party', 'celestia', 'zecora', 'twismile', 'derpyhappy', 'scootaloo', 'rdhappy', 'rdsitting', 'twidaw', 'cadencesmile'],
 			'E': ['awwyeah', 'cheerilee', 'dealwithit', 'sotrue', 'spitfire', 'colgate', 'absmile', 'happyluna', 'bonbon', 'lyra', 'cutealoo', 'huhhuh', 'wahaha', 'maud', 'sunsetshimmer', 'twisecret', 'spikehappy'],
+			'F': ['sombra'],
 			'Plounge': ['fillyrarity', 'dishappy', 'amazingmagic', 'sweetiedance', 'scootadance', 'lunadance', 'raritydance', 'ajdance', 'abdance', 'trixiedance', 'filly']
 		},
 		'sad': {
 			'A': ['rdcry', 'paperbagderpy', 'lunawait'],
 			'C': ['trixiesad', 'lunasad', 'raritysad', 'fluttercry'],
-			'E': ['macintears', 'twisad', 'discordsad', 'maud', 'scootablue']
+			'E': ['macintears', 'twisad', 'discordsad', 'maud', 'scootablue'],
+			'F': ['pinkiesad']
 		},
 		'angry': {
 			'A': ['silverspoon', 'cadence', 'grannysmith', 'ohcomeon'],
 			'B': ['rdcool', 'twirage', 'cockatrice', 'fluttersrs'],
 			'C': ['angel', 'rdannoyed', 'louder', 'loveme'],
 			'E': ['snails', 'discentia', 'lunamad', 'maud'],
+			'F': ['diamondtiara', 'guard', 'abstern'],
 			'Plounge': ['karmastare']
 		},
 		'incredulous': {
@@ -3564,13 +3572,15 @@
 			'A': ['ppfear'],
 			'B': ['abwut', 'ajcower', 'flutterfear'],
 			'C': ['rdscared'],
-			'E': ['lily', 'maud']
+			'E': ['lily', 'maud'],
+			'F': ['sbshocked']
 		},
 		'shocked': {
 			'A': ['rarishock', 'applegasp', 'pinkieawe', 'celestiawut', 'flutterwhoa'],
 			'B': ['ajwut'],
 			'C': ['lunagasp', 'derpyshock', 'fluttercry'],
-			'E': ['ajconfused', 'maud']
+			'E': ['ajconfused', 'maud'],
+			'F': ['sbshocked']
 		},
 		'crazed': {
 			'A': ['applederp', 'scootaderp', 'twicrazy'],
@@ -3587,7 +3597,8 @@
 			'A': ['flutterroll', 'flutterjerk', 'ppcute', 'twiright', 'ajsup', 'ajlie'],
 			'B': ['ajsly', 'ppboring', 'trixiesmug', 'rarityprimp'],
 			'C': ['twismug'],
-			'E': ['octavia', 'maud']
+			'E': ['octavia', 'maud'],
+			'F': ['diamondtiara', 'apathia']
 		},
 		'bashful': {
 			'A': ['shiningarmor'],
@@ -3599,12 +3610,14 @@
 			'A': ['swagintosh'],
 			'C': ['sneakybelle'],
 			'E': ['rdsalute', 'fillytgap', 'lunamad', 'maud', 'sunsetsneaky'],
+			'F': ['guard', 'abstern'],
 			'Plounge': ['karmasalute', 'karmastare']
 		},
 		'evil': {
 			'A': ['chrysalis', 'priceless'],
 			'C': ['changeling'],
-			'E': ['gilda', 'nmm', 'maud', 'sunsetsneaky']
+			'E': ['gilda', 'nmm', 'maud', 'sunsetsneaky'],
+			'F': ['sombra']
 		},
 		'distraught': {
 			'B': ['rarityyell', 'raritywhine', 'raritywhy', 'noooo'],
@@ -3613,7 +3626,8 @@
 		'blank': {
 			'B': ['ppseesyou', 'eeyup'],
 			'C': ['twistare', 'photofinish', 'ajfrown'],
-			'E': ['sbstare', 'maud']
+			'E': ['sbstare', 'maud'],
+			'F': ['apathia']
 		},
 		'misc': {
 			'A': ['abbored'],
@@ -3623,10 +3637,14 @@
 			'Plounge': ['smooze', 'ohnoes']
 		},
 		// pony names
+		'apathia': {
+			'F': ['apathia']
+		},
 		'applebloom': {
 			'A': ['abbored', 'abmeh'],
 			'B': ['abwut'],
 			'E': ['absmile', 'abhuh'],
+			'F': ['abstern'],
 			'Plounge': ['abdance']
 		},
 		'angel': {
@@ -3666,6 +3684,9 @@
 		'derpy': {
 			'A': ['paperbagderpy'],
 			'C': ['derpyhappy', 'derp', 'derpyshock']
+		},
+		'diamondtiara': {
+			'F': ['diamondtiara']
 		},
 		'discentia': {
 			'E': ['discentia'],
@@ -3721,6 +3742,7 @@
 			'B': ['ppseesyou', 'ppshrug', 'ppboring'],
 			'C': ['ohhi', 'party', 'hahaha', 'joy', 'pinkamina', 'ppreally'],
 			'E': ['huhhuh', 'pinkiepout'],
+			'F': ['pinkiesad'],
 			'Plounge': ['pinkiedance']
 		},
 		'rainbow': {
@@ -3753,6 +3775,9 @@
 		'snails': {
 			'E': ['snails']
 		},
+		'sombra': {
+			'F': ['sombra']
+		},
 		'spike': {
 			'A': ['spikemeh'],
 			'B': ['spikenervous', 'takealetter', 'noooo', 'spikepushy', 'manspike'],
@@ -3773,6 +3798,7 @@
 			'B': ['dumbfabric'],
 			'C': ['sneakybelle'],
 			'E': ['sbstare'],
+			'F': ['sbshocked'],
 			'Plounge': ['sweetiedance']
 		},
 		'trixie': {
@@ -3799,6 +3825,9 @@
 		}
 	};
 
+	/* jshint -W069 */
+	// jshint -W069: Ignore the message "[…] is better written in dot notation".
+
 	// Alternative names for certain tags
 	TAGS['derped'] = TAGS['crazed'];
 	TAGS['malicious'] = TAGS['evil'];
@@ -3814,6 +3843,7 @@
 	TAGS['minuette'] = TAGS['colgate'];
 	TAGS['derpyhooves'] = TAGS['derpy'];
 	TAGS['ditzy'] = TAGS['derpy'];
+	TAGS['dt'] = TAGS['diamondtiara'];
 	TAGS['fs'] = TAGS['fluttershy'];
 	TAGS['griffin'] = TAGS['gilda'];
 	TAGS['heartstrings'] = TAGS['lyra'];
