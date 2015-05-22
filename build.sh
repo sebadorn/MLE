@@ -95,6 +95,21 @@ function build_firefox {
 }
 
 
+function build_firefox_store {
+	cd Firefox/
+	cp package.json ../package_tmp.json
+
+	# Generate addon install file (XPI)
+	set_version_and_url package.json
+	$CFX xpi --force-mobile
+
+	# Clean up
+	mv ../package_tmp.json package.json
+	mv mle.xpi ../build/mle_store.xpi
+	cd ../
+}
+
+
 function hint_firefox {
 	echo " ---------- ---------- ---------- "
 	echo " Remember to update Firefox SDK if a new version becomes available."
@@ -135,6 +150,7 @@ if [ "$BROWSER" == "all" ]; then
 	build_chrome
 	build_chrome_store
 	build_firefox
+	build_firefox_store
 	hint_firefox
 elif [ "$BROWSER" == "opera" ]; then
 	build_opera
@@ -144,6 +160,7 @@ elif [ "$BROWSER" == "chrome_store" ]; then
 	build_chrome_store
 elif [ "$BROWSER" == "firefox" ]; then
 	build_firefox
+	build_firefox_store
 	hint_firefox
 fi
 

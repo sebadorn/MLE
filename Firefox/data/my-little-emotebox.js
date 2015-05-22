@@ -3551,14 +3551,14 @@
 			'A': ['rdcry', 'paperbagderpy', 'lunawait'],
 			'C': ['trixiesad', 'lunasad', 'raritysad', 'fluttercry'],
 			'E': ['macintears', 'twisad', 'discordsad', 'maud', 'scootablue'],
-			'F': ['pinkiesad']
+			'F': ['pinkiesad', 'ajcry']
 		},
 		'angry': {
 			'A': ['silverspoon', 'cadence', 'grannysmith', 'ohcomeon'],
 			'B': ['rdcool', 'twirage', 'cockatrice', 'fluttersrs'],
 			'C': ['angel', 'rdannoyed', 'louder', 'loveme'],
 			'E': ['snails', 'discentia', 'lunamad', 'maud'],
-			'F': ['diamondtiara', 'guard', 'abstern'],
+			'F': ['diamondtiara', 'guard', 'abstern', 'starlightrage'],
 			'Plounge': ['karmastare']
 		},
 		'incredulous': {
@@ -3580,7 +3580,7 @@
 			'B': ['ajwut'],
 			'C': ['lunagasp', 'derpyshock', 'fluttercry'],
 			'E': ['ajconfused', 'maud'],
-			'F': ['sbshocked']
+			'F': ['sbshocked', 'rarityeww']
 		},
 		'crazed': {
 			'A': ['applederp', 'scootaderp', 'twicrazy'],
@@ -3617,7 +3617,7 @@
 			'A': ['chrysalis', 'priceless'],
 			'C': ['changeling'],
 			'E': ['gilda', 'nmm', 'maud', 'sunsetsneaky'],
-			'F': ['sombra']
+			'F': ['sombra', 'starlightrage']
 		},
 		'distraught': {
 			'B': ['rarityyell', 'raritywhine', 'raritywhy', 'noooo'],
@@ -3627,7 +3627,7 @@
 			'B': ['ppseesyou', 'eeyup'],
 			'C': ['twistare', 'photofinish', 'ajfrown'],
 			'E': ['sbstare', 'maud'],
-			'F': ['apathia']
+			'F': ['apathia', 'flutterkay']
 		},
 		'misc': {
 			'A': ['abbored'],
@@ -3655,6 +3655,7 @@
 			'B': ['squintyjack', 'ajsly', 'ajcower', 'ajugh', 'ajwut'],
 			'C': ['ajfrown', 'hmmm'],
 			'E': ['ajconfused'],
+			'F': ['ajcry'],
 			'Plounge': ['ajdance']
 		},
 		'berrypunch': {
@@ -3699,7 +3700,8 @@
 		'fluttershy': {
 			'A': ['flutterwhoa', 'flutterroll', 'flutterjerk'],
 			'B': ['fluttershh', 'fluttershy', 'fluttersrs', 'flutterfear', 'flutterwink', 'flutteryay'],
-			'C': ['flutterblush', 'loveme', 'whattheflut', 'fluttercry']
+			'C': ['flutterblush', 'loveme', 'whattheflut', 'fluttercry'],
+			'F': ['flutterkay']
 		},
 		'gilda': {
 			'E': ['gilda']
@@ -3757,6 +3759,7 @@
 			'B': ['rarityyell', 'raritywhine', 'raritydress', 'rarityannoyed', 'raritywut', 'raritywhy', 'rarityjudge', 'rarityprimp'],
 			'C': ['raritysad', 'fabulous'],
 			'E': ['wahaha'],
+			'F': ['rarityeww'],
 			'Plounge': ['fillyrarity', 'raritydance']
 		},
 		'scootaloo': {
@@ -3786,6 +3789,9 @@
 		},
 		'spitfire': {
 			'E': ['spitfire']
+		},
+		'starlight': {
+			'F': ['starlightrage']
 		},
 		'stevenmagnet': {
 			'E': ['sotrue']
@@ -3859,6 +3865,7 @@
 	TAGS['sb'] = TAGS['sweetie'];
 	TAGS['shimmer'] = TAGS['sunsetshimmer'];
 	TAGS['ss'] = TAGS['sunsetshimmer'];
+	TAGS['starlightglimmer'] = TAGS['starlight'];
 	TAGS['sunset'] = TAGS['sunsetshimmer'];
 	TAGS['sweetiebelle'] = TAGS['sweetie'];
 	TAGS['tgap'] = TAGS['trixie'];
