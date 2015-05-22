@@ -28,7 +28,7 @@ function setFirefoxInstallTrigger() {
 				'MLE': {
 					URL: ev.target.href,
 					IconURL: 'http://sebadorn.de/mlp/mle/MLE_32.png',
-					Hash: 'sha256:db8b47f7c3c11a28a206b86eb59c01a961a93df40a9f072a910db75c6aabcf10',
+					Hash: 'sha256:6a34ce80507e4f17d2f7471f83c4a80aca6f15f26231ff362c801a189909b3a6',
 					toString: function() { return this.URL; }
 				}
 			};
@@ -44,7 +44,7 @@ function setFirefoxInstallTrigger() {
  */
 function setVersion() {
 	var v = document.getElementById( 'version' );
-	v.textContent = '2.10';
+	v.textContent = '2.10.1';
 }
 
 
