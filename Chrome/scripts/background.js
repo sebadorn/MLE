@@ -854,7 +854,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: 'GET',
 	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
-	xhrUserAgent: 'MLE/2.10.1 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.10.2 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -1114,10 +1114,14 @@ var Updater = {
 
 			// Get the next CSS URL.
 			if( typeof setTimeout != 'undefined' ) {
-				setTimeout( Updater.getCSSURLs.bind( Updater ), Updater.xhrWait );
+				setTimeout( function( ev ) {
+					Updater.getCSSURLs( ev );
+				}, Updater.xhrWait );
 			}
 			else {
-				Timer.setTimeout( Updater.getCSSURLs.bind( Updater ), Updater.xhrWait );
+				Timer.setTimeout( function( ev ) {
+					Updater.getCSSURLs( ev );
+				}, Updater.xhrWait );
 			}
 		}
 	},
@@ -1318,10 +1322,14 @@ var Updater = {
 			// Great. But it has require( "timers" ).setTimeout which
 			// does EXACTLY THE SAME. Go figure.
 			if( typeof setTimeout != 'undefined' ) {
-				setTimeout( this.getCSS.bind( this ), this.xhrWait );
+				setTimeout( function( ev ) {
+					this.getCSS( ev );
+				}.bind( this ), this.xhrWait );
 			}
 			else {
-				Timer.setTimeout( this.getCSS.bind( this ), this.xhrWait );
+				Timer.setTimeout( function( ev ) {
+					this.getCSS( ev );
+				}.bind( this ), this.xhrWait );
 			}
 		}
 		else {

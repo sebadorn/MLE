@@ -3,7 +3,7 @@
 
 function bootstrap() {
 	if (typeof chrome !== 'undefined' || typeof opera !== 'undefined' ) {
-		var optScript = document.createElement( 'script' );
+		var optScript = document.getElementById( 'options-script-placeholder' );
 		optScript.src = 'scripts/options.js';
 
 		var head = document.querySelector( 'head' );
