@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASEDIR="/home/$USER/programming/My Little Emotebox"
+BASEDIR=$(dirname "$0")
 TARGETS="$BASEDIR/common resources"
 
 
@@ -95,6 +95,7 @@ ln -f "$TARGETS/options.css" "$BASEDIR/Firefox/data/options.css"
 ln -f "$TARGETS/options.html" "$BASEDIR/Firefox/data/options.html"
 ln -f "$TARGETS/options-bootstrap.js" "$BASEDIR/Firefox/data/scripts/options-bootstrap.js"
 ln -f "$TARGETS/options.js" "$BASEDIR/Firefox/data/options.js"
+ln -f "$TARGETS/options.js" "$BASEDIR/Firefox/data/scripts/options.js"
 ln -f "$TARGETS/img/MLE_16.png" "$BASEDIR/Firefox/data/icons/MLE_16.png"
 ln -f "$TARGETS/img/MLE_48.png" "$BASEDIR/Firefox/icon.png"
 ln -f "$TARGETS/img/MLE_64.png" "$BASEDIR/Firefox/icon64.png"

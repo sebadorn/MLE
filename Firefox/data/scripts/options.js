@@ -108,7 +108,7 @@ function importConfig( ev ) {
 	var ta = document.getElementById( "import-config-ta" );
 	var cfg = ta.value.trim();
 
-	if( cfg == '' ) {
+	if( cfg.length === 0 ) {
 		showMsg( 'Nothing to import.', 'err' );
 		console.error( 'MyLittleEmotebox: Nothing to import.' );
 		return;
@@ -118,7 +118,7 @@ function importConfig( ev ) {
 		cfg = JSON.parse( cfg );
 	}
 	catch( err ) {
-		showMsg( 'Input not parsable as JSON.<br />Config remains unchanged.', 'err' );
+		showMsg( ['Input not parsable as JSON.', 'Config remains unchanged.'], 'err' );
 		console.error( 'MyLittleEmotebox: Could not parse input as JSON.' );
 		console.error( err );
 		return;
@@ -126,7 +126,7 @@ function importConfig( ev ) {
 
 	postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
 	ta.value = '';
-	showMsg( 'Import (probably) successful.<br />Changes show after next page load.', 'info' );
+	showMsg( ['Import (probably) successful.', 'Changes show after next page load.'], 'info' );
 }
 
 
@@ -141,7 +141,7 @@ function importEmotes( ev ) {
 	importField.value = importField.value.trim();
 
 	// Nothing to do if empty
-	if( importField.value.length == 0 ) {
+	if( importField.value.length === 0 ) {
 		showMsg( 'Nothing to import.', 'err' );
 		return;
 	}
@@ -151,7 +151,7 @@ function importEmotes( ev ) {
 		imported = JSON.parse( importField.value );
 	}
 	catch( err ) {
-		showMsg( 'Input not parsable as JSON.<br />Emotes remain unchanged.', 'err' );
+		showMsg( ['Input not parsable as JSON.', 'Emotes remain unchanged.'], 'err' );
 		console.error( 'MyLittleEmotebox: Could not JSON-parse import.' );
 		console.error( err );
 		return;
@@ -166,8 +166,8 @@ function importEmotes( ev ) {
 			break;
 		}
 	}
-	if( count == 0 ) {
-		showMsg( 'Imported emote list is empty?<br />Emotes remain unchanged.', 'err' );
+	if( count === 0 ) {
+		showMsg( ['Imported emote list is empty?', 'Emotes remain unchanged.'], 'err' );
 		return;
 	}
 
@@ -175,7 +175,7 @@ function importEmotes( ev ) {
 	EMOTES = imported;
 	saveEmotes( EMOTES );
 
-	showMsg( 'Import (probably) successful.<br />Changes show after next page load.', 'info' );
+	showMsg( ['Import (probably) successful.', 'Changes show after next page load.'], 'info' );
 	importField.value = '';
 }
 
@@ -373,9 +373,11 @@ function resetConfig( ev ) {
 		exportConfig();
 		postMessage( { task: BG_TASK.RESET_CONFIG } );
 		showMsg(
-			'Config has been reset.<br />' +
-			'There is an export from right before the reset,<br />' +
-			'that you can still save before reloading the page. Think about it.',
+			[
+				'Config has been reset.',
+				'There is an export from right before the reset,',
+				'that you can still save before reloading the page. Think about it.'
+			],
 			'info'
 		);
 	}
@@ -391,9 +393,11 @@ function resetEmotes( ev ) {
 		exportEmotes();
 		postMessage( { task: BG_TASK.RESET_EMOTES } );
 		showMsg(
-			'Lists and emotes have been reset.<br />' +
-			'There is an export from right before the reset,<br />' +
-			'that you can still save before reloading the page. Think about it.',
+			[
+				'Lists and emotes have been reset.',
+				'There is an export from right before the reset,',
+				'that you can still save before reloading the page. Think about it.'
+			],
 			'info'
 		);
 	}
@@ -416,6 +420,7 @@ function saveEmotes( emotes ) {
  * @throws {Boolean}    If no valid config value can be extracted.
  */
 function saveHandleInput( ev ) {
+	var cfgName = ev.target.id;
 	var val = null;
 
 	switch( ev.target.type ) {
@@ -486,7 +491,7 @@ function saveSetting( ev ) {
 			break;
 	}
 
-	if( val != null ) {
+	if( val !== null ) {
 		cfg[cfgName] = val;
 		postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
 	}
@@ -495,15 +500,25 @@ function saveSetting( ev ) {
 
 /**
  * Display a message box on the page.
- * @param {String} msg Message to display.
- * @param {String} mtype "err" or "info".
+ * @param {Array<String>|String} msg   Message to display.
+ * @param {String}               mtype "err" or "info".
  */
 function showMsg( msg, mtype ) {
-	var msg_paragraph = document.getElementById( 'msg' );
+	var msgContainer = document.getElementById( 'msg' );
+	msgContainer.innerHTML = '';
 
-	msg_paragraph.innerHTML = msg;
-	msg_paragraph.className = mtype;
-	msg_paragraph.parentNode.className = 'show';
+	if( typeof msg == 'string' ) {
+		msg = [msg];
+	}
+
+	for( var i = 0; i < msg.length; i++ ) {
+		var p = document.createElement( 'p' );
+		p.textContent = msg[i];
+		msgContainer.appendChild(p);
+	}
+
+	msgContainer.className = mtype;
+	msgContainer.parentNode.className = 'show';
 	window.setTimeout( hideMsg, OPT_CFG.MSG_TIMEOUT );
 }
 

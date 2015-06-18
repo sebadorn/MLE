@@ -64,64 +64,40 @@ function build_firefox {
 
 	# Generate addon install file (XPI)
 	set_version_and_url package.json
-	$CFX xpi --update-url "$PROJECT_URL/updates-firefox.rdf" --force-mobile
+	$CFX xpi --update-url "$PROJECT_URL/updates-firefox.rdf" --force-mobile --output-file="mle-unsigned.xpi"
 
 	# Insert our public key into the generated install.rdf
-	unzip mle.xpi install.rdf
+	unzip "mle-unsigned.xpi" install.rdf
 	$MCCOY -installRDF install.rdf -key "My Little Emotebox"
-	zip -f mle.xpi install.rdf
+	zip -f "mle-unsigned.xpi" install.rdf
 	rm install.rdf
 
 	# Clean up
 	mv ../package_tmp.json package.json
-	mv mle.xpi ../build/mle.xpi
+	mv "mle-unsigned.xpi" "../build/mle-unsigned.xpi"
 	cd ../
+}
 
-	# Generate update RDF
-	cp server/updates-firefox-template.rdf build/updates-firefox.rdf
+
+function build_firefox_updaterdf {
+	cp "server/updates-firefox-template.rdf" "build/updates-firefox.rdf"
 	local XPI_HASH=$(sha256sum build/mle.xpi | sed "s/ .*//g" -)
-	sed -i "s;%XPI_HASH%;sha256:$XPI_HASH;g" build/updates-firefox.rdf
-	set_version_and_url build/updates-firefox.rdf
+	sed -i "s;%XPI_HASH%;sha256:$XPI_HASH;g" "build/updates-firefox.rdf"
+	set_version_and_url "build/updates-firefox.rdf"
 
 	# Sign update RDF
-	$MCCOY -signRDF build/updates-firefox.rdf -key "My Little Emotebox"
-	# $MCCOY -verifyRDF build/updates-firefox.rdf -key "My Little Emotebox"
+	$MCCOY -signRDF "build/updates-firefox.rdf" -key "My Little Emotebox"
+	# $MCCOY -verifyRDF "build/updates-firefox.rdf" -key "My Little Emotebox"
 
 	# Replace XPI hash in mle.js
-	cd server/
-	cp mle-template.js mle.js
-	sed -i "s;%XPI_HASH%;sha256:$XPI_HASH;g" mle.js
-	cd ../
-}
-
-
-function build_firefox_store {
-	cd Firefox/
-	cp package.json ../package_tmp.json
-
-	# Generate addon install file (XPI)
-	set_version_and_url package.json
-	$CFX xpi --force-mobile
-
-	# Clean up
-	mv ../package_tmp.json package.json
-	mv mle.xpi ../build/mle_store.xpi
-	cd ../
-}
-
-
-function hint_firefox {
-	echo " ---------- ---------- ---------- "
-	echo " Remember to update Firefox SDK if a new version becomes available."
-	echo " Currently using $CFX."
-	echo " Current Firefox: $(firefox -v)"
+	build_page
 }
 
 
 function build_page {
 	local XPI_HASH=$(sha256sum build/mle.xpi | sed "s/ .*//g" -)
 	cd server/
-	cp mle-template.js mle.js
+	cp "mle-template.js" mle.js
 	sed -i "s;%XPI_HASH%;sha256:$XPI_HASH;g" mle.js
 	set_version_and_url mle.js
 	cd ../
@@ -130,14 +106,14 @@ function build_page {
 
 if [ $# -ge 1 ] && [ "$1" == "clean" ]; then
 	cd build
-	rm mle.xpi mle.crx mle.oex updates-*.xml updates-*.rdf
+	rm mle.xpi "mle-unsigned.xpi" mle.crx mle.oex updates-*.xml updates-*.rdf
 	cd ../
 	exit
 fi
 
 if [ $# -lt 2 ]; then
 	echo "Not enough arguments provided."
-	echo "First argument: all | opera | chrome | chrome_store | firefox | clean"
+	echo "First argument: all | opera | chrome | chrome_store | firefox | firefox_update | page | clean"
 	echo "Second argument: version"
 	exit
 fi
@@ -150,8 +126,6 @@ if [ "$BROWSER" == "all" ]; then
 	build_chrome
 	build_chrome_store
 	build_firefox
-	build_firefox_store
-	hint_firefox
 elif [ "$BROWSER" == "opera" ]; then
 	build_opera
 elif [ "$BROWSER" == "chrome" ]; then
@@ -160,11 +134,11 @@ elif [ "$BROWSER" == "chrome_store" ]; then
 	build_chrome_store
 elif [ "$BROWSER" == "firefox" ]; then
 	build_firefox
-	build_firefox_store
-	hint_firefox
+elif [ "$BROWSER" == "firefox_update" ]; then
+	build_firefox_updaterdf
+elif [ "$BROWSER" == "page" ]; then
+	build_page
 fi
-
-build_page
 
 echo " ---------- ---------- ---------- "
 echo " Done."
