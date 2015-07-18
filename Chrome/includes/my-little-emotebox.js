@@ -3558,7 +3558,7 @@
 			'B': ['rdcool', 'twirage', 'cockatrice', 'fluttersrs'],
 			'C': ['angel', 'rdannoyed', 'louder', 'loveme'],
 			'E': ['snails', 'discentia', 'lunamad', 'maud'],
-			'F': ['diamondtiara', 'guard', 'abstern', 'starlightrage'],
+			'F': ['diamondtiara', 'guard', 'abstern', 'starlightrage', 'bulkbiceps'],
 			'Plounge': ['karmastare']
 		},
 		'incredulous': {
@@ -3610,7 +3610,7 @@
 			'A': ['swagintosh'],
 			'C': ['sneakybelle'],
 			'E': ['rdsalute', 'fillytgap', 'lunamad', 'maud', 'sunsetsneaky'],
-			'F': ['guard', 'abstern'],
+			'F': ['guard', 'abstern', 'bulkbiceps'],
 			'Plounge': ['karmasalute', 'karmastare']
 		},
 		'evil': {
@@ -3663,6 +3663,9 @@
 		},
 		'bonbon': {
 			'E': ['bonbon']
+		},
+		'bulkbiceps': {
+			'F': ['bulkbiceps']
 		},
 		'cadence': {
 			'A': ['cadence'],

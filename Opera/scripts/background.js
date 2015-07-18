@@ -274,7 +274,7 @@ var DEFAULT_EMOTES = {
 	'F': [
 		'pinkiesad', 'diamondtiara', 'sombra', 'sbshocked', 'guard',
 		'abstern', 'apathia', 'ajcry', 'rarityeww', 'flutterkay',
-		'starlightrage'
+		'starlightrage', 'bulkbiceps'
 	],
 	'Plounge': [
 		'ajdance', 'pinkiedance', 'sweetiedance', 'dashdance', 'scootadance',
@@ -854,7 +854,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: 'GET',
 	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
-	xhrUserAgent: 'MLE/2.10.2 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.10.3 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
