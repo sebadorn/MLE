@@ -274,7 +274,8 @@ var DEFAULT_EMOTES = {
 	'F': [
 		'pinkiesad', 'diamondtiara', 'sombra', 'sbshocked', 'guard',
 		'abstern', 'apathia', 'ajcry', 'rarityeww', 'flutterkay',
-		'starlightrage', 'bulkbiceps'
+		'starlightrage', 'bulkbiceps', 'scootaeww', 'discordgrump', 'troubleshoes',
+		'rdsnrk', 'thcalm', 'ooh'
 	],
 	'Plounge': [
 		'ajdance', 'pinkiedance', 'sweetiedance', 'dashdance', 'scootadance',
