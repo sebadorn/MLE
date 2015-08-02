@@ -1021,7 +1021,15 @@ var Updater = {
 				emote = emote.replace( '"]:hov', '' );
 
 				if( emotes.indexOf( emote ) == -1 ) {
-					subEmoteList.push( emote );
+					// Ignore table-like Plounge emotes. There is no dedicated
+					// table list for Plounge emotes in MLE, so we would only
+					// end up with duplicated entries.
+					if(
+						this.xhrCurrentTarget != 'r/mlplounge' ||
+						emote.match( /^r?pl[0-9]{2}$/ ) === null
+					) {
+						subEmoteList.push( emote );
+					}
 				}
 			}
 
