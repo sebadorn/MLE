@@ -3551,14 +3551,14 @@
 			'A': ['rdcry', 'paperbagderpy', 'lunawait'],
 			'C': ['trixiesad', 'lunasad', 'raritysad', 'fluttercry'],
 			'E': ['macintears', 'twisad', 'discordsad', 'maud', 'scootablue'],
-			'F': ['pinkiesad', 'ajcry']
+			'F': ['pinkiesad', 'ajcry', 'troubleshoes']
 		},
 		'angry': {
 			'A': ['silverspoon', 'cadence', 'grannysmith', 'ohcomeon'],
 			'B': ['rdcool', 'twirage', 'cockatrice', 'fluttersrs'],
 			'C': ['angel', 'rdannoyed', 'louder', 'loveme'],
 			'E': ['snails', 'discentia', 'lunamad', 'maud'],
-			'F': ['diamondtiara', 'guard', 'abstern', 'starlightrage'],
+			'F': ['diamondtiara', 'guard', 'abstern', 'starlightrage', 'bulkbiceps', 'discordgrump'],
 			'Plounge': ['karmastare']
 		},
 		'incredulous': {
@@ -3566,6 +3566,7 @@
 			'B': ['twisquint', 'facehoof', 'ajugh', 'squintyjack', 'rarityannoyed', 'raritywut', 'rarityjudge'],
 			'C': ['whattheflut', 'ppreally'],
 			'E': ['spikewtf', 'abhuh', 'rdhuh', 'pinkiepout', 'maud'],
+			'F': ['scootaeww'],
 			'Plounge': ['twidurr']
 		},
 		'scared': {
@@ -3580,25 +3581,27 @@
 			'B': ['ajwut'],
 			'C': ['lunagasp', 'derpyshock', 'fluttercry'],
 			'E': ['ajconfused', 'maud'],
-			'F': ['sbshocked', 'rarityeww']
+			'F': ['sbshocked', 'rarityeww', 'scootaeww']
 		},
 		'crazed': {
 			'A': ['applederp', 'scootaderp', 'twicrazy'],
 			'B': ['rdwut'],
 			'C': ['pinkamina'],
+			'F': ['thcalm'],
 			'Plounge': ['twidurr', 'dashdance']
 		},
 		'thoughtful': {
 			'A': ['scootaplease'],
 			'C': ['hmmm'],
-			'E': ['twiponder', 'pinkiepout', 'maud']
+			'E': ['twiponder', 'pinkiepout', 'maud'],
+			'F': ['ooh']
 		},
 		'sarcastic': {
 			'A': ['flutterroll', 'flutterjerk', 'ppcute', 'twiright', 'ajsup', 'ajlie'],
 			'B': ['ajsly', 'ppboring', 'trixiesmug', 'rarityprimp'],
 			'C': ['twismug'],
 			'E': ['octavia', 'maud'],
-			'F': ['diamondtiara', 'apathia']
+			'F': ['diamondtiara', 'apathia', 'rdsnrk']
 		},
 		'bashful': {
 			'A': ['shiningarmor'],
@@ -3610,18 +3613,19 @@
 			'A': ['swagintosh'],
 			'C': ['sneakybelle'],
 			'E': ['rdsalute', 'fillytgap', 'lunamad', 'maud', 'sunsetsneaky'],
-			'F': ['guard', 'abstern'],
+			'F': ['guard', 'abstern', 'bulkbiceps', 'discordgrump'],
 			'Plounge': ['karmasalute', 'karmastare']
 		},
 		'evil': {
 			'A': ['chrysalis', 'priceless'],
 			'C': ['changeling'],
 			'E': ['gilda', 'nmm', 'maud', 'sunsetsneaky'],
-			'F': ['sombra', 'starlightrage']
+			'F': ['sombra', 'starlightrage', 'discordgrump']
 		},
 		'distraught': {
 			'B': ['rarityyell', 'raritywhine', 'raritywhy', 'noooo'],
-			'E': ['maud']
+			'E': ['maud'],
+			'F': ['scootaeww']
 		},
 		'blank': {
 			'B': ['ppseesyou', 'eeyup'],
@@ -3664,6 +3668,9 @@
 		'bonbon': {
 			'E': ['bonbon']
 		},
+		'bulkbiceps': {
+			'F': ['bulkbiceps']
+		},
 		'cadence': {
 			'A': ['cadence'],
 			'C': ['cadencesmile']
@@ -3695,7 +3702,8 @@
 		},
 		'discord': {
 			'A': ['priceless'],
-			'E': ['discordsad']
+			'E': ['discordsad'],
+			'F': ['discordgrump']
 		},
 		'fluttershy': {
 			'A': ['flutterwhoa', 'flutterroll', 'flutterjerk'],
@@ -3744,7 +3752,7 @@
 			'B': ['ppseesyou', 'ppshrug', 'ppboring'],
 			'C': ['ohhi', 'party', 'hahaha', 'joy', 'pinkamina', 'ppreally'],
 			'E': ['huhhuh', 'pinkiepout'],
-			'F': ['pinkiesad'],
+			'F': ['pinkiesad', 'ooh'],
 			'Plounge': ['pinkiedance']
 		},
 		'rainbow': {
@@ -3752,6 +3760,7 @@
 			'B': ['rdcool', 'rdsmile', 'soawesome', 'rdwut'],
 			'C': ['rdsitting', 'rdhappy', 'rdannoyed', 'gross', 'louder', 'rdscared'],
 			'E': ['rdhuh', 'rdsalute', 'awwyeah'],
+			'F': ['rdsnrk'],
 			'Plounge': ['dashdance']
 		},
 		'rarity': {
@@ -3766,6 +3775,7 @@
 			'A': ['scootaderp', 'scootaplease', 'scootacheer'],
 			'C': ['scootaloo'],
 			'E': ['cutealoo', 'scootablue'],
+			'F': ['scootaeww'],
 			'Plounge': ['scootadance']
 		},
 		'shiningarmor': {
@@ -3807,11 +3817,17 @@
 			'F': ['sbshocked'],
 			'Plounge': ['sweetiedance']
 		},
+		'treehugger': {
+			'F': ['thcalm']
+		},
 		'trixie': {
 			'B': ['trixiesmug'],
 			'C': ['trixiesad'],
 			'E': ['fillytgap'],
 			'Plounge': ['amazingmagic', 'trixiedance']
+		},
+		'troubleshoes': {
+			'F': ['troubleshoes']
 		},
 		'twilight': {
 			'A': ['twipride', 'twiright', 'twibeam', 'twicrazy'],
@@ -3869,6 +3885,7 @@
 	TAGS['sunset'] = TAGS['sunsetshimmer'];
 	TAGS['sweetiebelle'] = TAGS['sweetie'];
 	TAGS['tgap'] = TAGS['trixie'];
+	TAGS['tree'] = TAGS['fluttershy'];
 	TAGS['ts'] = TAGS['twilight'];
 	TAGS['twi'] = TAGS['twilight'];
 	TAGS['twilightsparkle'] = TAGS['twilight'];

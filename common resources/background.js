@@ -274,7 +274,8 @@ var DEFAULT_EMOTES = {
 	'F': [
 		'pinkiesad', 'diamondtiara', 'sombra', 'sbshocked', 'guard',
 		'abstern', 'apathia', 'ajcry', 'rarityeww', 'flutterkay',
-		'starlightrage'
+		'starlightrage', 'bulkbiceps', 'scootaeww', 'discordgrump', 'troubleshoes',
+		'rdsnrk', 'thcalm', 'ooh'
 	],
 	'Plounge': [
 		'ajdance', 'pinkiedance', 'sweetiedance', 'dashdance', 'scootadance',
@@ -854,7 +855,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: 'GET',
 	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
-	xhrUserAgent: 'MLE/2.10.2 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.10.3 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -1020,7 +1021,15 @@ var Updater = {
 				emote = emote.replace( '"]:hov', '' );
 
 				if( emotes.indexOf( emote ) == -1 ) {
-					subEmoteList.push( emote );
+					// Ignore table-like Plounge emotes. There is no dedicated
+					// table list for Plounge emotes in MLE, so we would only
+					// end up with duplicated entries.
+					if(
+						this.xhrCurrentTarget != 'r/mlplounge' ||
+						emote.match( /^r?pl[0-9]{2}$/ ) === null
+					) {
+						subEmoteList.push( emote );
+					}
 				}
 			}
 
