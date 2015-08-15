@@ -1348,7 +1348,7 @@
 						'box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;',
 				// Emote blocks
 				'.mle-block% a':
-						'display: inline-block !important; float: none !important; border: 1px solid ' + cfg.boxEmoteBorder + '; border-radius: 2px; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;',
+						'display: inline-block !important; float: none !important; border: 1px solid ' + cfg.boxEmoteBorder + '; border-radius: 2px; box-sizing: content-box; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;',
 				'.mle-block% a:hover':
 						'border-color: #96BFE9;',
 				'.mle-warning':
