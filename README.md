@@ -5,7 +5,7 @@ Browser extension for Opera, Chrome and Firefox to manage emotes of subreddits. 
 
 ## Self-hosted
 
-[The latest non-dev version can be found here.](http://sebadorn.de/mlp/mle/)
+[The latest non-dev version can be found here.](https://sebadorn.de/mlp/mle/)
 
 
 ## Forword on the project structure
@@ -33,7 +33,7 @@ There are some variables inside of some files, that will be replaced while build
 
 * `%XPI_HASH%` – Firefox specific. A hash (sha256 in this case) will be generated from the build XPI file. Necessary for users to be able to install and update from your own server.
 * `%MLE_VERSION%` – Will be replaced with the version parameter provided when calling *build.sh*. Please note that Chrome only accepts versions in the form of point seperated numbers. So "1.9-dev" or "2.5a" wouldn't be valid.
-* `%MLE_URL%` – Absolute URL to the project home page. In my case: "http://sebadorn.de/mlp/mle".
+* `%MLE_URL%` – Absolute URL to the project home page. In my case: "https://sebadorn.de/mlp/mle".
 
 
 ### Opera

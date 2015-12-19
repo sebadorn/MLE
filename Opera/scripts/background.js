@@ -275,13 +275,15 @@ var DEFAULT_EMOTES = {
 		'pinkiesad', 'diamondtiara', 'sombra', 'sbshocked', 'guard',
 		'abstern', 'apathia', 'ajcry', 'rarityeww', 'flutterkay',
 		'starlightrage', 'bulkbiceps', 'scootaeww', 'discordgrump', 'troubleshoes',
-		'rdsnrk', 'thcalm', 'ooh'
+		'rdsnrk', 'thcalm', 'ooh', 'raritytired', 'notangry',
+		'ajdoubt', 'spikewhoa', 'wasntme', 'twipbbt', 'flimflam',
+		'cocosmile', 'skeptiloo', 'limestonegrin', 'raritygrump', 'goodjob',
+		'flutterhay', 'sbwtf', 'nightmaregrin', 'spikeapproves', 'flutternice',
+		'ppdont'
 	],
 	'Plounge': [
-		'ajdance', 'pinkiedance', 'sweetiedance', 'dashdance', 'scootadance',
-		'lunadance', 'raritydance', 'abdance', 'smooze', 'fillyrarity',
-		'twidurr', 'amazingmagic', 'karmasalute', 'dishappy', 'karmastare',
-		'ohnoes', 'trixiedance', 'filly'
+		'fillyrarity', 'twidur', 'amzingmagic', 'karmasalute', 'dishappy',
+		'karmastare', 'ohnoes', 'filly'
 	]
 };
 
@@ -855,7 +857,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: 'GET',
 	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
-	xhrUserAgent: 'MLE/2.10.4 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.10.5 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
