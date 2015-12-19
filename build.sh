@@ -1,13 +1,22 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 CFX="/home/$USER/.firefox-addon-sdk-1.17/bin/cfx"
 MCCOY="/home/$USER/.mccoy/mccoy"
 CHROME="google-chrome"
 
-PROJECT_URL="http://sebadorn.de/mlp/mle"
+FF_MLE_ID="mle@sebadorn.de"
+FF_MIN="38.0a1"
+FF_MAX="46.*"
+
+PROJECT_URL="https://sebadorn.de/mlp/mle"
 ABSOLUTE_PATH="/home/$USER/programming/My Little Emotebox"
 
+BROWSER="$1"
+VERSION="$2"
+
 export LD_LIBRARY_PATH="/home/$USER/.mccoy/xulrunner/"
+
+cd $(dirname "$0")
 
 
 function set_version_and_url {
@@ -62,32 +71,35 @@ function build_firefox {
 	cd Firefox/
 	cp package.json ../package_tmp.json
 
-	# Generate addon install file (XPI)
+	local FF_API_USER=$(cat ../build/ff-sign-api-user.txt)
+	local FF_API_KEY=$(cat ../build/ff-sign-api-key.txt)
+
 	set_version_and_url package.json
-	$CFX xpi --update-url "$PROJECT_URL/updates-firefox.rdf" --force-mobile --output-file="mle-unsigned.xpi"
+	jpm xpi
+	jpm sign --api-key ${FF_API_USER} --api-secret ${FF_API_KEY}
 
-	# Insert our public key into the generated install.rdf
-	unzip "mle-unsigned.xpi" install.rdf
-	$MCCOY -installRDF install.rdf -key "My Little Emotebox"
-	zip -f "mle-unsigned.xpi" install.rdf
-	rm install.rdf
+	if [ -e "my_little_emotebox-${VERSION}-fx+an.xpi" ]; then
+		mv "my_little_emotebox-${VERSION}-fx+an.xpi" '../build/mle-unsigned.xpi'
+		rm "${FF_MLE_ID}-${VERSION}.update.rdf"
+	fi
 
-	# Clean up
 	mv ../package_tmp.json package.json
-	mv "mle-unsigned.xpi" "../build/mle-unsigned.xpi"
 	cd ../
-}
 
-
-function build_firefox_updaterdf {
-	cp "server/updates-firefox-template.rdf" "build/updates-firefox.rdf"
+	# Add updateHash to update.rdf and sign it for old
+	# installs that don't use the HTTPS updateLink.
 	local XPI_HASH=$(sha256sum build/mle.xpi | sed "s/ .*//g" -)
+	sed -i "s;</em:updateLink>;</em:updateLink>\n<em:updateHash>sha256:$XPI_HASH</em:updateHash>;g" "build/updates-firefox.rdf"
+
+	# Sign update RDF
+	cp "server/updates-firefox-template.rdf" "build/updates-firefox.rdf"
+	sed -i "s;%FF_MLE_ID%;$FF_MLE_ID;g" "build/updates-firefox.rdf"
+	sed -i "s;%FF_MIN%;$FF_MIN;g" "build/updates-firefox.rdf"
+	sed -i "s;%FF_MAX%;$FF_MAX;g" "build/updates-firefox.rdf"
 	sed -i "s;%XPI_HASH%;sha256:$XPI_HASH;g" "build/updates-firefox.rdf"
 	set_version_and_url "build/updates-firefox.rdf"
 
-	# Sign update RDF
 	$MCCOY -signRDF "build/updates-firefox.rdf" -key "My Little Emotebox"
-	# $MCCOY -verifyRDF "build/updates-firefox.rdf" -key "My Little Emotebox"
 
 	# Replace XPI hash in mle.js
 	build_page
@@ -96,9 +108,10 @@ function build_firefox_updaterdf {
 
 function build_page {
 	local XPI_HASH=$(sha256sum build/mle.xpi | sed "s/ .*//g" -)
+
 	cd server/
 	cp "mle-template.js" mle.js
-	sed -i "s;%XPI_HASH%;sha256:$XPI_HASH;g" mle.js
+	sed -i "s;%XPI_HASH%;sha256:${XPI_HASH};g" mle.js
 	set_version_and_url mle.js
 	cd ../
 }
@@ -118,8 +131,6 @@ if [ $# -lt 2 ]; then
 	exit
 fi
 
-BROWSER="$1"
-VERSION="$2"
 
 if [ "$BROWSER" == "all" ]; then
 	build_opera
@@ -134,8 +145,6 @@ elif [ "$BROWSER" == "chrome_store" ]; then
 	build_chrome_store
 elif [ "$BROWSER" == "firefox" ]; then
 	build_firefox
-elif [ "$BROWSER" == "firefox_update" ]; then
-	build_firefox_updaterdf
 elif [ "$BROWSER" == "page" ]; then
 	build_page
 fi

@@ -1,21 +1,32 @@
-
 {
-	"name": "mle",
-	"fullName": "My Little Emotebox",
-	"description": "An easy way to insert and manage emotes.",
-	"author": "meinstuhlknarrt",
-	"homepage": "%MLE_URL%/",
-	"icon": "./icon.png",
-	"icon64": "./icon64.png",
-	"license": "MPL 2.0",
-	"id": "mle@sebadorn.de",
-	"version": "%MLE_VERSION%",
-	"preferences": [
-		{
-			"type": "control",
-			"label": "Options",
-			"name": "optionsPage",
-			"title": "Open options page"
-		}
-	]
+  "title": "My Little Emotebox",
+  "id": "mle@sebadorn.de",
+  "name": "mle",
+  "version": "%MLE_VERSION%",
+  "description": "An easy way to insert and manage emotes.",
+  "main": "lib/main.js",
+  "author": "meinstuhlknarrt",
+  "homepage": "%MLE_URL%/",
+  "icon": "resource://mle-at-sebadorn-dot-de/icon64.png",
+  "updateURL": "%MLE_URL%/updates-firefox.rdf",
+  "updateLink": "%MLE_URL%/mle.xpi",
+  "engines": {
+    "firefox": ">=38.0a1",
+    "fennec": ">=38.0a1"
+  },
+  "license": "MPL-2.0",
+  "keywords": [
+    "emotes",
+    "MLE",
+    "MLP",
+    "My Little Emotebox",
+    "My Little Pony",
+    "reddit"
+  ],
+  "preferences": [{
+    "type": "control",
+    "label": "Open options page",
+    "name": "optionsPage",
+    "title": "Open the options page"
+  }]
 }

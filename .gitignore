@@ -7,11 +7,16 @@ debug/*
 # Just some screenshots
 server/mle_*.png
 
-# Script containing Firefox SDK command cfx with a parameter for my local profile
-Firefox/cfxrun.sh
+# Firefox
+Firefox/*.update.rdf
+Firefox/jpmrun.sh
 
 # Chrome private key
 *.pem
+
+# Firefox signing api credentials
+ff-sign-api-key.txt
+ff-sign-api-user.txt
 
 # Build extension files
 build/*
