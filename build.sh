@@ -74,7 +74,9 @@ function build_firefox {
 	local FF_API_USER=$(cat ../build/ff-sign-api-user.txt)
 	local FF_API_KEY=$(cat ../build/ff-sign-api-key.txt)
 
+	sed -i "s;%FF_MAX%;$FF_MAX;g" package.json
 	set_version_and_url package.json
+
 	jpm xpi
 	jpm sign --api-key ${FF_API_USER} --api-secret ${FF_API_KEY}
 

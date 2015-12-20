@@ -11,8 +11,8 @@
   "updateURL": "%MLE_URL%/updates-firefox.rdf",
   "updateLink": "%MLE_URL%/mle.xpi",
   "engines": {
-    "firefox": ">=38.0a1",
-    "fennec": ">=38.0a1"
+    "firefox": "38.0a1 - %FF_MAX%",
+    "fennec": "38.0a1 - %FF_MAX%"
   },
   "license": "MPL-2.0",
   "keywords": [
