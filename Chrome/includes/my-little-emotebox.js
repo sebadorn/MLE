@@ -1637,11 +1637,17 @@
 					subCSS = g.sub_css['r/mlplounge'] + '\n\n';
 				}
 
-				styleNode.textContent += subCSS;
+				if( subCSS ) {
+					styleNode.textContent += subCSS;
+				}
 			}
 
 			if( !/^\/r\/mylittlepony\//i.test( here ) ) {
-				styleNode.textContent += g.sub_css['r/mylittlepony'] + '\n\n';
+				subCSS = g.sub_css['r/mylittlepony'];
+
+				if( subCSS ) {
+					styleNode.textContent += g.sub_css['r/mylittlepony'] + '\n\n';
+				}
 			}
 
 			// Special modifiers from r/mylittlepony
@@ -3561,8 +3567,9 @@
 			],
 			'F': [
 				'sombra', 'flimflam', 'cocosmile', 'goodjob', 'nightmaregrin',
-				'spikeapproved', 'flutternice'
+				'spikeapproved', 'flutternice', 'raritysquee'
 			],
+			'G': ['karma'],
 			'Plounge': ['fillyrarity', 'dishappy', 'amzingmagic', 'filly']
 		},
 		'sad': {
@@ -3579,7 +3586,7 @@
 			'F': [
 				'diamondtiara', 'guard', 'abstern', 'starlightrage', 'bulkbiceps',
 				'discordgrump', 'notangry', 'twipbbt', 'skeptiloo', 'raritygrump',
-				'ppdont'
+				'ppdont', 'ajgrump'
 			],
 			'Plounge': ['karmastare']
 		},
@@ -3592,6 +3599,7 @@
 				'scootaeww', 'ajdoubt', 'spikewhoa', 'skeptiloo', 'sbwtf',
 				'ppdont'
 			],
+			'G': ['discentiajudge'],
 			'Plounge': ['twidur']
 		},
 		'scared': {
@@ -3629,7 +3637,8 @@
 			'B': ['ajsly', 'ppboring', 'trixiesmug', 'rarityprimp'],
 			'C': ['twismug'],
 			'E': ['octavia', 'maud'],
-			'F': ['diamondtiara', 'apathia', 'rdsnrk', 'ajdoubt', 'goodjob']
+			'F': ['diamondtiara', 'apathia', 'rdsnrk', 'ajdoubt', 'goodjob'],
+			'G': ['twisnide', 'discentiajudge']
 		},
 		'bashful': {
 			'A': ['shiningarmor'],
@@ -3655,7 +3664,8 @@
 			'F': [
 				'sombra', 'starlightrage', 'discordgrump', 'notangry', 'twipbbt',
 				'limestonegrin', 'raritygrump', 'nightmaregrin'
-			]
+			],
+			'G': ['twisnide']
 		},
 		'distraught': {
 			'B': ['rarityyell', 'raritywhine', 'raritywhy', 'noooo'],
@@ -3666,7 +3676,7 @@
 			'B': ['ppseesyou', 'eeyup'],
 			'C': ['twistare', 'photofinish', 'ajfrown'],
 			'E': ['sbstare', 'maud'],
-			'F': ['apathia', 'flutterkay']
+			'F': ['apathia', 'flutterkay', 'gummystare']
 		},
 		'misc': {
 			'A': ['abbored'],
@@ -3694,7 +3704,7 @@
 			'B': ['squintyjack', 'ajsly', 'ajcower', 'ajugh', 'ajwut'],
 			'C': ['ajfrown', 'hmmm'],
 			'E': ['ajconfused'],
-			'F': ['ajcry', 'ajdoubt']
+			'F': ['ajcry', 'ajdoubt', 'ajgrump']
 		},
 		'berrypunch': {
 			'E': ['berry']
@@ -3735,6 +3745,7 @@
 		},
 		'discentia': {
 			'E': ['discentia'],
+			'G': ['discentiajudge'],
 			'Plounge': ['dishappy']
 		},
 		'discord': {
@@ -3757,8 +3768,12 @@
 		'grannysmith': {
 			'A': ['grannysmith']
 		},
+		'gummy': {
+			'F': ['gummystare']
+		},
 		'karma': {
 			'E': ['dealwithit'],
+			'G': ['karma'],
 			'Plounge': ['karmasalute', 'karmastare']
 		},
 		'lily': {
@@ -3813,7 +3828,7 @@
 			'B': ['rarityyell', 'raritywhine', 'raritydress', 'rarityannoyed', 'raritywut', 'raritywhy', 'rarityjudge', 'rarityprimp'],
 			'C': ['raritysad', 'fabulous'],
 			'E': ['wahaha'],
-			'F': ['rarityeww', 'raritytired', 'raritygrump'],
+			'F': ['rarityeww', 'raritytired', 'raritygrump', 'raritysquee'],
 			'Plounge': ['fillyrarity']
 		},
 		'scootaloo': {
@@ -3849,7 +3864,7 @@
 			'E': ['spitfire']
 		},
 		'starlight': {
-			'F': ['starlightrage', 'goodjob']
+			'F': ['starlightrage', 'goodjob', 'sgpopcorn']
 		},
 		'stevenmagnet': {
 			'E': ['sotrue']
@@ -3882,6 +3897,7 @@
 			'C': ['twistare', 'twismug', 'twismile', 'twidaw'],
 			'E': ['twiponder', 'twisad', 'twisecret'],
 			'F': ['twipbbt'],
+			'G': ['twisnide'],
 			'Plounge': ['twidur']
 		},
 		'vinyl': {

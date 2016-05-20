@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 
-CFX="/home/$USER/.firefox-addon-sdk-1.17/bin/cfx"
 MCCOY="/home/$USER/.mccoy/mccoy"
 CHROME="google-chrome"
 
 FF_MLE_ID="mle@sebadorn.de"
 FF_MIN="38.0a1"
-FF_MAX="46.*"
+FF_MAX="48.*"
 
 PROJECT_URL="https://sebadorn.de/mlp/mle"
 ABSOLUTE_PATH="/home/$USER/programming/My Little Emotebox"
@@ -80,8 +79,8 @@ function build_firefox {
 	jpm xpi
 	jpm sign --api-key ${FF_API_USER} --api-secret ${FF_API_KEY}
 
-	if [ -e "my_little_emotebox-${VERSION}-fx+an.xpi" ]; then
-		mv "my_little_emotebox-${VERSION}-fx+an.xpi" '../build/mle-unsigned.xpi'
+	if [ -e "mle@sebadorn.de-${VERSION}.xpi" ]; then
+		mv "mle@sebadorn.de-${VERSION}.xpi" '../build/mle.xpi'
 		rm "${FF_MLE_ID}-${VERSION}.update.rdf"
 	fi
 
@@ -91,7 +90,6 @@ function build_firefox {
 	# Add updateHash to update.rdf and sign it for old
 	# installs that don't use the HTTPS updateLink.
 	local XPI_HASH=$(sha256sum build/mle.xpi | sed "s/ .*//g" -)
-	sed -i "s;</em:updateLink>;</em:updateLink>\n<em:updateHash>sha256:$XPI_HASH</em:updateHash>;g" "build/updates-firefox.rdf"
 
 	# Sign update RDF
 	cp "server/updates-firefox-template.rdf" "build/updates-firefox.rdf"
@@ -128,7 +126,7 @@ fi
 
 if [ $# -lt 2 ]; then
 	echo "Not enough arguments provided."
-	echo "First argument: all | opera | chrome | chrome_store | firefox | firefox_update | page | clean"
+	echo "First argument: all | opera | chrome | chrome_store | firefox | page | clean"
 	echo "Second argument: version"
 	exit
 fi

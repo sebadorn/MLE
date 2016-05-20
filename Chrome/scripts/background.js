@@ -210,6 +210,7 @@ var DEFAULT_CONFIG = {
 	listNameTableC: 'C', // Name of the list for the emotes of table C
 	listNameTableE: 'E', // Name of the list for the emotes of table E
 	listNameTableF: 'F', // Name of the list for the emotes of table F
+	listNameTableG: 'G', // Name of the list for the emotes of table G
 	listNamePlounge: 'Plounge', // Name of the list for the non-table emotes of the Plounge
 	msgAnimationSpeed: 1000, // [ms]
 	msgPosition: 'top', // "top" or "bottom"
@@ -279,7 +280,10 @@ var DEFAULT_EMOTES = {
 		'ajdoubt', 'spikewhoa', 'wasntme', 'twipbbt', 'flimflam',
 		'cocosmile', 'skeptiloo', 'limestonegrin', 'raritygrump', 'goodjob',
 		'flutterhay', 'sbwtf', 'nightmaregrin', 'spikeapproves', 'flutternice',
-		'ppdont'
+		'ppdont', 'ajgrump', 'sgpopcorn', 'raritysquee', 'gummystare'
+	],
+	'G': [
+		'karma', 'discentiajudge', 'twisnide'
 	],
 	'Plounge': [
 		'fillyrarity', 'twidur', 'amzingmagic', 'karmasalute', 'dishappy',
@@ -857,7 +861,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: 'GET',
 	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
-	xhrUserAgent: 'MLE/2.10.5 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.10.6 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -873,7 +877,7 @@ var Updater = {
 
 	linkStart: 'a[href|="/',
 	linkStartReverse: 'a[href^="/r"]',
-	tableCodeRegex: /^[abcef][0-9]{2}$/i,
+	tableCodeRegex: /^[abcefg][0-9]{2}$/i,
 
 	emoteCSS: {},
 	emotes: {},
@@ -1451,6 +1455,10 @@ var Updater = {
 
 					case 'F':
 						table = cfg.listNameTableF;
+						break;
+
+					case 'G':
+						table = cfg.listNameTableG;
 						break;
 				}
 
