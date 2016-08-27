@@ -16,9 +16,9 @@
 <h1>My Little Emotebox<sup id="version"></sup></h1>
 
 <nav class="main">
-	<a href="index.html" class="active">Features</a>
-	<a href="install.html">Install</a>
-	<a href="changelog.html">Changelog</a>
+	<a href="index.php" class="active">Features</a>
+	<a href="install.php">Install</a>
+	<a href="changelog.php">Changelog</a>
 </nav>
 
 
