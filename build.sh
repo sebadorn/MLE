@@ -82,6 +82,12 @@ function build_firefox {
 	if [ -e "mle@sebadorn.de-${VERSION}.xpi" ]; then
 		mv "mle@sebadorn.de-${VERSION}.xpi" '../build/mle.xpi'
 		rm "${FF_MLE_ID}-${VERSION}.update.rdf"
+	elif [ -e "my_little_emotebox-${VERSION}-fx+an.xpi" ]; then
+		mv "my_little_emotebox-${VERSION}-fx+an.xpi" '../build/mle.xpi'
+		rm "${FF_MLE_ID}-${VERSION}.update.rdf"
+	elif [ -e "my_little_emotebox-${VERSION}-an+fx.xpi" ]; then
+		mv "my_little_emotebox-${VERSION}-an+fx.xpi" '../build/mle.xpi'
+		rm "${FF_MLE_ID}-${VERSION}.update.rdf"
 	fi
 
 	mv ../package_tmp.json package.json

@@ -283,7 +283,8 @@ var DEFAULT_EMOTES = {
 		'ppdont', 'ajgrump', 'sgpopcorn', 'raritysquee', 'gummystare'
 	],
 	'G': [
-		'karma', 'discentiajudge', 'twisnide'
+		'karma', 'discentiajudge', 'twisnide', 'pinkie', 'cococold',
+		'quibble', 'rdthis', 'flutterbrow'
 	],
 	'Plounge': [
 		'fillyrarity', 'twidur', 'amzingmagic', 'karmasalute', 'dishappy',
@@ -861,7 +862,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: 'GET',
 	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
-	xhrUserAgent: 'MLE/2.10.6 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.10.7 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,

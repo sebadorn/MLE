@@ -28,6 +28,18 @@
 			<a href="https://github.com/sebadorn/MLE">Source code available on GitHub.</a>
 		</li>
 		<li>
+			<h2>2.10.9</h2>
+			<ul>
+				<li><code>Bugfix</code> Some missing G table integration.</li>
+			</ul>
+		</li>
+		<li>
+			<h2>2.10.7</h2>
+			<ul>
+				<li><code>Misc.</code> Added tags for new emotes.</li>
+			</ul>
+		</li>
+		<li>
 			<h2>2.10.6</h2>
 			<ul>
 				<li><code>Misc.</code> Added new G table.</li>

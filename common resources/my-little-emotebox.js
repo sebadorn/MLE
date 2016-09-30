@@ -173,6 +173,9 @@
 			case 'F':
 				return cfg.listNameTableF;
 
+			case 'G':
+				return cfg.listNameTableG;
+
 			case 'Plounge':
 				return cfg.listNamePlounge;
 
@@ -479,6 +482,7 @@
 			cfg.listNameTableC,
 			cfg.listNameTableE,
 			cfg.listNameTableF,
+			cfg.listNameTableG,
 			cfg.listNamePlounge
 		];
 
@@ -3569,14 +3573,15 @@
 				'sombra', 'flimflam', 'cocosmile', 'goodjob', 'nightmaregrin',
 				'spikeapproved', 'flutternice', 'raritysquee'
 			],
-			'G': ['karma'],
+			'G': ['karma', 'pinkie', 'rdthis'],
 			'Plounge': ['fillyrarity', 'dishappy', 'amzingmagic', 'filly']
 		},
 		'sad': {
 			'A': ['rdcry', 'paperbagderpy', 'lunawait'],
 			'C': ['trixiesad', 'lunasad', 'raritysad', 'fluttercry'],
 			'E': ['macintears', 'twisad', 'discordsad', 'maud', 'scootablue'],
-			'F': ['pinkiesad', 'ajcry', 'troubleshoes', 'raritytired']
+			'F': ['pinkiesad', 'ajcry', 'troubleshoes', 'raritytired'],
+			'G': ['cococold']
 		},
 		'angry': {
 			'A': ['silverspoon', 'cadence', 'grannysmith', 'ohcomeon'],
@@ -3588,6 +3593,7 @@
 				'discordgrump', 'notangry', 'twipbbt', 'skeptiloo', 'raritygrump',
 				'ppdont', 'ajgrump'
 			],
+			'G': ['quibble'],
 			'Plounge': ['karmastare']
 		},
 		'incredulous': {
@@ -3599,7 +3605,7 @@
 				'scootaeww', 'ajdoubt', 'spikewhoa', 'skeptiloo', 'sbwtf',
 				'ppdont'
 			],
-			'G': ['discentiajudge'],
+			'G': ['discentiajudge', 'flutterbrow'],
 			'Plounge': ['twidur']
 		},
 		'scared': {
@@ -3638,7 +3644,7 @@
 			'C': ['twismug'],
 			'E': ['octavia', 'maud'],
 			'F': ['diamondtiara', 'apathia', 'rdsnrk', 'ajdoubt', 'goodjob'],
-			'G': ['twisnide', 'discentiajudge']
+			'G': ['twisnide', 'discentiajudge', 'flutterbrow']
 		},
 		'bashful': {
 			'A': ['shiningarmor'],
@@ -3731,7 +3737,8 @@
 			'E': ['cheerilee']
 		},
 		'coco': {
-			'F': ['cocosmile']
+			'F': ['cocosmile'],
+			'G': ['cococold']
 		},
 		'colgate': {
 			'E': ['colgate']
@@ -3760,7 +3767,8 @@
 			'A': ['flutterwhoa', 'flutterroll', 'flutterjerk'],
 			'B': ['fluttershh', 'fluttershy', 'fluttersrs', 'flutterfear', 'flutterwink', 'flutteryay'],
 			'C': ['flutterblush', 'loveme', 'whattheflut', 'fluttercry'],
-			'F': ['flutterkay', 'flutterhay', 'flutternice']
+			'F': ['flutterkay', 'flutterhay', 'flutternice'],
+			'G': ['flutterbrow']
 		},
 		'gilda': {
 			'E': ['gilda']
@@ -3814,14 +3822,19 @@
 			'B': ['ppseesyou', 'ppshrug', 'ppboring'],
 			'C': ['ohhi', 'party', 'hahaha', 'joy', 'pinkamina', 'ppreally'],
 			'E': ['huhhuh', 'pinkiepout'],
-			'F': ['pinkiesad', 'ooh', 'ppdont']
+			'F': ['pinkiesad', 'ooh', 'ppdont'],
+			'G': ['pinkie']
+		},
+		'quibble': {
+			'G': ['quibble']
 		},
 		'rainbow': {
 			'A': ['rdcry'],
 			'B': ['rdcool', 'rdsmile', 'soawesome', 'rdwut'],
 			'C': ['rdsitting', 'rdhappy', 'rdannoyed', 'gross', 'louder', 'rdscared'],
 			'E': ['rdhuh', 'rdsalute', 'awwyeah'],
-			'F': ['rdsnrk', 'notangry']
+			'F': ['rdsnrk', 'notangry'],
+			'G': ['rdthis']
 		},
 		'rarity': {
 			'A': ['raritypaper', 'raritydaww', 'rarityreally', 'rarishock'],
