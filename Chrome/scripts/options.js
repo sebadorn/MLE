@@ -236,11 +236,24 @@ function loadConfig() {
  */
 function postMessage( msg ) {
 	// Opera
-	if( typeof opera != 'undefined' ) {
+	if( typeof opera !== 'undefined' ) {
 		opera.extension.postMessage( msg );
 	}
+	// Firefox (WebExt)
+	else if( typeof browser !== 'undefined' ) {
+		browser.runtime.sendMessage( msg ).then(
+			function( response ) {
+				if( response ) {
+					handleBackgroundMessages( { data: response } );
+				}
+			},
+			function( err ) {
+				console.error( err );
+			}
+		);
+	}
 	// Chrome
-	else if( typeof chrome != 'undefined' ) {
+	else if( typeof chrome !== 'undefined' ) {
 		chrome.extension.sendMessage( msg, handleBackgroundMessages );
 	}
 	// probably Firefox
@@ -350,11 +363,17 @@ function registerEventToggleNav() {
  */
 function registerForBackgroundMessages() {
 	// Opera
-	if( typeof opera != 'undefined' ) {
+	if( typeof opera !== 'undefined' ) {
 		opera.extension.onmessage = handleBackgroundMessages;
 	}
+	// Firefox (WebExt)
+	else if( typeof browser !== 'undefined' ) {
+		browser.runtime.onMessage.addListener( function( msg ) {
+			handleBackgroundMessages( { data: msg } );
+		} );
+	}
 	// Chrome
-	else if( typeof chrome != 'undefined' ) {
+	else if( typeof chrome !== 'undefined' ) {
 		chrome.extension.onMessage.addListener( handleBackgroundMessages );
 	}
 	// probably Firefox

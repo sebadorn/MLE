@@ -1,0 +1,281 @@
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+a {
+	color: #2560AB;
+	text-decoration: none;
+}
+
+a:hover {
+	border-bottom: 1px solid #2560AB;
+}
+
+html {
+	background-color: #ffffff;
+	color: #000000;
+	font: 16px Arial, sans-serif;
+	padding-bottom: 80px;
+}
+
+fieldset {
+	border: 0;
+}
+
+h1 {
+	font-size: 42px;
+	font-weight: bold;
+	letter-spacing: -1px;
+	line-height: 30px;
+	margin: 72px auto 10px;
+	position: relative;
+	text-transform: uppercase;
+}
+
+h2 {
+	font-size: 19px;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+li.headline {
+	background-color: #f2f2f8;
+	padding: 20px !important;
+}
+
+input, select, textarea {
+	background-color: #ffffff;
+	border: 1px solid #e0e0e0;
+	border-radius: 1px;
+	box-sizing: border-box;
+	color: #000000;
+	font: 100% Arial, sans-serif;
+}
+
+input[type="text"], input[type="number"] {
+	padding: 4px 4px;
+}
+
+input[type="checkbox"] {
+	margin-right: 8px;
+}
+
+input[type="number"] {
+	margin-right: 8px;
+	width: 70px;
+}
+
+input[type="text"] {
+	margin-right: 6px;
+	width: 97px;
+}
+
+input.color,
+input.long {
+	font-family: monospace;
+	font-size: 13px;
+	width: 160px;
+}
+
+input[data-meta] {
+	text-align: center;
+}
+
+input[readonly] {
+	background-color: #f0f0f0 !important;
+	color: #a0a0a0 !important;
+}
+
+input[type="submit"] {
+	background-color: #9AB4D1;
+	border-width: 0;
+	color: #ffffff;
+	cursor: pointer;
+	min-width: 110px;
+	padding: 4px 8px;
+}
+
+input[type="submit"]:hover {
+	background-color: #6189B5;
+}
+
+select {
+	margin-right: 6px;
+	min-width: 97px;
+	padding: 3px 6px;
+}
+
+textarea {
+	font-family: "DejaVu Sans Mono", "Courier New", monospace;
+	font-size: 13px;
+	height: 140px;
+	padding: 10px;
+	resize: vertical;
+	width: 500px;
+}
+
+textarea[readonly] {
+	background-color: #fafafa;
+	border-color: #d8d8d8;
+	color: #101010;
+}
+
+ul {
+	list-style-type: none;
+}
+
+
+
+/* Same width */
+/* ---------- */
+
+h1, nav, #msg, .options {
+	box-sizing: border-box;
+	max-width: 720px;
+}
+
+
+
+/* Message box */
+/* ----------- */
+
+#msgbox {
+	position: fixed;
+	bottom: -200px;
+	-moz-transition: bottom 1200ms;
+	-webkit-transition: bottom 1200ms;
+	-o-transition: bottom 1200ms;
+	transition: bottom 1200ms;
+	width: 100%;
+	z-index: 100;
+}
+
+#msgbox.show {
+	bottom: 0;
+	-moz-transition: bottom 1000ms;
+	-webkit-transition: bottom 1000ms;
+	-o-transition: bottom 1000ms;
+	transition: bottom 1000ms;
+}
+
+	#msg {
+		background-color: #505050;
+		border-top: 3px solid transparent;
+		border-radius: 5px;
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+		color: #f0f0f0;
+		line-height: 24px;
+		margin: 0 auto;
+		padding: 16px 20px;
+		text-align: center;
+	}
+
+	#msg.err {
+		border-color: #E15353;
+	}
+
+	#msg.info {
+		border-color: #63C95C;
+	}
+
+
+
+/* Navigation */
+/* ---------- */
+
+nav {
+	margin: 0 auto 48px;
+}
+
+	nav label {
+		background-color: #f0f0f0;
+		border-radius: 1px;
+		color: #000000;
+		cursor: pointer;
+		display: inline-block;
+		margin-right: 10px;
+		min-width: 80px;
+		padding: 8px;
+		position: relative;
+		text-align: center;
+	}
+
+	nav label:hover {
+		background-color: #ffffff;
+	}
+
+	nav .active {
+		background-color: #404040 !important;
+		color: #ffffff;
+	}
+
+	nav .active:after {
+		border: 10px solid transparent;
+		border-top-color: #404040;
+		bottom: -20px;
+		content: "";
+		display: inline-block;
+		left: 40px;
+		position: absolute;
+	}
+
+.options {
+	margin: 0 auto;
+}
+
+.form {
+	display: none;
+}
+
+input[name="page"]:checked ~ .form {
+	display: block;
+}
+
+	.form li {
+		border-top: 1px solid #e0e0e0;
+		padding: 20px 0;
+	}
+
+	.form li:last-child {
+		border-bottom: 1px solid #e0e0e0;
+	}
+
+		.form label {
+			display: inline-block;
+		}
+
+		.unit {
+			color: #a0a0a0;
+			display: inline-block;
+			margin-left: -6px;
+			margin-right: 6px;
+			width: 21px;
+		}
+
+		.explain {
+			color: #909090;
+			font-size: 13px;
+			line-height: 16px;
+			margin-top: 8px;
+		}
+
+		.export-import label {
+			display: block;
+			margin-bottom: 8px;
+		}
+
+		.export-import input {
+			margin-left: 10px;
+			vertical-align: top;
+		}
+
+		.reset {
+			background-color: #DB0B0B !important;
+		}
+
+		.reset:hover {
+			background-color: #B51414 !important;
+		}

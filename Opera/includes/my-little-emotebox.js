@@ -593,11 +593,17 @@
 	 */
 	function postMessage( msg ) {
 		// Opera
-		if( typeof opera != 'undefined' ) {
+		if( typeof opera !== 'undefined' ) {
 			opera.extension.postMessage( msg );
 		}
+		// Firefox (WebExt)
+		else if( typeof browser !== 'undefined' ) {
+			browser.runtime.sendMessage( msg ).then( function( response ) {
+				response && handleBackgroundMessages( { data: response } );
+			} );
+		}
 		// Chrome
-		else if( typeof chrome != 'undefined' ) {
+		else if( typeof chrome !== 'undefined' ) {
 			chrome.extension.sendMessage( msg, handleBackgroundMessages );
 		}
 		// probably Firefox
@@ -3502,11 +3508,15 @@
 		 */
 		registerForBackgroundMessages: function() {
 			// Opera
-			if( typeof opera != 'undefined' ) {
+			if( typeof opera !== 'undefined' ) {
 			    opera.extension.onmessage = handleBackgroundMessages;
 			}
+			// Firefox (WebExt)
+			else if( typeof browser !== 'undefined' ) {
+				browser.runtime.onMessage.addListener( handleBackgroundMessages );
+			}
 			// Chrome
-			else if( typeof chrome != 'undefined' ) {
+			else if( typeof chrome !== 'undefined' ) {
 				chrome.extension.onMessage.addListener( handleBackgroundMessages );
 			}
 			// probably Firefox

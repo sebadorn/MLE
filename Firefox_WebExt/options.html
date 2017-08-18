@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>My Little Emotebox – Options</title>
+	<link rel="stylesheet" href="options.css" />
+	<script id="options-script-placeholder"></script>
+	<script src="includes/mle-codes.js"></script>
+	<script src="scripts/options-bootstrap.js"></script>
+	<link rel="shortcut icon" href="icons/MLE_16.png" />
+</head>
+<body>
+
+<h1>My Little Emotebox</h1>
+
+<div id="msgbox" class="">
+	<div id="msg" class=""></div>
+</div>
+
+<nav>
+	<label for="behaviour" class="active">Behaviour</label>
+	<label for="style">Style</label>
+	<label for="emotes">Emotes</label>
+	<label for="advanced">Advanced</label>
+	<label for="about">About</label>
+</nav>
+
+<div class="options">
+
+	<!-- Behaviour -->
+	<fieldset>
+		<input type="radio" name="page" id="behaviour" hidden checked />
+		<ul class="form">
+			<li>
+				<select id="boxTrigger">
+					<option value="float">float</option>
+					<option value="button">button</option>
+				</select>
+				<label for="boxTrigger">Page integration when minimized</label>
+				<p class="explain">
+					<strong>float</strong> – A little box at the side, that stays on top of other elements and scrolls with the view.<br />
+					<strong>button</strong> – A button next to every textarea.
+				</p>
+			</li>
+			<li>
+				<select id="ctxMenu">
+					<option value="true">enabled</option>
+					<option value="false">disabled</option>
+				</select>
+				<label for="ctxMenu">Context menu for emotes</label>
+			</li>
+			<li>
+				<input type="checkbox" id="boxUnderHeader" value="true" />
+				<label for="boxUnderHeader">Box gets hidden by reddit header</label>
+				<p class="explain">May not work in every subreddit, due to custom CSS.</p>
+			</li>
+			<li>
+				<input type="checkbox" id="addBlankAfterInsert" value="true" />
+				<label for="addBlankAfterInsert">Add a blank after inserted emotes</label>
+			</li>
+			<li>
+				<input type="checkbox" id="showEmoteTitleText" value="false" />
+				<label for="showEmoteTitleText">Show emote title text</label>
+				<p class="explain">Also known as alt text. Text that would normally only become visible by hovering with the mouse over the emote.</p>
+			</li>
+			<li>
+				<input type="checkbox" id="showTitleConvertURLs" value="true" />
+				<label for="showTitleConvertURLs">Convert URLs in title text into links</label>
+				<p class="explain">When showing emote title text convert URLs into clickable links.</p>
+			</li>
+			<li>
+				<input type="checkbox" id="stopEmoteLinkFollowing" value="true" />
+				<label for="stopEmoteLinkFollowing">Stop emote link following</label>
+				<p class="explain">Emotes are basically just links. Left-clicking them normally opens the link. This option stops that.</p>
+			</li>
+
+			<li class="headline">
+				<h2>Search</h2>
+			</li>
+			<li>
+				<input type="checkbox" id="searchGroupEmotes" value="true" />
+				<label for="searchGroupEmotes">Group search results</label>
+				<p class="explain">Group the search results by subreddit – or table in case of r/mylittlepony.</p>
+			</li>
+
+			<li class="headline">
+				<h2>Emotes Out-of-Sub</h2>
+			</li>
+			<li>
+				<input type="checkbox" id="displayEmotesOutOfSub" value="true" />
+				<label for="displayEmotesOutOfSub">Display emotes outside of their subreddit</label>
+				<p class="explain">Show emotes outside of r/mylittlepony and r/MLPLounge.</p>
+			</li>
+			<li>
+				<input type="checkbox" id="adjustEmotesInInbox" value="true" />
+				<label for="adjustEmotesInInbox">Adjust r/MLPLounge emotes in the inbox and user overview</label>
+				<p class="explain">
+					Show r/MLPLounge emotes in the inbox and user overview for messages and comments that come from this subreddit – instead of the r/mylittlepony emotes.<br />
+					<em>Enabling this option may cause a slight slowdown in the inbox and user overview.</em>
+				</p>
+			</li>
+			<li>
+				<input type="checkbox" id="revealUnknownEmotes" value="true" />
+				<label for="revealUnknownEmotes">Reveal unknown emotes</label>
+				<p class="explain">Show a placeholder for emotes that cannot be displayed – most likely for emotes that are from another subreddit.</p>
+			</li>
+
+			<li class="headline">
+				<h2>Keys</h2>
+			</li>
+			<li>
+				<select id="keyReverse">
+					<option value="16">shift</option>
+					<option value="17">ctrl</option>
+					<option value="18">alt</option>
+				</select>
+				<label for="keyReverse">Insert emote reversed</label>
+				<p class="explain">Adds a "r" prefix to the default emotes and a "-r" suffix to the other ones.</p>
+			</li>
+		</ul>
+	</fieldset>
+
+	<!-- Style -->
+	<fieldset>
+		<input type="radio" name="page" id="style" hidden />
+		<ul class="form">
+			<li class="headline">
+				<h2>Emote box</h2>
+			</li>
+			<li>
+				<select id="boxAlign">
+					<option value="left">left</option>
+					<option value="right">right</option>
+				</select>
+				<label for="boxAlign">X axis orientation on page</label>
+				<p class="explain">
+					<strong>left</strong> – Origin of X ordinates is on the left.<br />
+					<strong>right</strong> – Origin of X ordinates is on the right.
+				</p>
+			</li>
+			<li>
+				<input type="number" id="boxPosX" value="" />
+				<span class="unit">px</span>
+				<label for="boxPosX">Box margin from the side</label>
+				<p class="explain">If it is the left or right side is specified in the <em>X axis orientation</em> setting.</p>
+			</li>
+			<li>
+				<input type="number" id="boxPosTop" value="" />
+				<span class="unit">px</span>
+				<label for="boxPosTop">Box margin from top</label>
+			</li>
+			<li>
+				<select id="boxScrollbar">
+					<option value="left">left</option>
+					<option value="right">right</option>
+				</select>
+				<label for="boxScrollbar">Side the list scrollbar is on</label>
+			</li>
+			<li>
+				<input type="text" id="boxLabelMinimized" value="" />
+				<label for="boxLabelMinimized">Box label when minimized</label>
+			</li>
+			<li>
+				<input type="number" id="boxWidthMinimized" value="" />
+				<span class="unit">px</span>
+				<label for="boxWidthMinimized">Box width when minimized</label>
+			</li>
+			<li>
+				<input type="number" id="boxWidth" value="" />
+				<span class="unit">px</span>
+				<label for="boxWidth">Box width</label>
+			</li>
+			<li>
+				<input type="number" id="boxHeight" value="" />
+				<span class="unit">px</span>
+				<label for="boxHeight">Box height</label>
+			</li>
+			<li>
+				<input type="number" id="boxAnimationSpeed" value="" />
+				<span class="unit">ms</span>
+				<label for="boxAnimationSpeed">Time needed for the box to open</label>
+			</li>
+			<li>
+				<input type="text" class="color" id="boxBgColor" value="" />
+				<label for="boxBgColor">Box background color</label>
+				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
+			</li>
+			<li>
+				<input type="text" class="color" id="boxEmoteBorder" value="" />
+				<label for="boxEmoteBorder">Border color around emotes</label>
+				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
+			</li>
+
+			<li class="headline">
+				<h2>Reveal unknown emotes</h2>
+			</li>
+			<li>
+				<input type="text" class="color" id="revealStyleBgColor" value="" />
+				<label for="revealStyleBgColor">Background color</label>
+				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
+			</li>
+			<li>
+				<input type="text" class="color" id="revealStyleBorderColor" value="" />
+				<label for="revealStyleBorderColor">Border color</label>
+			</li>
+			<li>
+				<input type="text" class="color" id="revealStyleColor" value="" />
+				<label for="revealStyleColor">Text color</label>
+			</li>
+
+			<li class="headline">
+				<h2>Show emote title text</h2>
+			</li>
+			<li>
+				<select id="showTitleStyleDisplay">
+					<option value="block">block</option>
+					<option value="float">float</option>
+				</select>
+				<label for="showTitleStyleDisplay">Type of the text container</label>
+				<p class="explain">
+					<strong>block</strong> – The text will fill the whole line and following text or emotes will be forced into the next line. Setting the border and background color to transparent (<code>rgba(0,0,0,0.0)</code>) may look best with the <em>block</em> setting.<br />
+					<strong>float</strong> – Following emotes and text will stay in the same line, if possible.
+				</p>
+			</li>
+			<li>
+				<input type="text" class="color" id="showTitleStyleBgColor" value="" />
+				<label for="showTitleStyleBgColor">Background color</label>
+				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
+			</li>
+			<li>
+				<input type="text" class="color" id="showTitleStyleBorderColor" value="" />
+				<label for="showTitleStyleBorderColor">Border color</label>
+			</li>
+			<li>
+				<input type="text" class="color" id="showTitleStyleColor" value="" />
+				<label for="showTitleStyleColor">Text color</label>
+			</li>
+
+			<li class="headline">
+				<h2>Context menu</h2>
+			</li>
+			<li>
+				<input type="text" class="color" id="ctxStyleBgColor" value="" />
+				<label for="ctxStyleBgColor">Background color</label>
+				<p class="explain">Format: <code>#f4f4f4</code>, <code>rgb(122,179,51)</code> or <code>rgba(210,57,57,0.6)</code>.</p>
+			</li>
+			<li>
+				<input type="text" class="color" id="ctxStyleBorderColor" value="" />
+				<label for="ctxStyleBorderColor">Border color</label>
+			</li>
+			<li>
+				<input type="text" class="color" id="ctxStyleColor" value="" />
+				<label for="ctxStyleColor">Text color</label>
+			</li>
+			<li>
+				<input type="text" class="color" id="ctxStyleHoverColor" value="" />
+				<label for="ctxStyleHoverColor">Highlight color</label>
+			</li>
+
+			<li class="headline">
+				<h2>Notifier</h2>
+			</li>
+			<li>
+				<select id="msgPosition">
+					<option value="top">top</option>
+					<option value="bottom">bottom</option>
+				</select>
+				<label for="msgPosition">Message position on page</label>
+			</li>
+			<li>
+				<input type="number" id="msgAnimationSpeed" value="" />
+				<span class="unit">ms</span>
+				<label for="msgAnimationSpeed">Time needed for a message to slide in/out</label>
+			</li>
+			<li>
+				<input type="number" id="msgTimeout" value="" />
+				<span class="unit">ms</span>
+				<label for="msgTimeout">How long a message stays</label>
+			</li>
+		</ul>
+	</fieldset>
+
+	<!-- Emotes -->
+	<fieldset>
+		<input type="radio" name="page" id="emotes" hidden />
+		<ul class="form">
+			<li class="headline">
+				<h2>Backup</h2>
+			</li>
+			<li class="export-import">
+				<label>Export emotes</label>
+				<textarea id="export-emotes-ta" readonly></textarea>
+				<input type="submit" id="export-emotes" value="export" />
+				<p class="explain">Export format is <a href="http://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
+			</li>
+			<li class="export-import">
+				<label>Import emotes</label>
+				<textarea id="import-emotes-ta"></textarea>
+				<input type="submit" id="import-emotes" value="import" />
+				<p class="explain">Import format is <a href="http://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
+			</li>
+			<li>
+				<input type="submit" id="reset-emotes" class="reset" value="reset emotes" />
+				<p class="explain">Turns the lists and emotes back to the default.</p>
+			</li>
+
+			<li class="headline">
+				<h2>Emote settings for auto-updates</h2>
+				<p class="explain">The emotes we get from the subreddit stylesheet are merged with certain emote lists of the extension. Here you can set, which lists you want the emotes to be automatically be put into. If a list with the provided name doesn't exist, it will be created.</p>
+			</li>
+			<li>
+				<input type="text" id="listNameTableA" value="" />
+				<label for="listNameTableA">List for the emotes of table A from r/mylittlepony</label>
+			</li>
+			<li>
+				<input type="text" id="listNameTableB" value="" />
+				<label for="listNameTableB">List for the emotes of table B from r/mylittlepony</label>
+			</li>
+			<li>
+				<input type="text" id="listNameTableC" value="" />
+				<label for="listNameTableC">List for the emotes of table C from r/mylittlepony</label>
+			</li>
+			<li>
+				<input type="text" id="listNameTableE" value="" />
+				<label for="listNameTableE">List for the emotes of table E from r/mylittlepony</label>
+			</li>
+			<li>
+				<input type="text" id="listNameTableF" value="" />
+				<label for="listNameTableF">List for the emotes of table F from r/mylittlepony</label>
+			</li>
+			<li>
+				<input type="text" id="listNameTableG" value="" />
+				<label for="listNameTableG">List for the emotes of table G from r/mylittlepony</label>
+			</li>
+			<li>
+				<input type="text" id="listNamePlounge" value="" />
+				<label for="listNamePlounge">List for the non-table emotes from r/MLPLounge</label>
+			</li>
+		</ul>
+	</fieldset>
+
+	<!-- Advanced -->
+	<fieldset>
+		<input type="radio" name="page" id="advanced" hidden />
+		<ul class="form">
+			<li class="headline">
+				<h2>Emote Updates</h2>
+			</li>
+			<li>
+				<input type="submit" id="force-update" class="update" value="force stylesheet update" />
+				<p class="explain">Get and parse the stylesheets from r/mylittlepony and r/MLPLounge for emotes. This may take a few seconds.</p>
+			</li>
+			<li>
+				<input type="text" class="long" id="lastSubredditCheck" data-meta="true" readonly />
+				<label>Last time the subreddits have been checked for new emotes</label>
+				<p class="explain"><em>Readonly.</em> Format: <code>yyyy-mm-dd hh:ii</code></p>
+			</li>
+			<li>
+				<select id="intervalToCheckCSS">
+					<option value="-1">never</option>
+					<option value="21600000">6 hours</option>
+					<option value="43200000">12 hours</option>
+					<option value="64800000">18 hours</option>
+					<option value="86400000">1 day</option>
+					<option value="172800000">2 days</option>
+					<option value="604800000">1 week</option>
+				</select>
+				<label for="intervalToCheckCSS">Interval to check the subreddit stylesheets for changes</label>
+				<p class="explain">
+					Update checks occur every time you visit reddit or this options page.<br />
+					If equal or more time than set here has passed since the last check, an update is started.
+				</p>
+			</li>
+
+			<li class="headline">
+				<h2>Compatibility</h2>
+			</li>
+			<li>
+				<input type="checkbox" id="adjustForBetterPonymotes" value="true" />
+				<label for="adjustForBetterPonymotes">Adjust for BetterPonymotes</label>
+				<p class="explain">If you use <a href="https://ponymotes.net/bpm/">BetterPonymotes</a> to display out-of-sub emotes, an extra CSS class has to be added to the emotes inside of the MLE box.</p>
+			</li>
+			<li>
+				<input type="checkbox" id="adjustForGrEmB" value="true" />
+				<label for="adjustForGrEmB">Adjust for GrEmB</label>
+				<p class="explain"><em>(Please note that GrEmB is discontinued.)</em> If you use <a href="http://nallar.me/scripts/">GrEmB</a> to display out-of-sub emotes, an extra CSS class has to be added to the emotes inside of the MLE box.</p>
+			</li>
+
+			<li class="headline">
+				<h2>Backup</h2>
+			</li>
+			<li class="export-import">
+				<label>Export config</label>
+				<textarea id="export-config-ta" readonly></textarea>
+				<input type="submit" id="export-config" value="export" />
+				<p class="explain">Export format is <a href="http://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
+			</li>
+			<li class="export-import">
+				<label>Import config</label>
+				<textarea id="import-config-ta"></textarea>
+				<input type="submit" id="import-config" value="import" />
+				<p class="explain">Import format is <a href="http://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
+			</li>
+			<li>
+				<input type="submit" id="reset-config" class="reset" value="reset config" />
+				<p class="explain">Turns the configuration back to the default settings. If an import goes wrong, this may come in handy.</p>
+			</li>
+		</ul>
+	</fieldset>
+
+	<!-- About -->
+	<fieldset>
+		<input type="radio" name="page" id="about" hidden />
+		<ul class="form">
+			<li>
+				<label><a href="https://github.com/sebadorn/MLE">https://github.com/sebadorn/MLE</a></label>
+				<p class="explain">Repository on GitHub.</p>
+			</li>
+			<li>
+				<label><a href="https://mozilla.org/MPL/2.0/">https://mozilla.org/MPL/2.0/</a></label>
+				<p class="explain">License: Mozilla Public License, Version 2.0</p>
+			</li>
+		</ul>
+	</fieldset>
+
+</div>
+
+</body>
+</html>

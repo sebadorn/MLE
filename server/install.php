@@ -43,7 +43,7 @@
 
 		<input type="radio" name="browser" id="tab_firefox" hidden />
 		<div class="tab-content firefox">
-			<a class="install_trigger firefox" href="mle.xpi" id="install_firefox">Install MLE in Firefox</a>
+			<a class="install_trigger firefox" href="mle-webext.xpi" id="install_firefox">Install MLE in Firefox</a>
 			<p><strong>Install –</strong> Click the button.</p>
 		</div>
 

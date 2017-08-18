@@ -86,6 +86,19 @@ ln -f "$TARGETS/img/MLE_16.png" "$BASEDIR/Chrome/icons/MLE_16.png"
 ln -f "$TARGETS/img/MLE_48.png" "$BASEDIR/Chrome/icons/MLE_48.png"
 echo ' - Done linking Chrome.'
 
+# Firefox WebExt
+ln -f "$TARGETS/background.js" "$BASEDIR/Firefox_WebExt/scripts/background.js"
+ln -f "$TARGETS/mle-codes.js" "$BASEDIR/Firefox_WebExt/includes/mle-codes.js"
+ln -f "$TARGETS/my-little-emotebox.js" "$BASEDIR/Firefox_WebExt/includes/my-little-emotebox.js"
+ln -f "$TARGETS/options.css" "$BASEDIR/Firefox_WebExt/options.css"
+ln -f "$TARGETS/options.html" "$BASEDIR/Firefox_WebExt/options.html"
+ln -f "$TARGETS/options-bootstrap.js" "$BASEDIR/Firefox_WebExt/scripts/options-bootstrap.js"
+ln -f "$TARGETS/options.js" "$BASEDIR/Firefox_WebExt/scripts/options.js"
+ln -f "$TARGETS/img/MLE_128.png" "$BASEDIR/Firefox_WebExt/icons/MLE_128.png"
+ln -f "$TARGETS/img/MLE_16.png" "$BASEDIR/Firefox_WebExt/icons/MLE_16.png"
+ln -f "$TARGETS/img/MLE_48.png" "$BASEDIR/Firefox_WebExt/icons/MLE_48.png"
+echo ' - Done linking Firefox (WebExt).'
+
 # Firefox
 ln -f "$TARGETS/background.js" "$BASEDIR/Firefox/lib/main.js"
 ln -f "$TARGETS/mle-codes.js" "$BASEDIR/Firefox/data/mle-codes.js"

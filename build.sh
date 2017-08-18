@@ -5,7 +5,7 @@ CHROME="google-chrome"
 
 FF_MLE_ID="mle@sebadorn.de"
 FF_MIN="38.0a1"
-FF_MAX="48.*"
+FF_MAX="57.*"
 
 PROJECT_URL="https://sebadorn.de/mlp/mle"
 ABSOLUTE_PATH="/home/$USER/programming/My Little Emotebox"
@@ -66,7 +66,19 @@ function build_chrome_store {
 }
 
 
-function build_firefox {
+function build_firefox_webext {
+	cd Firefox_WebExt/
+	cp manifest.json ../manifest_tmp.json
+
+	set_version_and_url manifest.json
+	zip -r -FS ../build/mle-ff-webext.zip *
+
+	mv ../manifest_tmp.json manifest.json
+	cp ../server/updates-firefox-template.json ../build/updates-firefox.json
+}
+
+
+function build_firefox_legacy {
 	cd Firefox/
 	cp package.json ../package_tmp.json
 
@@ -113,11 +125,8 @@ function build_firefox {
 
 
 function build_page {
-	local XPI_HASH=$(sha256sum build/mle.xpi | sed "s/ .*//g" -)
-
 	cd server/
 	cp "mle-template.js" mle.js
-	sed -i "s;%XPI_HASH%;sha256:${XPI_HASH};g" mle.js
 	set_version_and_url mle.js
 	cd ../
 }
@@ -125,7 +134,7 @@ function build_page {
 
 if [ $# -ge 1 ] && [ "$1" == "clean" ]; then
 	cd build
-	rm mle.xpi "mle-unsigned.xpi" mle.crx mle.oex updates-*.xml updates-*.rdf
+	rm mle.xpi mle-ff-webext.zip "mle-unsigned.xpi" mle.crx mle.oex updates-*.xml updates-*.rdf
 	cd ../
 	exit
 fi
@@ -142,7 +151,7 @@ if [ "$BROWSER" == "all" ]; then
 	build_opera
 	build_chrome
 	build_chrome_store
-	build_firefox
+	build_firefox_webext
 elif [ "$BROWSER" == "opera" ]; then
 	build_opera
 elif [ "$BROWSER" == "chrome" ]; then
@@ -150,7 +159,7 @@ elif [ "$BROWSER" == "chrome" ]; then
 elif [ "$BROWSER" == "chrome_store" ]; then
 	build_chrome_store
 elif [ "$BROWSER" == "firefox" ]; then
-	build_firefox
+	build_firefox_webext
 elif [ "$BROWSER" == "page" ]; then
 	build_page
 fi

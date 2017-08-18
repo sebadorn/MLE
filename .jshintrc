@@ -4,6 +4,7 @@
 	"multistr": true,
 	"node": true, // I don't use node, but it suppresses the "use function form of use strict" message.
 	"predef": [
+		"browser",
 		"BG_TASK",
 		"chrome",
 		"InstallTrigger",

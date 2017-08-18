@@ -2,7 +2,7 @@
 
 
 function bootstrap() {
-	if (typeof chrome !== 'undefined' || typeof opera !== 'undefined' ) {
+	if( typeof chrome !== 'undefined' || typeof browser !== 'undefined' || typeof opera !== 'undefined' ) {
 		var optScript = document.getElementById( 'options-script-placeholder' );
 		optScript.src = 'scripts/options.js';
 

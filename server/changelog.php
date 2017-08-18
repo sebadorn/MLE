@@ -28,6 +28,13 @@
 			<a href="https://github.com/sebadorn/MLE">Source code available on GitHub.</a>
 		</li>
 		<li>
+			<h2>2.10.10</h2>
+			<ul>
+				<li><code>Misc.</code> Firefox extension is now a WebExtension. <strong>Important: All settings, lists and saved emotes will be lost after the update. Create a backup before updating.</strong> Too late already? No, it's not. You can still <a href="mle.xpi">install the old version</a>.</li>
+				<li><code>Bugfix</code> Fixed CSS URL retrieval from subreddit.</li>
+			</ul>
+		</li>
+		<li>
 			<h2>2.10.9</h2>
 			<ul>
 				<li><code>Bugfix</code> Some missing G table integration.</li>
