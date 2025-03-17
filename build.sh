@@ -20,66 +20,83 @@ function set_version_and_url {
 	sed -i "s;%MLE_URL%;$PROJECT_URL;g" "$1"
 }
 
+
 function build_chrome {
+	OUT_DIR='build/chrome'
+
+	if [ -d "$OUT_DIR" ]; then
+		rm -r "$OUT_DIR"
+	fi
+
+	mkdir -p "$OUT_DIR"
 	cp 'chrome/manifest.json' 'manifest_tmp.json'
 
 	set_version_and_url 'chrome/manifest.json'
 	$CHROME \
 		--pack-extension="$ABSOLUTE_PATH/chrome/" \
-		--pack-extension-key="$ABSOLUTE_PATH/build/chrome-private-key-mle.pem"
+		--pack-extension-key="$ABSOLUTE_PATH/chrome-private-key-mle.pem"
 
 	mv 'manifest_tmp.json' 'chrome/manifest.json'
-	mv 'chrome.crx' 'build/mle.crx'
-	cp 'server/updates-chrome-template.xml' 'build/updates-chrome.xml'
+	mv 'chrome.crx' "$OUT_DIR/mle.crx"
+	cp 'server/updates-chrome-template.xml' "$OUT_DIR/updates-chrome.xml"
 
-	set_version_and_url 'build/updates-chrome.xml'
+	set_version_and_url "$OUT_DIR/updates-chrome.xml"
 }
 
 
 function build_chrome_store {
+	OUT_DIR='build/chrome_store'
+
+	if [ -d "$OUT_DIR" ]; then
+		rm -r "$OUT_DIR"
+	fi
+
+	mkdir -p "$OUT_DIR"
 	cd 'chrome/'
 	cp 'manifest.json' '../manifest_tmp.json'
 
 	set_version_and_url 'manifest.json'
 	sed -i 's/\t"update_url".*//g' 'manifest.json'
-	zip -r '../build/mle-chrome.zip' *
+	zip -r "../$OUT_DIR/mle-chrome.zip" *
 
 	mv '../manifest_tmp.json' 'manifest.json'
-	cd '../'
+	cd '..'
 }
 
 
 function build_firefox {
+	OUT_DIR='build/firefox'
+
+	if [ -d "$OUT_DIR" ]; then
+		rm -r "$OUT_DIR"
+	fi
+
+	mkdir -p "$OUT_DIR"
+
 	cd 'firefox/'
 	cp 'manifest.json' '../manifest_tmp.json'
 
 	set_version_and_url 'manifest.json'
-	zip -r -FS '../build/mle-ff-webext.zip' *
+	zip -r -FS "../$OUT_DIR/mle-ff-webext.zip" *
 
 	mv '../manifest_tmp.json' 'manifest.json'
-	cp '../server/updates-firefox-template.json' '../build/updates-firefox.json'
-	set_version_and_url '../build/updates-firefox.json'
+	cp '../server/updates-firefox-template.json' "../$OUT_DIR/updates-firefox.json"
+	set_version_and_url "../$OUT_DIR/updates-firefox.json"
 }
 
 
 function build_page {
 	cd 'server/'
+	rm 'mle.js'
 	cp 'mle-template.js' 'mle.js'
 	set_version_and_url 'mle.js'
 	cd '../'
 }
 
 
-if [ $# -ge 1 ] && [ "$1" == 'clean' ]; then
-	cd 'build'
-	rm 'mle.xpi' 'mle-ff-webext.zip' "mle-unsigned.xpi" 'mle.crx' 'mle.oex' updates-*.xml updates-*.rdf
-	cd '../'
-	exit
-fi
-
 if [ $# -lt 2 ]; then
 	echo 'Not enough arguments provided.'
-	echo 'First argument: all | chrome | chrome_store | firefox | page | clean'
+	echo 'First argument: all | chrome | chrome_store | firefox | page'
 	echo 'Second argument: version'
 	exit
 fi
