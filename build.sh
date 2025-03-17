@@ -21,15 +21,15 @@ function set_version_and_url {
 }
 
 function build_chrome {
-	cp 'Chrome/manifest.json' 'manifest_tmp.json'
+	cp 'chrome/manifest.json' 'manifest_tmp.json'
 
-	set_version_and_url 'Chrome/manifest.json'
+	set_version_and_url 'chrome/manifest.json'
 	$CHROME \
-		--pack-extension="$ABSOLUTE_PATH/Chrome/" \
+		--pack-extension="$ABSOLUTE_PATH/chrome/" \
 		--pack-extension-key="$ABSOLUTE_PATH/build/chrome-private-key-mle.pem"
 
-	mv 'manifest_tmp.json' 'Chrome/manifest.json'
-	mv 'Chrome.crx' 'build/mle.crx'
+	mv 'manifest_tmp.json' 'chrome/manifest.json'
+	mv 'chrome.crx' 'build/mle.crx'
 	cp 'server/updates-chrome-template.xml' 'build/updates-chrome.xml'
 
 	set_version_and_url 'build/updates-chrome.xml'
@@ -37,7 +37,7 @@ function build_chrome {
 
 
 function build_chrome_store {
-	cd 'Chrome/'
+	cd 'chrome/'
 	cp 'manifest.json' '../manifest_tmp.json'
 
 	set_version_and_url 'manifest.json'
@@ -50,7 +50,7 @@ function build_chrome_store {
 
 
 function build_firefox {
-	cd 'Firefox_WebExt/'
+	cd 'firefox/'
 	cp 'manifest.json' '../manifest_tmp.json'
 
 	set_version_and_url 'manifest.json'

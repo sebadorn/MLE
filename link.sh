@@ -1,89 +1,33 @@
 #!/bin/bash
 
 BASEDIR=$(dirname "$0")
-TARGETS="$BASEDIR/common resources"
-
-
-# Checking out a branch will kill all links between files/directories.
-# Run this script to fix them.
-
-
-# Check if target files exist
-
-if [ ! -f "$TARGETS/mle-codes.js" ]; then
-	echo " ! Missing target file: $TARGETS/mle-codes.js"
-	exit
-fi
-
-if [ ! -f "$TARGETS/my-little-emotebox.js" ]; then
-	echo " ! Missing target file: $TARGETS/my-little-emotebox.js"
-	exit
-fi
-
-if [ ! -f "$TARGETS/options.css" ]; then
-	echo " ! Missing target file: $TARGETS/options.css"
-	exit
-fi
-
-if [ ! -f "$TARGETS/options.html" ]; then
-	echo " ! Missing target file: $TARGETS/options.html"
-	exit
-fi
-
-if [ ! -f "$TARGETS/options.js" ]; then
-	echo " ! Missing target file: $TARGETS/options.js"
-	exit
-fi
-
-if [ ! -f "$TARGETS/icons/MLE_128.png" ]; then
-	echo " ! Missing target file: $TARGETS/icons/MLE_128.png"
-	exit
-fi
-
-if [ ! -f "$TARGETS/icons/MLE_16.png" ]; then
-	echo " ! Missing target file: $TARGETS/icons/MLE_16.png"
-	exit
-fi
-
-if [ ! -f "$TARGETS/icons/MLE_32.png" ]; then
-	echo " ! Missing target file: $TARGETS/icons/MLE_32.png"
-	exit
-fi
-
-if [ ! -f "$TARGETS/icons/MLE_48.png" ]; then
-	echo " ! Missing target file: $TARGETS/icons/MLE_48.png"
-	exit
-fi
-
-if [ ! -f "$TARGETS/icons/MLE_64.png" ]; then
-	echo " ! Missing target file: $TARGETS/icons/MLE_64.png"
-	exit
-fi
-
-
-# Linking
+SOURCE="$BASEDIR/all"
 
 # Chrome
-ln -f "$TARGETS/mle-codes.js" "$BASEDIR/Chrome/includes/mle-codes.js"
-ln -f "$TARGETS/my-little-emotebox.js" "$BASEDIR/Chrome/includes/my-little-emotebox.js"
-ln -f "$TARGETS/options.css" "$BASEDIR/Chrome/options.css"
-ln -f "$TARGETS/options.html" "$BASEDIR/Chrome/options.html"
-ln -f "$TARGETS/options.js" "$BASEDIR/Chrome/scripts/options.js"
-ln -f "$TARGETS/icons/MLE_16.png" "$BASEDIR/Chrome/icons/MLE_16.png"
-ln -f "$TARGETS/icons/MLE_48.png" "$BASEDIR/Chrome/icons/MLE_48.png"
-ln -f "$TARGETS/icons/MLE_128.png" "$BASEDIR/Chrome/icons/MLE_128.png"
-echo ' - Done linking Chrome.'
+mkdir -p "$BASEDIR/chrome/icons"
+mkdir -p "$BASEDIR/chrome/includes"
+ln -f "$SOURCE/mle-codes.js" "$BASEDIR/chrome/includes/mle-codes.js"
+ln -f "$SOURCE/my-little-emotebox.js" "$BASEDIR/chrome/includes/my-little-emotebox.js"
+ln -f "$SOURCE/options.css" "$BASEDIR/chrome/options.css"
+ln -f "$SOURCE/options.html" "$BASEDIR/chrome/options.html"
+ln -f "$SOURCE/options.js" "$BASEDIR/chrome/scripts/options.js"
+ln -f "$SOURCE/icons/MLE_16.png" "$BASEDIR/chrome/icons/MLE_16.png"
+ln -f "$SOURCE/icons/MLE_48.png" "$BASEDIR/chrome/icons/MLE_48.png"
+ln -f "$SOURCE/icons/MLE_128.png" "$BASEDIR/chrome/icons/MLE_128.png"
+echo ' - Done linking for Chrome.'
 
 # Firefox
-ln -f "$TARGETS/mle-codes.js" "$BASEDIR/Firefox_WebExt/includes/mle-codes.js"
-ln -f "$TARGETS/my-little-emotebox.js" "$BASEDIR/Firefox_WebExt/includes/my-little-emotebox.js"
-ln -f "$TARGETS/options.css" "$BASEDIR/Firefox_WebExt/options.css"
-ln -f "$TARGETS/options.html" "$BASEDIR/Firefox_WebExt/options.html"
-ln -f "$TARGETS/options.js" "$BASEDIR/Firefox_WebExt/scripts/options.js"
-ln -f "$TARGETS/icons/MLE_16.png" "$BASEDIR/Firefox_WebExt/icons/MLE_16.png"
-ln -f "$TARGETS/icons/MLE_48.png" "$BASEDIR/Firefox_WebExt/icons/MLE_48.png"
-ln -f "$TARGETS/icons/MLE_128.png" "$BASEDIR/Firefox_WebExt/icons/MLE_128.png"
-echo ' - Done linking Firefox.'
+mkdir -p "$BASEDIR/firefox/icons"
+mkdir -p "$BASEDIR/firefox/includes"
+ln -f "$SOURCE/mle-codes.js" "$BASEDIR/firefox/includes/mle-codes.js"
+ln -f "$SOURCE/my-little-emotebox.js" "$BASEDIR/firefox/includes/my-little-emotebox.js"
+ln -f "$SOURCE/options.css" "$BASEDIR/firefox/options.css"
+ln -f "$SOURCE/options.html" "$BASEDIR/firefox/options.html"
+ln -f "$SOURCE/options.js" "$BASEDIR/firefox/scripts/options.js"
+ln -f "$SOURCE/icons/MLE_16.png" "$BASEDIR/firefox/icons/MLE_16.png"
+ln -f "$SOURCE/icons/MLE_48.png" "$BASEDIR/firefox/icons/MLE_48.png"
+ln -f "$SOURCE/icons/MLE_128.png" "$BASEDIR/firefox/icons/MLE_128.png"
+echo ' - Done linking for Firefox.'
 
 echo ' All done.'
 

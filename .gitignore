@@ -5,19 +5,19 @@ server/mle_*.png
 server/mle.js
 
 # Firefox
-Firefox_WebExt/icons/
-Firefox_WebExt/includes/
-Firefox_WebExt/options.css
-Firefox_WebExt/options.html
-Firefox_WebExt/scripts/options.js
+firefox/icons/
+firefox/includes/
+firefox/options.css
+firefox/options.html
+firefox/scripts/options.js
 
 # Chrome
 *.pem
-Chrome/icons/
-Chrome/includes/
-Chrome/options.css
-Chrome/options.html
-Chrome/scripts/options.js
+chrome/icons/
+chrome/includes/
+chrome/options.css
+chrome/options.html
+chrome/scripts/options.js
 
 # Firefox signing api credentials
 ff-sign-api-key.txt
@@ -32,5 +32,4 @@ build/*
 # Other
 _ignore/
 *.sublime-*
-debug/*
 TODO.md
