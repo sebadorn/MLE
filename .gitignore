@@ -5,11 +5,19 @@ server/mle_*.png
 server/mle.js
 
 # Firefox
-Firefox/*.update.rdf
-Firefox/jpmrun.sh
+Firefox_WebExt/icons/
+Firefox_WebExt/includes/
+Firefox_WebExt/options.css
+Firefox_WebExt/options.html
+Firefox_WebExt/scripts/options.js
 
-# Chrome private key
+# Chrome
 *.pem
+Chrome/icons/
+Chrome/includes/
+Chrome/options.css
+Chrome/options.html
+Chrome/scripts/options.js
 
 # Firefox signing api credentials
 ff-sign-api-key.txt
