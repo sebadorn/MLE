@@ -41,7 +41,6 @@
 
 	"permissions": [
 		"storage",
-		"contextMenus",
 		"webRequest",
 		"webRequestBlocking",
 		"http://reddit.com/",
