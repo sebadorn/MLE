@@ -58,6 +58,7 @@ function build_firefox {
 
 	mv '../manifest_tmp.json' 'manifest.json'
 	cp '../server/updates-firefox-template.json' '../build/updates-firefox.json'
+	set_version_and_url '../build/updates-firefox.json'
 }
 
 

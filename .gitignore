@@ -1,5 +1,8 @@
-# Just some screenshots
+# Server page
+server/fonts/
 server/mle_*.png
+## Generated from build.sh
+server/mle.js
 
 # Firefox
 Firefox/*.update.rdf

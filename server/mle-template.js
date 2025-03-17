@@ -19,9 +19,9 @@ function registerEventToggleNav() {
  */
 function setFirefoxInstallTrigger() {
 	if( typeof InstallTrigger != 'undefined' ) {
-		var lff = document.getElementById( 'link_firefox' );
+		var lff = document.getElementById( 'install_firefox' );
 
-		lff.addEventListener( 'click', function( ev ) {
+		lff && lff.addEventListener( 'click', function( ev ) {
 			ev.preventDefault();
 
 			var params = {

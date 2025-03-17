@@ -1,0 +1,12 @@
+{
+	"addons": {
+		"mle@sebadorn.de": {
+			"updates": [
+				{
+					"version": "%MLE_VERSION%",
+					"update_link": "%MLE_URL%/mle-webext.xpi"
+				}
+			]
+		}
+	}
+}
