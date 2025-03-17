@@ -650,7 +650,7 @@ var BrowserChrome = {
 	 * @param {Function} handler
 	 */
 	registerMessageHandler: function( handler ) {
-		chrome.extension.onMessage.addListener( handler );
+		chrome.runtime.onMessage.addListener( handler );
 	},
 
 

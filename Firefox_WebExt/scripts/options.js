@@ -254,7 +254,7 @@ function postMessage( msg ) {
 	}
 	// Chrome
 	else if( typeof chrome !== 'undefined' ) {
-		chrome.extension.sendMessage( msg, handleBackgroundMessages );
+		chrome.runtime.sendMessage( msg, handleBackgroundMessages );
 	}
 	// probably Firefox
 	else {
@@ -374,7 +374,7 @@ function registerForBackgroundMessages() {
 	}
 	// Chrome
 	else if( typeof chrome !== 'undefined' ) {
-		chrome.extension.onMessage.addListener( handleBackgroundMessages );
+		chrome.runtime.onMessage.addListener( handleBackgroundMessages );
 	}
 	// probably Firefox
 	else {
