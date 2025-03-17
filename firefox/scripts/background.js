@@ -1,27 +1,6 @@
 'use strict';
 
 
-// Browser
-var BROWSER = {
-	CHROME: 1,
-	FIREFOX_LEGACY: 2,
-	FIREFOX_WEBEXT: 3,
-	OPERA: 4
-};
-
-var I_AM = BROWSER.FIREFOX_LEGACY;
-
-if( typeof opera != 'undefined' ) {
-	I_AM = BROWSER.OPERA;
-}
-else if( typeof browser !== 'undefined' ) {
-	I_AM = BROWSER.FIREFOX_WEBEXT;
-}
-else if( typeof chrome != 'undefined' ) {
-	I_AM = BROWSER.CHROME;
-}
-
-
 // In strict mode code, functions may be declared only at
 // top level or immediately within another function.
 // These functions will be implemented in the following
@@ -30,167 +9,31 @@ var forgetWorker = null;
 var handleOnAttach = null;
 
 
-// Firefox only.
-// Include content scripts, handle messaging and add options page.
-if( I_AM == BROWSER.FIREFOX_LEGACY ) {
+// Set an individual User-Agent for our XMLHttpRequests.
+browser.webRequest.onBeforeSendHeaders.addListener(
+	// Modify user-agent
+	function( details ) {
+		var headers = details.requestHeaders;
+		var flagMLE = false;
 
-	var pageMod = require( 'sdk/page-mod' );
-	var Request = require( 'sdk/request' ).Request;
-	var self = require( 'sdk/self' );
-	var sprefs = require( 'sdk/simple-prefs' );
-	var ss = require( 'sdk/simple-storage' );
-	var tabs = require( 'sdk/tabs' );
-	var Timer = require( 'sdk/timers' );
-
-	var workers = [];
-
-	var csfWebpage = [
-		self.data.url( 'mle-codes.js' ),
-		self.data.url( 'my-little-emotebox.js' )
-	];
-	var csfOptionsPage = [
-		self.data.url( 'mle-codes.js' ),
-		self.data.url( 'options.js' )
-	];
-
-
-	/**
-	 * Forget a worker that has been detached.
-	 * @param {Object} worker Detached worker.
-	 */
-	forgetWorker = function( worker ) {
-		var idx = workers.indexOf( worker );
-
-		if( idx >= 0 ) {
-			workers.splice( idx, 1 );
+		for( var i = 0; i < headers.length; i++ ) {
+			if( headers[i].name == 'MLE-Firefox' ) {
+				flagMLE = true;
+			}
+			else if( headers[i].name.toLowerCase() == 'user-agent' ) {
+				headers[i].value = Updater.xhrUserAgent;
+			}
 		}
-	};
 
-
-	/**
-	 * Every message a page sends gets redirected to the "background",
-	 * together with the worker to respond to.
-	 * @param {Object} worker
-	 */
-	handleOnAttach = function( worker ) {
-		worker.on( 'message', function( msg ) {
-			handleMessage( msg, worker );
-		} );
-		worker.on( 'detach', function() {
-			forgetWorker( this );
-		} );
-	};
-
-
-	// Add content scripts to web pages
-	pageMod.PageMod( {
-		include: '*',
-		attachTo: ['existing', 'top'],
-		contentScriptWhen: 'ready',
-		contentScriptFile: csfWebpage,
-		onAttach: handleOnAttach
-	} );
-
-	// Add scripts to options page. Has to be done this way instead of
-	// a parameter for "tabs.open", so the "self" object can be used.
-	pageMod.PageMod( {
-		include: self.data.url( 'options.html' ),
-		attachTo: ['existing', 'top'],
-		contentScriptWhen: 'ready',
-		contentScriptFile: csfOptionsPage,
-		onAttach: handleOnAttach
-	} );
-
-
-	// Open options page when button in addon manager is clicked.
-	// @see package.json
-	sprefs.on( 'optionsPage', function() {
-		tabs.open( {
-			url: self.data.url( 'options.html' )
-		} );
-	} );
-
-
-	// mle-codes.js copy
-	// Because I don't know how to include "mle-codes.js" so
-	// its contents become available here (in Firefox).
-
-	var BG_TASK = {
-		LOAD: 1,
-		SAVE_CONFIG: 2,
-		SAVE_EMOTES: 3,
-		RESET_CONFIG: 4,
-		RESET_EMOTES: 5,
-		OPEN_OPTIONS: 6,
-		UPDATE_EMOTES: 7,
-		UPDATE_LIST_ORDER: 8,
-		UPDATE_LIST_NAME: 9,
-		UPDATE_LIST_DELETE: 10,
-		UPDATE_CSS: 11
-	};
-
-}
-// Firefox (WebExt)
-else if( I_AM == BROWSER.FIREFOX_WEBEXT ) {
-
-	// Set an individual User-Agent for our XMLHttpRequests.
-	browser.webRequest.onBeforeSendHeaders.addListener(
-		// Modify user-agent
-		function( details ) {
-			var headers = details.requestHeaders;
-			var flagMLE = false;
-
-			for( var i = 0; i < headers.length; i++ ) {
-				if( headers[i].name == 'MLE-Chrome' ) {
-					flagMLE = true;
-				}
-				else if( headers[i].name.toLowerCase() == 'user-agent' ) {
-					headers[i].value = Updater.xhrUserAgent;
-				}
-			}
-
-			return { requestHeaders: flagMLE ? headers: details.requestHeaders };
-		},
-		// filter
-		{
-			urls: ['<all_urls>'],
-			types: ['xmlhttprequest']
-		},
-		['requestHeaders', 'blocking']
-	);
-
-}
-// Chrome only.
-else if( I_AM == BROWSER.CHROME ) {
-
-	// Set an individual User-Agent for our XMLHttpRequests.
-	chrome.webRequest.onBeforeSendHeaders.addListener(
-		// Modify user-agent
-		function( details ) {
-			var headers = details.requestHeaders;
-			var flagMLE = false;
-
-			for( var i = 0; i < headers.length; i++ ) {
-				if( headers[i].name == 'MLE-Chrome' ) {
-					flagMLE = true;
-				}
-				else if( headers[i].name.toLowerCase() == 'user-agent' ) {
-					headers[i].value = Updater.xhrUserAgent;
-				}
-			}
-
-			return { requestHeaders: flagMLE ? headers: details.requestHeaders };
-		},
-		// filter
-		{
-			urls: ['<all_urls>'],
-			types: ['xmlhttprequest']
-		},
-		['requestHeaders', 'blocking']
-	);
-
-}
-
+		return { requestHeaders: flagMLE ? headers : details.requestHeaders };
+	},
+	// filter
+	{
+		urls: ['<all_urls>'],
+		types: ['xmlhttprequest']
+	},
+	['requestHeaders', 'blocking']
+);
 
 
 // Keys
@@ -335,376 +178,11 @@ var SUBREDDIT_CSS = null;
 var SUBREDDIT_EMOTES = null;
 
 
-
 /**
- * Browser "class" for Opera.
- * @type {Object}
+ * Browser namespace for Firefox.
+ * @type {object}
  */
-var BrowserOpera = {
-
-
-	tabSources: [],
-
-
-	/**
-	 * Broadcast a message to everything extension related.
-	 * @param {Object} source
-	 * @param {Object} msg
-	 */
-	broadcast: function( source, msg ) {
-		var remove = [];
-
-		for( var i = 0; i < this.tabSources.length; i++ ) {
-			if( this.tabSources[i] != source ) {
-				try {
-					this.tabSources[i].postMessage( msg );
-				}
-				// Using the ondisconnect event didn't work as expected.
-				// If it doesn't work (because the tab has been closed)
-				// catch the error and remove the source from the list.
-				catch( err ) {
-					remove.push( this.tabSources[i] );
-				}
-			}
-		}
-
-		// Remove failed sources
-		for( var j = 0; j < remove.length; j++ ) {
-			var idx = this.tabSources.indexOf( remove[j] );
-
-			if( idx >= 0 ) {
-				this.tabSources.splice( idx, 1 );
-			}
-		}
-	},
-
-
-	/**
-	 * Load config and emotes in Opera.
-	 * @param  {Object}  response Response object that will get send to the content script later.
-	 * @param  {Boolean} loadMeta True, if META data shall be included in the response.
-	 * @return {Object}  response
-	 */
-	loadConfigAndEmotes: function( response, sender, loadMeta ) {
-		var wpref = widget.preferences;
-
-		// Remember this tab in which MLE is running
-		if( this.tabSources.indexOf( sender ) < 0 ) {
-			this.tabSources.push( sender );
-		}
-
-		CURRENT_CONFIG = wpref[PREF.CONFIG] ?
-		                 JSON.parse( wpref[PREF.CONFIG] ) :
-		                 saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-
-		CURRENT_EMOTES = wpref[PREF.EMOTES] ?
-		                 JSON.parse( wpref[PREF.EMOTES] ) :
-		                 saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
-
-		META = wpref[PREF.META] ?
-		       JSON.parse( wpref[PREF.META] ) :
-		       saveDefaultToStorage( PREF.META, DEFAULT_META );
-
-		SUBREDDIT_CSS = wpref[PREF.SUBREDDIT_CSS] ?
-		                JSON.parse( wpref[PREF.SUBREDDIT_CSS] ) :
-		                saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
-
-		SUBREDDIT_EMOTES = wpref[PREF.SUBREDDIT_EMOTES] ?
-		                   JSON.parse( wpref[PREF.SUBREDDIT_EMOTES] ) :
-		                   saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
-
-		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
-		updateObject( META, DEFAULT_META, PREF.META );
-
-		response.config = CURRENT_CONFIG;
-		response.emotes = CURRENT_EMOTES;
-		response.sub_css = SUBREDDIT_CSS;
-		response.sub_emotes = SUBREDDIT_EMOTES;
-
-		if( loadMeta ) {
-			response.meta = META;
-		}
-
-		// It's ugly to place that function call here.
-		// But THANKS TO CHROME that's the way it has to be.
-		// Unless I come up with a good way to refactor this.
-		Updater.check();
-
-		return response;
-	},
-
-
-	/**
-	 * Post an error to the error console.
-	 * @param {String} msg
-	 */
-	logError: function( msg ) {
-		opera.postError( msg );
-	},
-
-
-	/**
-	 * Open the options page.
-	 */
-	openOptions: function() {
-		opera.extension.tabs.create( {
-			url: 'options.html',
-			focused: true
-		} );
-	},
-
-
-	/**
-	 * Register a function to handle messaging between pages.
-	 * @param {Function} handler
-	 */
-	registerMessageHandler: function( handler ) {
-		opera.extension.onmessage = handler;
-	},
-
-
-	/**
-	 * Send a response to a page that previously send a message.
-	 * @param {Object} source
-	 * @param {Object} msg
-	 */
-	respond: function( source, msg ) {
-		source.postMessage( msg );
-	},
-
-
-	/**
-	 * Save to extension storage.
-	 * @param {String} key
-	 * @param {String} val String as JSON.
-	 */
-	save: function( key, val ) {
-		widget.preferences[key] = val;
-	},
-
-
-	/**
-	 * Send a XMLHttpRequest.
-	 * @param {String}   method    POST or GET.
-	 * @param {String}   url       URL to send the request to.
-	 * @param {Boolean}  async     If to make the request async.
-	 * @param {String}   userAgent The User-Agent to sent.
-	 * @param {Function} callback  Callback function to handle the response.
-	 */
-	sendRequest: function( method, url, async, userAgent, callback ) {
-		var xhr = new XMLHttpRequest();
-
-		xhr.open( method, url, async );
-		xhr.setRequestHeader( 'User-Agent', userAgent );
-		xhr.onreadystatechange = callback.bind( xhr );
-		xhr.send();
-	}
-
-
-};
-
-
-
-/**
- * Browser "class" for Chrome.
- * @type {Object}
- */
-var BrowserChrome = {
-
-
-	tabs: [],
-
-
-	/**
-	 * Broadcast a message to everything extension related.
-	 * @param {Object} sender
-	 * @param {Object} msg
-	 */
-	broadcast: function( sender, msg ) {
-		for( var i = 0; i < this.tabs.length; i++ ) {
-			if( sender && sender.tab.id == this.tabs[i] ) {
-				continue;
-			}
-			chrome.tabs.sendMessage( this.tabs[i], msg, handleMessage );
-		}
-	},
-
-
-	/**
-	 * CHROME ONLY.
-	 * Handle the items loaded from the storage.
-	 * (this == binded object with variables)
-	 * @param {Object} items Loaded items in key/value pairs.
-	 */
-	handleLoadedItems: function( items ) {
-		CURRENT_CONFIG = !items[PREF.CONFIG] ?
-		                 saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) :
-		                 JSON.parse( items[PREF.CONFIG] );
-
-		CURRENT_EMOTES = !items[PREF.EMOTES] ?
-		                 saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) :
-		                 JSON.parse( items[PREF.EMOTES] );
-
-		META = !items[PREF.META] ?
-		       saveDefaultToStorage( PREF.META, DEFAULT_META ) :
-		       JSON.parse( items[PREF.META] );
-
-		SUBREDDIT_CSS = !items[PREF.SUBREDDIT_CSS] ?
-		                saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS ) :
-		                JSON.parse( items[PREF.SUBREDDIT_CSS] );
-
-		SUBREDDIT_EMOTES = !items[PREF.SUBREDDIT_EMOTES] ?
-		                   saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES ) :
-		                   JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
-
-		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
-		updateObject( META, DEFAULT_META, PREF.META );
-
-		this.response.config = CURRENT_CONFIG;
-		this.response.emotes = CURRENT_EMOTES;
-		this.response.sub_css = SUBREDDIT_CSS;
-		this.response.sub_emotes = SUBREDDIT_EMOTES;
-
-		if( this.loadMeta ) {
-			this.response.meta = META;
-		}
-
-		// It's ugly to place that function call here.
-		// But THANKS TO CHROME that's the way it has to be.
-		// Unless I come up with a good way to refactor this.
-		Updater.check();
-
-		// Send loaded items to the tab that sent the request.
-		if( this.sender ) {
-			chrome.tabs.sendMessage( this.sender.tab.id, this.response, handleMessage );
-		}
-	},
-
-
-	/**
-	 * Load config and emotes in Chrome.
-	 * @param  {Object}  response Response object that will get send to the content script.
-	 * @param  {Object}  sender   Sender of message. Used to send response. (Chrome only)
-	 * @param  {Boolean} loadMeta True, if META data shall be included in the response.
-	 * @return {Object}  response
-	 */
-	loadConfigAndEmotes: function( response, sender, loadMeta ) {
-		var packet = {
-			loadMeta: loadMeta,
-			response: response,
-			sender: sender
-		};
-
-		// Remember this tab in which MLE is running
-		if( this.tabs.indexOf( sender.tab.id ) < 0 ) {
-			this.tabs.push( sender.tab.id );
-		}
-
-		chrome.tabs.onRemoved.addListener( this.onTabRemove.bind( this ) );
-
-		chrome.storage.local.get( null, this.handleLoadedItems.bind( packet ) );
-
-		// Response unaltered.
-		// Actual response happens in this.handleLoadedItems.
-		return response;
-	},
-
-
-	/**
-	 * Post an error to the error console.
-	 * @param {String} msg
-	 */
-	logError: function( msg ) {
-		console.error( msg );
-	},
-
-
-	/**
-	 * Called when a tab is closed.
-	 * A CHROME ONLY FUNCTION.
-	 * @param {Number} tabId ID of the removed tab.
-	 * @param {Object} info
-	 */
-	onTabRemove: function( tabId, info ) {
-		var idx = this.tabs.indexOf( tabId );
-
-		if( idx >= 0 ) {
-			this.tabs.splice( idx, 1 );
-		}
-	},
-
-
-	/**
-	 * Open the options page.
-	 */
-	openOptions: function() {
-		chrome.tabs.create( {
-			url: chrome.extension.getURL( 'options.html' ),
-			active: true
-		} );
-	},
-
-
-	/**
-	 * Register a function to handle messaging between pages.
-	 * @param {Function} handler
-	 */
-	registerMessageHandler: function( handler ) {
-		chrome.runtime.onMessage.addListener( handler );
-	},
-
-
-	/**
-	 * Send a response to a page that previously send a message.
-	 * THIS IS JUST A DUMMY FUNCTION.
-	 * @see   BrowserChrome.loadConfigAndEmotes()
-	 * @param {Object} source
-	 * @param {Object} msg
-	 */
-	respond: function( source, msg ) {
-		// pass
-	},
-
-
-	/**
-	 * Save to extension storage.
-	 * @param {String} key
-	 * @param {String} val String as JSON.
-	 */
-	save: function( key, val ) {
-		var saveObj = {};
-		saveObj[key] = val;
-		chrome.storage.local.set( saveObj );
-	},
-
-
-	/**
-	 * Send a XMLHttpRequest.
-	 * @param {String}   method    POST or GET.
-	 * @param {String}   url       URL to send the request to.
-	 * @param {Boolean}  async     If to make the request async.
-	 * @param {String}   userAgent The User-Agent to sent. (NOT USED IN CHROME.)
-	 * @param {Function} callback  Callback function to handle the response.
-	 */
-	sendRequest: function( method, url, async, userAgent, callback ) {
-		var xhr = new XMLHttpRequest();
-
-		xhr.open( method, url, async );
-		xhr.setRequestHeader( 'MLE-Chrome', '1' );
-		xhr.onreadystatechange = callback.bind( xhr );
-		xhr.send();
-	}
-
-
-};
-
-
-
-/**
- * Browser "class" for Firefox (WebExt).
- * @type {Object}
- */
-var BrowserFirefoxWebExt = {
+var MyBrowser = {
 
 
 	tabs: [],
@@ -735,7 +213,6 @@ var BrowserFirefoxWebExt = {
 
 
 	/**
-	 * CHROME ONLY.
 	 * Handle the items loaded from the storage.
 	 * (this == binded object with variables)
 	 * @param {Object} items Loaded items in key/value pairs.
@@ -791,9 +268,9 @@ var BrowserFirefoxWebExt = {
 
 
 	/**
-	 * Load config and emotes in Chrome.
+	 * Load config and emotes.
 	 * @param  {Object}  response Response object that will get send to the content script.
-	 * @param  {Object}  sender   Sender of message. Used to send response. (Chrome only)
+	 * @param  {Object}  sender   Sender of message. Used to send response.
 	 * @param  {Boolean} loadMeta True, if META data shall be included in the response.
 	 * @return {Object}  response
 	 */
@@ -830,7 +307,6 @@ var BrowserFirefoxWebExt = {
 
 	/**
 	 * Called when a tab is closed.
-	 * A CHROME ONLY FUNCTION.
 	 * @param {Number} tabId ID of the removed tab.
 	 * @param {Object} info
 	 */
@@ -901,211 +377,13 @@ var BrowserFirefoxWebExt = {
 		var xhr = new XMLHttpRequest();
 
 		xhr.open( method, url, async );
-		xhr.setRequestHeader( 'MLE-Firefox_WebExt', '1' );
+		xhr.setRequestHeader( 'MLE-Firefox', '1' );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
 	}
 
 
 };
-
-
-
-/**
- * Browser "class" for Firefox.
- * @type {Object}
- */
-var BrowserFirefoxLegacy = {
-
-
-	/**
-	 * Broadcast a message to everything extension related.
-	 * @param {Object} sender
-	 * @param {Object} msg
-	 */
-	broadcast: function( sender, msg ) {
-		for( var i = 0; i < workers.length; i++ ) {
-			if( sender == workers[i] ) {
-				continue;
-			}
-			try {
-				workers[i].postMessage( msg );
-			}
-			catch( err ) {
-				forgetWorker( workers[i] );
-			}
-		}
-	},
-
-
-	/**
-	 * Load config and emotes in Firefox.
-	 * @param  {Object}  response Response object that will get send to the content script later.
-	 * @param  {Boolean} loadMeta True, if META data shall be included in the response.
-	 * @return {Object}  response
-	 */
-	loadConfigAndEmotes: function( response, sender, loadMeta ) {
-		// Remember this tab in which MLE is running
-		if( workers.indexOf( sender ) < 0 ) {
-			workers.push( sender );
-		}
-
-		CURRENT_CONFIG = ss.storage[PREF.CONFIG] ?
-		                 JSON.parse( ss.storage[PREF.CONFIG] ) :
-		                 saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-
-		CURRENT_EMOTES = ss.storage[PREF.EMOTES] ?
-		                 JSON.parse( ss.storage[PREF.EMOTES] ) :
-		                 saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
-
-		META = ss.storage[PREF.META] ?
-		       JSON.parse( ss.storage[PREF.META] ) :
-		       saveDefaultToStorage( PREF.META, DEFAULT_META );
-
-		SUBREDDIT_CSS = ss.storage[PREF.SUBREDDIT_CSS] ?
-		                JSON.parse( ss.storage[PREF.SUBREDDIT_CSS] ) :
-		                saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS );
-
-		SUBREDDIT_EMOTES = ss.storage[PREF.SUBREDDIT_EMOTES] ?
-		                   JSON.parse( ss.storage[PREF.SUBREDDIT_EMOTES] ) :
-		                   saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES );
-
-		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
-		updateObject( META, DEFAULT_META, PREF.META );
-
-		response.config = CURRENT_CONFIG;
-		response.emotes = CURRENT_EMOTES;
-		response.sub_css = SUBREDDIT_CSS;
-		response.sub_emotes = SUBREDDIT_EMOTES;
-
-		if( loadMeta ) {
-			response.meta = META;
-		}
-
-		// It's ugly to place that function call here.
-		// But THANKS TO CHROME that's the way it has to be.
-		// Unless I come up with a good way to refactor this.
-		Updater.check();
-
-		return response;
-	},
-
-
-	/**
-	 * Post an error to the error console.
-	 * @param {String} msg
-	 */
-	logError: function( msg ) {
-		console.error( msg );
-	},
-
-
-	/**
-	 * Open the options page.
-	 */
-	openOptions: function() {
-		tabs.open( {
-			url: self.data.url( 'options.html' )
-		} );
-	},
-
-
-	/**
-	 * Register a function to handle messaging between pages.
-	 * THIS IS JUST A DUMMY FUNCTION.
-	 * @see   handleOnAttach()
-	 * @param {Function} handler
-	 */
-	registerMessageHandler: function( handler ) {
-		// pass
-	},
-
-
-	/**
-	 * Send a response to a page that previously send a message.
-	 * @param {Object} source
-	 * @param {Object} msg
-	 */
-	respond: function( source, msg ) {
-		source.postMessage( msg );
-	},
-
-
-	/**
-	 * Save to extension storage.
-	 * @param {String} key
-	 * @param {String} val String as JSON.
-	 */
-	save: function( key, val ) {
-		ss.storage[key] = val;
-	},
-
-
-	/**
-	 * Send a XMLHttpRequest.
-	 * ONLY USEABLE FOR THE UPDATER AT THIS MOMENT!
-	 * @param {String}   method    POST or GET.
-	 * @param {String}   url       URL to send the request to.
-	 * @param {Boolean}  async     If to make the request async.
-	 * @param {String}   userAgent The User-Agent to sent.
-	 * @param {Function} callback  Callback function to handle the response. (NOT USED IN FIREFOX.)
-	 */
-	sendRequest: function( method, url, async, userAgent, callback ) {
-		var req = new Request( {
-			url: url,
-			onComplete: function( response ) {
-				var lastModified = response.headers['Last-Modified'];
-				var contentType = response.headers['Content-Type'];
-
-				lastModified = Date.parse( lastModified );
-				callback( true, response.text, lastModified, contentType );
-			},
-			headers: {
-				'User-Agent': userAgent
-			}
-		} );
-
-		req.get();
-	}
-
-
-};
-
-
-
-// Assign correct browser "class".
-var MyBrowser = null;
-
-switch( I_AM ) {
-	case BROWSER.OPERA:
-		MyBrowser = BrowserOpera;
-		BrowserChrome = null;
-		BrowserFirefoxLegacy = null;
-		BrowserFirefoxWebExt = null;
-		break;
-
-	case BROWSER.CHROME:
-		MyBrowser = BrowserChrome;
-		BrowserFirefoxLegacy = null;
-		BrowserFirefoxWebExt = null;
-		BrowserOpera = null;
-		break;
-
-	case BROWSER.FIREFOX_WEBEXT:
-		MyBrowser = BrowserFirefoxWebExt;
-		BrowserChrome = null;
-		BrowserFirefoxLegacy = null;
-		BrowserOpera = null;
-		break;
-
-	case BROWSER.FIREFOX_LEGACY:
-		MyBrowser = BrowserFirefoxLegacy;
-		BrowserChrome = null;
-		BrowserFirefoxWebExt = null;
-		BrowserOpera = null;
-		break;
-}
-
 
 
 /**
@@ -1119,7 +397,7 @@ var Updater = {
 	xhrAsync: true,
 	xhrMethod: 'GET',
 	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
-	xhrUserAgent: 'MLE/2.10.10 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.10.11 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -1347,7 +625,7 @@ var Updater = {
 		this.xhrProgress++;
 
 		// Fetch a small page which uses the subreddit CSS.
-		var url = 'https://www.reddit.com/' + this.xhrCurrentTarget;
+		var url = 'https://old.reddit.com/' + this.xhrCurrentTarget;
 
 		MyBrowser.sendRequest(
 			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.getCSSURLsCallback
@@ -1887,22 +1165,13 @@ var Updater = {
 
 		if( this.forceUpdate ) {
 			var response = { task: BG_TASK.UPDATE_CSS };
-
-			if( I_AM === BROWSER.CHROME ) {
-				chrome.tabs.sendMessage( this.forceSource.tab.id, response, null );
-			}
-			else if( I_AM === BROWSER.FIREFOX_WEBEXT ) {
-				var promise = browser.tabs.sendMessage( this.forceSource.tab.id, response );
-				promise.then(
-					null,
-					function( err ) {
-						console.error( err );
-					}
-				);
-			}
-			else {
-				MyBrowser.respond( this.forceSource, response );
-			}
+			var promise = browser.tabs.sendMessage( this.forceSource.tab.id, response );
+			promise.then(
+				null,
+				function( err ) {
+					console.error( err );
+				}
+			);
 		}
 
 		this.forceUpdate = false;
