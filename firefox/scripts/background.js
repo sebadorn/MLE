@@ -186,6 +186,8 @@ const MyBrowser = {
 	 * @param {Object} msg
 	 */
 	broadcast( sender, msg ) {
+		console.debug( '[MyBrowser.broadcast]', sender, msg );
+
 		const makeCb = sender => {
 			return response => {
 				if( response ) {
@@ -199,10 +201,9 @@ const MyBrowser = {
 				continue;
 			}
 
-			let cb = makeCb( sender );
 			browser.tabs.sendMessage( this.tabs[i], msg )
-				.then( cb )
-				.catch( this.logError );
+				.then( makeCb( sender ) )
+				.catch( err => console.error( '[MyBrowser.broadcast]', err ) );
 		}
 	},
 
@@ -257,9 +258,10 @@ const MyBrowser = {
 					handleMessage( { data: response }, this.sender );
 				}
 			};
+
 			browser.tabs.sendMessage( this.sender.tab.id, this.response )
 				.then( cb )
-				.catch( this.logError );
+				.catch( err => console.error( '[MyBrowser.handleLoadedItems] Send to:', this.sender, err ) );
 		}
 	},
 
@@ -285,20 +287,13 @@ const MyBrowser = {
 
 		browser.tabs.onRemoved.addListener( this.onTabRemove.bind( this ) );
 
-		browser.storage.local.get().then( this.handleLoadedItems.bind( packet ), this.logError );
+		browser.storage.local.get()
+			.then( this.handleLoadedItems.bind( packet ) )
+			.catch( err => console.error( '[MyBrowser.loadConfigAndEmotes]', err ) );
 
 		// Response unaltered.
 		// Actual response happens in this.handleLoadedItems.
 		return response;
-	},
-
-
-	/**
-	 * Post an error to the error console.
-	 * @param {String} msg
-	 */
-	logError( msg ) {
-		console.error( msg );
 	},
 
 
@@ -320,10 +315,13 @@ const MyBrowser = {
 	 * Open the options page.
 	 */
 	openOptions() {
-		browser.tabs.create( {
+		const create = {
 			url: browser.extension.getURL( 'options.html' ),
 			active: true,
-		} ).then( null, this.logError );
+		};
+
+		browser.tabs.create( create )
+			.catch( err => console.error( '[MyBrowser.openOptions]', err ) );
 	},
 
 
@@ -356,9 +354,14 @@ const MyBrowser = {
 	 * @param {String} val String as JSON.
 	 */
 	save( key, val ) {
+		console.debug( `[MyBrowser.save] Saving for "${key}" string with length ${val.length}...` );
+
 		const saveObj = {};
 		saveObj[key] = val;
-		browser.storage.local.set( saveObj ).then( null, this.logError );
+
+		browser.storage.local.set( saveObj )
+			.then( () => console.debug( '[MyBrowser.save] Success' ) )
+			.catch( err => console.error( '[MyBrowser.save]', err ) );
 	},
 
 
@@ -371,6 +374,8 @@ const MyBrowser = {
 	 * @param {Function} callback  Callback function to handle the response.
 	 */
 	sendRequest( method, url, async, userAgent, callback ) {
+		console.debug( '[MyBrowser.sendRequest]', method, url );
+
 		const xhr = new XMLHttpRequest();
 		xhr.open( method, url, async );
 		xhr.setRequestHeader( 'MLE-Firefox', '1' );
@@ -653,7 +658,7 @@ const Updater = {
 			let url = responseContent.match( /href="[a-zA-Z0-9/.:\-_+]+" (ref="applied_subreddit_stylesheet")? title="applied_subreddit_stylesheet"/ );
 
 			if( !url ) {
-				MyBrowser.logError( 'No CSS URL found.' );
+				console.error( '[Updater.getCSSURLsCallback] No CSS URL found.' );
 				return;
 			}
 
@@ -1173,7 +1178,7 @@ function handleMessage( ev, sender, _sendResponse ) {
 
 	// Only handle messages which come with a set task.
 	if( !data.task ) {
-		MyBrowser.logError( 'Background process: No task specified.' );
+		console.error( '[handleMessage] Background process: No task specified.' );
 		return;
 	}
 
@@ -1254,7 +1259,7 @@ function handleMessage( ev, sender, _sendResponse ) {
 			return;
 
 		default:
-			MyBrowser.logError( 'Background process: Unknown task given - "' + data.task + '".' );
+			console.error( `[handleMessage] Background process: Unknown task given - "${data.task}".` );
 			return;
 	}
 
@@ -1306,8 +1311,7 @@ function loadConfigAndEmotes( response, sender, loadMeta ) {
 		response = MyBrowser.loadConfigAndEmotes( response, sender, loadMeta );
 	}
 	catch( err ) {
-		MyBrowser.logError( 'Background process: Could not load preferences.' );
-		MyBrowser.logError( err );
+		console.error( '[loadConfigAndEmotes] Background process: Could not load preferences.', err );
 	}
 
 	return response;
@@ -1365,12 +1369,14 @@ function mergeWithConfig( obj ) {
  * @return {Object}     Default value. Same as parameter "obj".
  */
 function saveDefaultToStorage( key, obj ) {
-	let r = saveToStorage( key, obj );
-	let msg = r.success ?
-		`Background process: "${key}" not in extension preferences yet. Created default.` :
-		'Background process: Could not save default value.';
+	const r = saveToStorage( key, obj );
 
-	MyBrowser.logError( msg );
+	if( r.success ) {
+		console.debug( `[saveDefaultToStorage] Background process: "${key}" not in extension preferences yet. Created default.` );
+	}
+	else {
+		console.error( '[saveDefaultToStorage] Background process: Could not save default value.' );
+	}
 
 	return obj;
 }
@@ -1393,7 +1399,7 @@ function saveToStorage( key, obj ) {
 		obj_json = JSON.stringify( obj );
 	}
 	catch( err ) {
-		MyBrowser.logError( err );
+		console.error( '[saveToStorage]', err );
 		return { success: false };
 	}
 

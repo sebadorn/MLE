@@ -289,14 +289,18 @@
 			</li>
 			<li class="export-import">
 				<label>Export emotes</label>
-				<textarea id="export-emotes-ta" readonly></textarea>
-				<input type="submit" id="export-emotes" value="export" />
+				<div class="textarea-and-button">
+					<textarea id="export-emotes-ta" readonly></textarea>
+					<input type="submit" id="export-emotes" value="export" />
+				</div>
 				<p class="explain">Export format is <a href="https://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
 			</li>
 			<li class="export-import">
 				<label>Import emotes</label>
-				<textarea id="import-emotes-ta"></textarea>
-				<input type="submit" id="import-emotes" value="import" />
+				<div class="textarea-and-button">
+					<textarea id="import-emotes-ta"></textarea>
+					<input type="submit" id="import-emotes" value="import" />
+				</div>
 				<p class="explain">Import format is <a href="https://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
 			</li>
 			<li>
@@ -351,8 +355,10 @@
 				<p class="explain">Get and parse the stylesheets from r/mylittlepony and r/MLPLounge for emotes. This may take a few seconds.</p>
 			</li>
 			<li>
-				<input type="text" class="long" id="lastSubredditCheck" data-meta="true" readonly />
-				<label>Last time the subreddits have been checked for new emotes</label>
+				<div class="last-check">
+					<input type="text" class="long" id="lastSubredditCheck" data-meta="true" readonly />
+					<label>Last time the subreddits have been checked for new emotes</label>
+				</div>
 				<p class="explain"><em>Readonly.</em> Format: <code>yyyy-mm-dd hh:ii</code></p>
 			</li>
 			<li>
@@ -391,14 +397,18 @@
 			</li>
 			<li class="export-import">
 				<label>Export config</label>
-				<textarea id="export-config-ta" readonly></textarea>
-				<input type="submit" id="export-config" value="export" />
+				<div class="textarea-and-button">
+					<textarea id="export-config-ta" readonly></textarea>
+					<input type="submit" id="export-config" value="export" />
+				</div>
 				<p class="explain">Export format is <a href="https://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
 			</li>
 			<li class="export-import">
 				<label>Import config</label>
-				<textarea id="import-config-ta"></textarea>
-				<input type="submit" id="import-config" value="import" />
+				<div class="textarea-and-button">
+					<textarea id="import-config-ta"></textarea>
+					<input type="submit" id="import-config" value="import" />
+				</div>
 				<p class="explain">Import format is <a href="https://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
 			</li>
 			<li>

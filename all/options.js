@@ -58,10 +58,12 @@ function getOptionValue( select ) {
  * @param {Event} ev
  */
 function handleBackgroundMessages( ev ) {
+	console.debug( '[handleBackgroundMessages]', ev );
+
 	let data = ev.data ? ev.data : ev;
 
 	if( !data.task ) {
-		console.warn( 'MyLittleEmotebox: Message from background process didn\'t contain the handled task.' );
+		console.warn( "[handleBackgroundMessages] Message from background process didn't contain the handled task." );
 		return;
 	}
 
@@ -82,6 +84,9 @@ function handleBackgroundMessages( ev ) {
 		case BG_TASK.UPDATE_CSS:
 			showMsg( 'Force update finished.', 'info' );
 			break;
+
+		default:
+			console.warn( '[handleBackgroundMessages] Unknown task:', data.task );
 	}
 }
 
@@ -228,18 +233,13 @@ function loadConfig() {
  * @param {Object} msg Message to send.
  */
 function sendMessage( msg ) {
-	// Firefox (WebExt)
+	console.debug( '[sendMessage]', msg );
+
+	// Firefox
 	if( typeof browser !== 'undefined' ) {
-		browser.runtime.sendMessage( msg ).then(
-			function( response ) {
-				if( response ) {
-					handleBackgroundMessages( { data: response } );
-				}
-			},
-			function( err ) {
-				console.error( err );
-			}
-		);
+		browser.runtime.sendMessage( msg )
+			.then( res => res && handleBackgroundMessages( { data: res } ) )
+			.catch( err => console.error( '[sendMessage]', err ) );
 	}
 	// Chrome
 	else if( typeof chrome !== 'undefined' ) {
@@ -347,11 +347,11 @@ function registerEventToggleNav() {
  * Register for messages from the background process.
  */
 function registerForBackgroundMessages() {
-	// Firefox (WebExt)
+	console.debug( '[registerForBackgroundMessages]' );
+
+	// Firefox
 	if( typeof browser !== 'undefined' ) {
-		browser.runtime.onMessage.addListener( function( msg ) {
-			handleBackgroundMessages( { data: msg } );
-		} );
+		browser.runtime.onMessage.addListener( msg => handleBackgroundMessages( { data: msg } ) );
 	}
 	// Chrome
 	else if( typeof chrome !== 'undefined' ) {
@@ -539,6 +539,7 @@ function toggleNav( ev ) {
  * Get started.
  */
 function init() {
+	console.debug( '[init]' );
 	registerForBackgroundMessages();
 	loadConfig();
 	registerEventToggleNav();
@@ -549,6 +550,7 @@ function init() {
  * Second setup phase after receiving the config, emotes and meta data.
  */
 function init2() {
+	console.debug( '[init2]' );
 	registerEventSettingChanged();
 	insertMetaData();
 }

@@ -15,9 +15,17 @@ a:hover {
 
 html {
 	background-color: #ffffff;
+}
+
+body {
 	color: #000000;
+	display: block;
 	font: 16px Arial, sans-serif;
-	padding-bottom: 80px;
+	padding: 0 20px 80px;
+}
+
+body * {
+	box-sizing: border-box;
 }
 
 fieldset {
@@ -29,7 +37,7 @@ h1 {
 	font-weight: bold;
 	letter-spacing: -1px;
 	line-height: 30px;
-	margin: 72px auto 10px;
+	margin: 40px auto 10px;
 	position: relative;
 	text-transform: uppercase;
 }
@@ -113,7 +121,6 @@ textarea {
 	height: 140px;
 	padding: 10px;
 	resize: vertical;
-	width: 500px;
 }
 
 textarea[readonly] {
@@ -187,6 +194,7 @@ h1, nav, #msg, .options {
 /* ---------- */
 
 nav {
+	display: flex;
 	margin: 0 auto 48px;
 }
 
@@ -196,11 +204,15 @@ nav {
 		color: #000000;
 		cursor: pointer;
 		display: inline-block;
+		flex-basis: 96px;
 		margin-right: 10px;
-		min-width: 80px;
 		padding: 8px;
 		position: relative;
 		text-align: center;
+	}
+
+	nav label:last-child {
+		margin-right: 0;
 	}
 
 	nav label:hover {
@@ -218,7 +230,7 @@ nav {
 		bottom: -20px;
 		content: "";
 		display: inline-block;
-		left: 40px;
+		left: 38px;
 		position: absolute;
 	}
 
@@ -262,6 +274,15 @@ input[name="page"]:checked ~ .form {
 			margin-top: 8px;
 		}
 
+		.last-check {
+			align-items: center;
+			display: flex;
+		}
+
+			.last-check label {
+				margin-left: 7px;
+			}
+
 		.export-import label {
 			display: block;
 			margin-bottom: 8px;
@@ -271,6 +292,20 @@ input[name="page"]:checked ~ .form {
 			margin-left: 10px;
 			vertical-align: top;
 		}
+
+		.textarea-and-button {
+			align-items: flex-start;
+			display: flex;
+		}
+
+			.textarea-and-button textarea {
+				flex-grow: 1;
+			}
+
+			.textarea-and-button input {
+				flex-grow: 0;
+				flex-shrink: 0;
+			}
 
 		.reset {
 			background-color: #DB0B0B !important;
