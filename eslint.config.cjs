@@ -26,13 +26,20 @@ module.exports = [
 		],
 		rules: {
 			'no-unused-vars': [
-				'warn', {
+				'warn',
+				{
 					argsIgnorePattern: '^_',
 					caughtErrorsIgnorePattern: '^_',
 				}
 			],
 			'no-var': ['warn'],
-			'quotes': ['warn', 'single'],
+			'quotes': [
+				'warn',
+				'single',
+				{
+					avoidEscape: true,
+				}
+			],
 		},
 	},
 	{

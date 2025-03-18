@@ -1,26 +1,18 @@
 'use strict';
 
 
-// In strict mode code, functions may be declared only at
-// top level or immediately within another function.
-// These functions will be implemented in the following
-// conditional branch for Firefox.
-var forgetWorker = null;
-var handleOnAttach = null;
-
-
 // Set an individual User-Agent for our XMLHttpRequests.
 browser.webRequest.onBeforeSendHeaders.addListener(
 	// Modify user-agent
-	function( details ) {
-		var headers = details.requestHeaders;
-		var flagMLE = false;
+	details => {
+		let headers = details.requestHeaders;
+		let flagMLE = false;
 
-		for( var i = 0; i < headers.length; i++ ) {
-			if( headers[i].name == 'MLE-Firefox' ) {
+		for( let i = 0; i < headers.length; i++ ) {
+			if( headers[i].name === 'MLE-Firefox' ) {
 				flagMLE = true;
 			}
-			else if( headers[i].name.toLowerCase() == 'user-agent' ) {
+			else if( headers[i].name.toLowerCase() === 'user-agent' ) {
 				headers[i].value = Updater.xhrUserAgent;
 			}
 		}
@@ -37,27 +29,27 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 
 
 // Keys
-var PREF = {
+const PREF = {
 	CONFIG: 'mle.config',
 	EMOTES: 'mle.emotes',
 	META: 'mle.meta',
 	SUBREDDIT_CSS: 'mle.subreddit.css',
-	SUBREDDIT_EMOTES: 'mle.subreddit.emotes'
+	SUBREDDIT_EMOTES: 'mle.subreddit.emotes',
 };
 
 
-var DEFAULT_SUB_CSS = {};
-var DEFAULT_SUB_EMOTES = {};
+const DEFAULT_SUB_CSS = {};
+const DEFAULT_SUB_EMOTES = {};
 
 
 // Information that the user won't need to backup
-var DEFAULT_META = {
+const DEFAULT_META = {
 	lastSubredditCheck: 0
 };
 
 
 // Default config
-var DEFAULT_CONFIG = {
+const DEFAULT_CONFIG = {
 	addBlankAfterInsert: true,
 	adjustEmotesInInbox: true, // Adjust Plounge emotes in user overview and inbox
 	adjustForBetterPonymotes: true,
@@ -105,12 +97,12 @@ var DEFAULT_CONFIG = {
 	showTitleStyleBorderColor: 'rgba(255,255,255,0.0)',
 	showTitleStyleColor: '#808080',
 	showTitleStyleDisplay: 'block', // "block" or "float"
-	stopEmoteLinkFollowing: true
+	stopEmoteLinkFollowing: true,
 };
 
 
 // Default emotes of r/mylittlepony and r/MLPLounge
-var DEFAULT_EMOTES = {
+const DEFAULT_EMOTES = {
 	'A': [
 		'twipride', 'twicrazy', 'twiright', 'twibeam', 'spikemeh',
 		'celestiawut', 'celestiamad', 'lunateehee', 'lunawait', 'paperbagderpy',
@@ -168,21 +160,21 @@ var DEFAULT_EMOTES = {
 	'Plounge': [
 		'fillyrarity', 'twidur', 'amzingmagic', 'karmasalute', 'dishappy',
 		'karmastare', 'ohnoes', 'filly'
-	]
+	],
 };
 
-var CURRENT_CONFIG = null;
-var CURRENT_EMOTES = null;
-var META = null;
-var SUBREDDIT_CSS = null;
-var SUBREDDIT_EMOTES = null;
+let CURRENT_CONFIG = null;
+let CURRENT_EMOTES = null;
+let META = null;
+let SUBREDDIT_CSS = null;
+let SUBREDDIT_EMOTES = null;
 
 
 /**
  * Browser namespace for Firefox.
  * @type {object}
  */
-var MyBrowser = {
+const MyBrowser = {
 
 
 	tabs: [],
@@ -193,21 +185,24 @@ var MyBrowser = {
 	 * @param {Object} sender
 	 * @param {Object} msg
 	 */
-	broadcast: function( sender, msg ) {
-		var makeCb = function( sender ) {
-			return function( response ) {
+	broadcast( sender, msg ) {
+		const makeCb = sender => {
+			return response => {
 				if( response ) {
 					handleMessage( { data: response }, sender );
 				}
 			};
 		};
 
-		for( var i = 0; i < this.tabs.length; i++ ) {
+		for( let i = 0; i < this.tabs.length; i++ ) {
 			if( sender && sender.tab.id == this.tabs[i] ) {
 				continue;
 			}
-			var cb = makeCb( sender );
-			browser.tabs.sendMessage( this.tabs[i], msg ).then( cb ).catch( this.logError );
+
+			let cb = makeCb( sender );
+			browser.tabs.sendMessage( this.tabs[i], msg )
+				.then( cb )
+				.catch( this.logError );
 		}
 	},
 
@@ -217,26 +212,26 @@ var MyBrowser = {
 	 * (this == binded object with variables)
 	 * @param {Object} items Loaded items in key/value pairs.
 	 */
-	handleLoadedItems: function( items ) {
+	handleLoadedItems( items ) {
 		CURRENT_CONFIG = !items[PREF.CONFIG] ?
-		                 saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) :
-		                 JSON.parse( items[PREF.CONFIG] );
+			saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) :
+			JSON.parse( items[PREF.CONFIG] );
 
 		CURRENT_EMOTES = !items[PREF.EMOTES] ?
-		                 saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) :
-		                 JSON.parse( items[PREF.EMOTES] );
+			saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) :
+			JSON.parse( items[PREF.EMOTES] );
 
 		META = !items[PREF.META] ?
-		       saveDefaultToStorage( PREF.META, DEFAULT_META ) :
-		       JSON.parse( items[PREF.META] );
+			saveDefaultToStorage( PREF.META, DEFAULT_META ) :
+			JSON.parse( items[PREF.META] );
 
 		SUBREDDIT_CSS = !items[PREF.SUBREDDIT_CSS] ?
-		                saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS ) :
-		                JSON.parse( items[PREF.SUBREDDIT_CSS] );
+			saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS ) :
+			JSON.parse( items[PREF.SUBREDDIT_CSS] );
 
 		SUBREDDIT_EMOTES = !items[PREF.SUBREDDIT_EMOTES] ?
-		                   saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES ) :
-		                   JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
+			saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES ) :
+			JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
 
 		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( META, DEFAULT_META, PREF.META );
@@ -257,12 +252,14 @@ var MyBrowser = {
 
 		// Send loaded items to the tab that sent the request.
 		if( this.sender ) {
-			var cb = function( response ) {
+			const cb = response => {
 				if( response ) {
 					handleMessage( { data: response }, this.sender );
 				}
 			};
-			browser.tabs.sendMessage( this.sender.tab.id, this.response ).then( cb ).catch( this.logError );
+			browser.tabs.sendMessage( this.sender.tab.id, this.response )
+				.then( cb )
+				.catch( this.logError );
 		}
 	},
 
@@ -274,11 +271,11 @@ var MyBrowser = {
 	 * @param  {Boolean} loadMeta True, if META data shall be included in the response.
 	 * @return {Object}  response
 	 */
-	loadConfigAndEmotes: function( response, sender, loadMeta ) {
-		var packet = {
+	loadConfigAndEmotes( response, sender, loadMeta ) {
+		const packet = {
 			loadMeta: loadMeta,
 			response: response,
-			sender: sender
+			sender: sender,
 		};
 
 		// Remember this tab in which MLE is running
@@ -300,7 +297,7 @@ var MyBrowser = {
 	 * Post an error to the error console.
 	 * @param {String} msg
 	 */
-	logError: function( msg ) {
+	logError( msg ) {
 		console.error( msg );
 	},
 
@@ -310,8 +307,8 @@ var MyBrowser = {
 	 * @param {Number} tabId ID of the removed tab.
 	 * @param {Object} info
 	 */
-	onTabRemove: function( tabId, info ) {
-		var idx = this.tabs.indexOf( tabId );
+	onTabRemove( tabId, _info ) {
+		const idx = this.tabs.indexOf( tabId );
 
 		if( idx >= 0 ) {
 			this.tabs.splice( idx, 1 );
@@ -322,10 +319,10 @@ var MyBrowser = {
 	/**
 	 * Open the options page.
 	 */
-	openOptions: function() {
+	openOptions() {
 		browser.tabs.create( {
 			url: browser.extension.getURL( 'options.html' ),
-			active: true
+			active: true,
 		} ).then( null, this.logError );
 	},
 
@@ -334,8 +331,8 @@ var MyBrowser = {
 	 * Register a function to handle messaging between pages.
 	 * @param {Function} handler
 	 */
-	registerMessageHandler: function( handler ) {
-		browser.runtime.onMessage.addListener( function( msg, sender, sendResponse ) {
+	registerMessageHandler( handler ) {
+		browser.runtime.onMessage.addListener( ( msg, sender, sendResponse ) => {
 			handler( { data: msg }, sender, sendResponse );
 		} );
 	},
@@ -345,10 +342,10 @@ var MyBrowser = {
 	 * Send a response to a page that previously send a message.
 	 * THIS IS JUST A DUMMY FUNCTION.
 	 * @see   BrowserChrome.loadConfigAndEmotes()
-	 * @param {Object} source
-	 * @param {Object} msg
+	 * @param {Object} _source
+	 * @param {Object} _msg
 	 */
-	respond: function( source, msg ) {
+	respond( _source, _msg ) {
 		// pass
 	},
 
@@ -358,8 +355,8 @@ var MyBrowser = {
 	 * @param {String} key
 	 * @param {String} val String as JSON.
 	 */
-	save: function( key, val ) {
-		var saveObj = {};
+	save( key, val ) {
+		const saveObj = {};
 		saveObj[key] = val;
 		browser.storage.local.set( saveObj ).then( null, this.logError );
 	},
@@ -373,14 +370,13 @@ var MyBrowser = {
 	 * @param {String}   userAgent The User-Agent to sent. (NOT USED IN CHROME.)
 	 * @param {Function} callback  Callback function to handle the response.
 	 */
-	sendRequest: function( method, url, async, userAgent, callback ) {
-		var xhr = new XMLHttpRequest();
-
+	sendRequest( method, url, async, userAgent, callback ) {
+		const xhr = new XMLHttpRequest();
 		xhr.open( method, url, async );
 		xhr.setRequestHeader( 'MLE-Firefox', '1' );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
-	}
+	},
 
 
 };
@@ -390,13 +386,16 @@ var MyBrowser = {
  * Getting the sub-reddit CSS and extracting the emotes.
  * @type {Object}
  */
-var Updater = {
+const Updater = {
 
 
 	// Config
 	xhrAsync: true,
 	xhrMethod: 'GET',
-	xhrTargets: ['r/mylittlepony', 'r/mlplounge'],
+	xhrTargets: [
+		'r/mylittlepony',
+		'r/mlplounge',
+	],
 	xhrUserAgent: 'MLE/2.10.11 (by meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
@@ -423,11 +422,12 @@ var Updater = {
 	 * Check if it is time for scheduled update
 	 * and start the process if it is the case.
 	 */
-	check: function() {
+	check() {
 		// Less than zero means automatic checks are disabled
 		if( META.lastSubredditCheck < 0 ) {
 			return;
 		}
+
 		if( Date.now() - META.lastSubredditCheck >= CURRENT_CONFIG.intervalToCheckCSS ) {
 			this.emoteCSS = SUBREDDIT_CSS;
 			this.emotes = SUBREDDIT_EMOTES;
@@ -442,18 +442,18 @@ var Updater = {
 	 * @param  {String} css Stylesheet.
 	 * @return {Object}     Emotes ordered by table.
 	 */
-	extractEmotesStep1: function( css ) {
-		var cssCopy = css;
-		var emoteCSS = [];
-		var needleImage = 'background-image';
-		var needlePosition = 'background-position';
-		var needleTransform = 'transform';
-		var selectors = [];
+	extractEmotesStep1( css ) {
+		let cssCopy = css;
+		let emoteCSS = [];
+		let needleImage = 'background-image';
+		let needlePosition = 'background-position';
+		let needleTransform = 'transform';
+		let selectors = [];
 
 
 		// CSS code for reversing emotes
 
-		var rCSS = this.getReverseEmotesCSS( css );
+		let rCSS = this.getReverseEmotesCSS( css );
 
 		if( rCSS !== false ) {
 			emoteCSS.push( rCSS );
@@ -461,10 +461,10 @@ var Updater = {
 
 
 		while( true ) {
-			var idxImage = cssCopy.indexOf( needleImage );
-			var idxPosition = cssCopy.indexOf( needlePosition );
-			var idxTransform = cssCopy.indexOf( needleTransform );
-			var ignoreSelectors = false;
+			let idxImage = cssCopy.indexOf( needleImage );
+			let idxPosition = cssCopy.indexOf( needlePosition );
+			let idxTransform = cssCopy.indexOf( needleTransform );
+			let ignoreSelectors = false;
 
 			if( idxImage < 0 && idxPosition < 0 && idxTransform < 0 ) {
 				break;
@@ -476,9 +476,9 @@ var Updater = {
 			idxPosition = ( idxPosition < 0 ) ? Infinity : idxPosition;
 			idxTransform = ( idxTransform < 0 ) ? Infinity : idxTransform;
 
-			var firstIdx = Math.min( idxImage, idxPosition, idxTransform );
-			var idx = -1;
-			var needleLength = 0;
+			let firstIdx = Math.min( idxImage, idxPosition, idxTransform );
+			let idx = -1;
+			let needleLength = 0;
 
 			if( firstIdx == idxImage ) {
 				idx = idxImage;
@@ -495,12 +495,12 @@ var Updater = {
 				ignoreSelectors = true;
 			}
 
-			var selector = [];
-			var eCSS = [];
-			var record = false;
+			let selector = [];
+			let eCSS = [];
+			let record = false;
 
 			// Get the selectors and part of the CSS
-			for( var i = idx; i > 0; i-- ) {
+			for( let i = idx; i > 0; i-- ) {
 				if( cssCopy[i] == '}' ) {
 					break;
 				}
@@ -538,19 +538,19 @@ var Updater = {
 	/**
 	 * Extract the emote names.
 	 */
-	extractEmotesStep2: function() {
-		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
-		var cssCurrent = this.emoteCSS[this.xhrCurrentTarget];
-		var emotes = [];
-		var idx = -1;
+	extractEmotesStep2() {
+		let emotesCurrent = this.emotes[this.xhrCurrentTarget];
+		let cssCurrent = this.emoteCSS[this.xhrCurrentTarget];
+		let emotes = [];
+		let idx = -1;
 
 		// Extract emote names
-		for( var i = 0; i < emotesCurrent.length; i++ ) {
-			var selector = emotesCurrent[i].split( ',' );
-			var subEmoteList = [];
+		for( let i = 0; i < emotesCurrent.length; i++ ) {
+			let selector = emotesCurrent[i].split( ',' );
+			let subEmoteList = [];
 
-			for( var j = 0; j < selector.length; j++ ) {
-				var emote = selector[j].trim();
+			for( let j = 0; j < selector.length; j++ ) {
+				let emote = selector[j].trim();
 				idx = emote.indexOf( this.linkStart );
 
 				if( idx == -1 ) {
@@ -589,13 +589,13 @@ var Updater = {
 	/**
 	 * Get the sub-reddit stylesheet per XHR.
 	 */
-	getCSS: function() {
+	getCSS() {
 		if( this.isProgressFinished() ) {
 			this.wrapUp();
 			return;
 		}
 
-		var url = this.xhrTargetsCSS[this.xhrProgress];
+		let url = this.xhrTargetsCSS[this.xhrProgress];
 
 		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
 		this.xhrProgress++;
@@ -609,7 +609,7 @@ var Updater = {
 	/**
 	 * Get the URLs to the CSS files.
 	 */
-	getCSSURLs: function() {
+	getCSSURLs() {
 		// Just getting started. Prepare list for CSS URLs.
 		if( this.xhrProgress === 0 ) {
 			this.xhrTargetsCSS = [];
@@ -625,7 +625,7 @@ var Updater = {
 		this.xhrProgress++;
 
 		// Fetch a small page which uses the subreddit CSS.
-		var url = 'https://old.reddit.com/' + this.xhrCurrentTarget;
+		const url = 'https://old.reddit.com/' + this.xhrCurrentTarget;
 
 		MyBrowser.sendRequest(
 			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.getCSSURLsCallback
@@ -639,8 +639,8 @@ var Updater = {
 	 * @param {Boolean} hasReadyState4 Workaround for Firefox.
 	 * @param {String}  responseText   Workaround for Firefox.
 	 */
-	getCSSURLsCallback: function( hasReadyState4, responseText ) {
-		var responseContent = '';
+	getCSSURLsCallback( hasReadyState4, responseText ) {
+		let responseContent = '';
 
 		if( hasReadyState4 === true ) {
 			responseContent = responseText;
@@ -650,7 +650,7 @@ var Updater = {
 		}
 
 		if( hasReadyState4 === true || this.readyState == 4 ) {
-			var url = responseContent.match( /href="[a-zA-Z0-9\/.:\-_+]+" (ref="applied_subreddit_stylesheet")? title="applied_subreddit_stylesheet"/ );
+			let url = responseContent.match( /href="[a-zA-Z0-9/.:\-_+]+" (ref="applied_subreddit_stylesheet")? title="applied_subreddit_stylesheet"/ );
 
 			if( !url ) {
 				MyBrowser.logError( 'No CSS URL found.' );
@@ -665,16 +665,7 @@ var Updater = {
 			Updater.xhrTargetsCSS.push( url );
 
 			// Get the next CSS URL.
-			if( typeof setTimeout != 'undefined' ) {
-				setTimeout( function( ev ) {
-					Updater.getCSSURLs( ev );
-				}, Updater.xhrWait );
-			}
-			else {
-				Timer.setTimeout( function( ev ) {
-					Updater.getCSSURLs( ev );
-				}, Updater.xhrWait );
-			}
+			setTimeout( () => Updater.getCSSURLs(), Updater.xhrWait );
 		}
 	},
 
@@ -686,13 +677,13 @@ var Updater = {
 	 * @param  {Number} idx     Index of the found needle.
 	 * @return {String}         Extracted CSS.
 	 */
-	getRestOfCSS: function( cssCopy, idx ) {
-		var css = '';
+	getRestOfCSS( cssCopy, idx ) {
+		let css = '';
 
-		for( var i = idx + 1; i < cssCopy.length; i++ ) {
+		for( let i = idx + 1; i < cssCopy.length; i++ ) {
 			css += cssCopy[i];
 
-			if( cssCopy[i] == '}' ) {
+			if( cssCopy[i] === '}' ) {
 				break;
 			}
 		}
@@ -706,14 +697,14 @@ var Updater = {
 	 * @param  {String}         css The CSS.
 	 * @return {String|Boolean}     The relevant CSS part or false if nothing could be found.
 	 */
-	getReverseEmotesCSS: function( css ) {
-		var rCSS = false;
-		var idxReverse = css.indexOf( this.linkStartReverse );
+	getReverseEmotesCSS( css ) {
+		let rCSS = false;
+		let idxReverse = css.indexOf( this.linkStartReverse );
 
 		if( idxReverse >= 0 ) {
-			rCSS = css.substr( idxReverse );
-			var idxEnd = rCSS.indexOf( '}' );
-			rCSS = rCSS.substr( 0, idxEnd + 1 );
+			rCSS = css.substring( idxReverse );
+			let idxEnd = rCSS.indexOf( '}' );
+			rCSS = rCSS.substring( 0, idxEnd + 1 );
 		}
 
 		return rCSS;
@@ -724,18 +715,18 @@ var Updater = {
 	 * Group emotes that show the same image but have different names.
 	 * This is kind of unstable since it depends on the CSS authors' style not to change.
 	 */
-	groupSameEmotes: function() {
-		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
-		var newEmoteList = [];
-		var nonTableEmotes = [];
+	groupSameEmotes() {
+		let emotesCurrent = this.emotes[this.xhrCurrentTarget];
+		let newEmoteList = [];
+		let nonTableEmotes = [];
 
 
 		// Get a list of lists with all the emotes that share the same background position
-		var emotesCurrentCSS = this.emoteCSS[this.xhrCurrentTarget].split( '\n' );
-		var lineEmotes = [];
+		let emotesCurrentCSS = this.emoteCSS[this.xhrCurrentTarget].split( '\n' );
+		let lineEmotes = [];
 
-		for( var i = 0; i < emotesCurrentCSS.length; i++ ) {
-			var line = emotesCurrentCSS[i];
+		for( let i = 0; i < emotesCurrentCSS.length; i++ ) {
+			let line = emotesCurrentCSS[i];
 
 			if( line.indexOf( 'background-position:' ) == -1 ) {
 				continue;
@@ -749,32 +740,32 @@ var Updater = {
 
 
 		// Iterate over (presumably) emote tables
-		for( var i = 0; i < emotesCurrent.length; i++ ) {
-			var newEmoteSubList = [];
-			var ecCopy = emotesCurrent[i].slice( 0 );
+		for( let i = 0; i < emotesCurrent.length; i++ ) {
+			let newEmoteSubList = [];
+			let ecCopy = emotesCurrent[i].slice( 0 );
 
 			// Iterate over emotes of a table
-			for( var j = 0; j < emotesCurrent[i].length; j++ ) {
-				var emote = emotesCurrent[i][j];
+			for( let j = 0; j < emotesCurrent[i].length; j++ ) {
+				let emote = emotesCurrent[i][j];
 
 				// Emote has already been checked and was an alternate name for another one
 				if( ecCopy.indexOf( emote ) == -1 ) {
 					continue;
 				}
 
-				var group = [emote];
+				let group = [emote];
 
-				for( var k = 0; k < ecCopy.length; k++ ) {
-					var emote2 = ecCopy[k];
-					var originalFound = false;
-					var emote2Found = false;
+				for( let k = 0; k < ecCopy.length; k++ ) {
+					let emote2 = ecCopy[k];
+					let originalFound = false;
+					let emote2Found = false;
 
 					if( emote2 == emote ) {
 						continue;
 					}
 
 					// Iterate over list of lists of emotes with same background position
-					for( var l = 0; l < lineEmotes.length; l++ ) {
+					for( let l = 0; l < lineEmotes.length; l++ ) {
 
 						// Find bg pos list of current emote
 						if( lineEmotes[l].indexOf( emote ) >= 0 ) {
@@ -798,9 +789,9 @@ var Updater = {
 				}
 
 				// Remove already grouped emotes
-				var belongsToTable = false;
+				let belongsToTable = false;
 
-				for( var rem = 0; rem < group.length; rem++ ) {
+				for( let rem = 0; rem < group.length; rem++ ) {
 					if( !belongsToTable && this.isTableCode( group[rem] ) ) {
 						belongsToTable = true;
 					}
@@ -820,11 +811,11 @@ var Updater = {
 			}
 		}
 
-		var noDoubles = [];
+		let noDoubles = [];
 
 		if( nonTableEmotes.length > 0 ) {
 			// Remove doubled emotes
-			for( var i = 0; i < nonTableEmotes.length; i++ ) {
+			for( let i = 0; i < nonTableEmotes.length; i++ ) {
 				if( noDoubles.indexOf( nonTableEmotes[i] ) < 0 ) {
 					noDoubles.push( nonTableEmotes[i] );
 				}
@@ -844,17 +835,17 @@ var Updater = {
 	 *                              (At least according to what the server tells us.)
 	 * @param {String} contentType  Content-Type of the received resource. We need "text/css".
 	 */
-	handleCSS: function( responseText, lastModified, contentType ) {
+	handleCSS( responseText, lastModified, contentType ) {
 		// Don't process if it isn't CSS.
-		if( contentType == 'text/css' ) {
+		if( contentType === 'text/css' ) {
 			// Only process the stylesheet if something changed since the last check
 			// or it is a forced update.
 			if( this.forceUpdate || lastModified >= META.lastSubredditCheck ) {
 				// Create key for subreddit, if not already existent
-				if( !this.emoteCSS.hasOwnProperty( this.xhrCurrentTarget ) ) {
+				if( !Object.prototype.hasOwnProperty.call( this.emoteCSS, this.xhrCurrentTarget ) ) {
 					this.emoteCSS[this.xhrCurrentTarget] = [];
 				}
-				if( !this.emotes.hasOwnProperty( this.xhrCurrentTarget ) ) {
+				if( !Object.prototype.hasOwnProperty.call( this.emotes, this.xhrCurrentTarget ) ) {
 					this.emotes[this.xhrCurrentTarget] = [];
 				}
 
@@ -870,19 +861,7 @@ var Updater = {
 		// The reddit API guidelines say:
 		// Not more than 1 request every 2 seconds.
 		if( !this.isProgressFinished() ) {
-			// Firefox doesn't know window.setTimeout in main.js.
-			// Great. But it has require( "timers" ).setTimeout which
-			// does EXACTLY THE SAME. Go figure.
-			if( typeof setTimeout != 'undefined' ) {
-				setTimeout( function( ev ) {
-					this.getCSS( ev );
-				}.bind( this ), this.xhrWait );
-			}
-			else {
-				Timer.setTimeout( function( ev ) {
-					this.getCSS( ev );
-				}.bind( this ), this.xhrWait );
-			}
+			setTimeout( ev => this.getCSS( ev ), this.xhrWait );
 		}
 		else {
 			this.getCSS();
@@ -898,7 +877,7 @@ var Updater = {
 	 * @param {Number}  lastModified
 	 * @param {String}  contentType
 	 */
-	handleCSSCallback: function( hasReadyState4, responseText, lastModified, contentType ) {
+	handleCSSCallback( hasReadyState4, responseText, lastModified, contentType ) {
 		// Firefox
 		if( hasReadyState4 === true ) {
 			Updater.handleCSS( responseText, lastModified, contentType );
@@ -919,10 +898,8 @@ var Updater = {
 	 * @param  {Array<String>} group Emote and its names.
 	 * @return {String}              Table name of the emote or false if it cannot be identified.
 	 */
-	identifyTableOfEmoteGroup: function( group ) {
-		var emote, table;
-
-		for( var i = group.length - 1; i >= 0; i-- ) {
+	identifyTableOfEmoteGroup( group ) {
+		for( let i = group.length - 1; i >= 0; i-- ) {
 			if( this.isTableCode( group[i] ) ) {
 				return group[i][0].toUpperCase();
 			}
@@ -936,8 +913,8 @@ var Updater = {
 	 * Check if all XHR targets have been used.
 	 * @return {Boolean} True if no more XHR calls will be made, false otherwise.
 	 */
-	isProgressFinished: function() {
-		return ( this.xhrProgress >= this.xhrTargets.length );
+	isProgressFinished() {
+		return this.xhrProgress >= this.xhrTargets.length;
 	},
 
 
@@ -946,8 +923,8 @@ var Updater = {
 	 * @param  {String}  emote Emote name.
 	 * @return {Boolean}       True if the emote is in table code form, false otherwise.
 	 */
-	isTableCode: function( emote ) {
-		return ( emote.match( this.tableCodeRegex ) !== null );
+	isTableCode( emote ) {
+		return emote.match( this.tableCodeRegex ) !== null;
 	},
 
 
@@ -955,19 +932,19 @@ var Updater = {
 	 * Merge the emotes extracted from the subreddit stylesheets
 	 * with our lists. Or create the list if it doesn't exist yet.
 	 */
-	mergeSubredditEmotesIntoLists: function() {
-		var cfg = CURRENT_CONFIG;
-		var r_mlp = this.emotes['r/mylittlepony'];
-		var r_plounge = this.emotes['r/mlplounge'];
+	mergeSubredditEmotesIntoLists() {
+		const cfg = CURRENT_CONFIG;
+		const r_mlp = this.emotes['r/mylittlepony'];
+		const r_plounge = this.emotes['r/mlplounge'];
 
 		// r/mylittlepony
 		// Different tables to take care of.
-		for( var i = 0; i < r_mlp.length; i++ ) {
-			var emoteCluster = r_mlp[i];
+		for( let i = 0; i < r_mlp.length; i++ ) {
+			let emoteCluster = r_mlp[i];
 
-			for( var j = 0; j < emoteCluster.length; j++ ) {
-				var group = emoteCluster[j];
-				var table = this.identifyTableOfEmoteGroup( group );
+			for( let j = 0; j < emoteCluster.length; j++ ) {
+				let group = emoteCluster[j];
+				let table = this.identifyTableOfEmoteGroup( group );
 
 				if( table === false ) {
 					continue;
@@ -1000,14 +977,14 @@ var Updater = {
 				}
 
 				// Create table if not there anymore
-				if( !CURRENT_EMOTES.hasOwnProperty( table ) ) {
+				if( !Object.prototype.hasOwnProperty.call( CURRENT_EMOTES, table ) ) {
 					CURRENT_EMOTES[table] = [];
 				}
 
 				// Add emote to the table if not in there already
-				var add = false;
+				let add = false;
 
-				for( var k = 0; k < group.length; k++ ) {
+				for( let k = 0; k < group.length; k++ ) {
 					if( group.length > 1 && this.isTableCode( group[k] ) ) {
 						continue;
 					}
@@ -1027,22 +1004,22 @@ var Updater = {
 
 		// r/mlplounge
 		// No tables, but additional emotes.
-		for( var i = 0; i < r_plounge.length; i++ ) {
-			var emoteCluster = r_plounge[i];
+		for( let i = 0; i < r_plounge.length; i++ ) {
+			let emoteCluster = r_plounge[i];
 
-			for( var j = 0; j < emoteCluster.length; j++ ) {
-				var group = emoteCluster[j];
-				var table = this.identifyTableOfEmoteGroup( group );
+			for( let j = 0; j < emoteCluster.length; j++ ) {
+				let group = emoteCluster[j];
+				let table = this.identifyTableOfEmoteGroup( group );
 
 				if( table !== false ) {
 					continue;
 				}
 
-				if( !CURRENT_EMOTES.hasOwnProperty( cfg.listNamePlounge ) ) {
+				if( !Object.prototype.hasOwnProperty.call( CURRENT_EMOTES, cfg.listNamePlounge ) ) {
 					CURRENT_EMOTES[cfg.listNamePlounge] = [];
 				}
 
-				for( var k = 0; k < group.length; k++ ) {
+				for( let k = 0; k < group.length; k++ ) {
 					if( CURRENT_EMOTES[cfg.listNamePlounge].indexOf( group[k] ) < 0 ) {
 						CURRENT_EMOTES[cfg.listNamePlounge].push( group[k] );
 					}
@@ -1057,26 +1034,25 @@ var Updater = {
 	 * @param  {Array<String>} css
 	 * @return {String}
 	 */
-	removeNonEmoteCSS: function( css ) {
-		var purgedCSS = [];
+	removeNonEmoteCSS( css ) {
+		let purgedCSS = [];
 
-		for( var i = 0; i < css.length; i++ ) {
-			var purged = css[i];
-			var idx = purged.indexOf( this.linkStart );
-			var idxFilly = purged.indexOf( 'a[href="/filly"]' );
-			// var idxReverse = purged.indexOf( this.linkStartReverse );
+		for( let i = 0; i < css.length; i++ ) {
+			let purged = css[i];
+			let idx = purged.indexOf( this.linkStart );
+			let idxFilly = purged.indexOf( 'a[href="/filly"]' );
 
 			// Alrighty, there is at least one emote selector in there
 			if( idx >= 0 || idxFilly >= 0 ) {
 
 				// Remove the non-emote selectors ...
-				var parts = purged.split( '{' );
-				var selectors = parts[0].split( ',' );
+				let parts = purged.split( '{' );
+				let selectors = parts[0].split( ',' );
 				purged = '';
 
 				// ... by only keeping the emote selectors
-				for( var j = 0; j < selectors.length; j++ ) {
-					var s = selectors[j];
+				for( let j = 0; j < selectors.length; j++ ) {
+					let s = selectors[j];
 					idx = s.indexOf( this.linkStart );
 					idxFilly = s.indexOf( 'a[href="/filly"]' );
 
@@ -1088,9 +1064,6 @@ var Updater = {
 				purged = purged.substring( 1 ) + '{' + parts[1];
 				purgedCSS.push( purged );
 			}
-			// else if( idxReverse >= 0 ) {
-			// 	purgedCSS.push( purged );
-			// }
 		}
 
 		return purgedCSS.join( '\n' );
@@ -1100,22 +1073,22 @@ var Updater = {
 	/**
 	 * Remove the emotes which are simply mirrored versions of others.
 	 */
-	removeReverseEmotes: function() {
-		var emotesCurrent = this.emotes[this.xhrCurrentTarget];
-		var flatCopy = [];
-		var newEmoteList = [];
+	removeReverseEmotes() {
+		let emotesCurrent = this.emotes[this.xhrCurrentTarget];
+		let flatCopy = [];
+		let newEmoteList = [];
 
 		// Create a flat copy of the emotes for easier searching.
-		for( var i = 0; i < emotesCurrent.length; i++ ) {
+		for( let i = 0; i < emotesCurrent.length; i++ ) {
 			flatCopy = flatCopy.concat( emotesCurrent[i] );
 		}
 
 		// Create a new (not flat) emote list with only non-reversed emotes.
-		for( var i = 0; i < emotesCurrent.length; i++ ) {
+		for( let i = 0; i < emotesCurrent.length; i++ ) {
 			newEmoteList[i] = [];
 
-			for( var j = 0; j < emotesCurrent[i].length; j++ ) {
-				var emote = emotesCurrent[i][j];
+			for( let j = 0; j < emotesCurrent[i].length; j++ ) {
+				let emote = emotesCurrent[i][j];
 
 				// If the emote doesn't start with "r" or does, but the
 				// part after the first "r" isn't a known emote: keep it
@@ -1128,7 +1101,7 @@ var Updater = {
 		// Save the new emote list and fitler out now empty sub-lists.
 		this.emotes[this.xhrCurrentTarget] = [];
 
-		for( var i = 0; i < newEmoteList.length; i++ ) {
+		for( let i = 0; i < newEmoteList.length; i++ ) {
 			if( newEmoteList[i].length > 0 ) {
 				this.emotes[this.xhrCurrentTarget].push( newEmoteList[i].slice( 0 ) );
 			}
@@ -1140,15 +1113,15 @@ var Updater = {
 	 * Called at the end of updating ALL subreddit CSS.
 	 * Saves the emotes and CSS. Resets counter.
 	 */
-	wrapUp: function() {
+	wrapUp() {
 		META.lastSubredditCheck = Date.now();
 		saveToStorage( PREF.META, META );
 
-		var flagUpdateSuccess = true;
+		let flagUpdateSuccess = true;
 
-		for( var i = 0; i < this.xhrTargets.length; i++ ) {
+		for( let i = 0; i < this.xhrTargets.length; i++ ) {
 			if(
-				!this.emotes.hasOwnProperty( this.xhrTargets[i] ) ||
+				!Object.prototype.hasOwnProperty.call( this.emotes, this.xhrTargets[i] ) ||
 				this.emotes[this.xhrTargets[i]].length === 0
 			) {
 				flagUpdateSuccess = false;
@@ -1164,8 +1137,8 @@ var Updater = {
 		}
 
 		if( this.forceUpdate ) {
-			var response = { task: BG_TASK.UPDATE_CSS };
-			var promise = browser.tabs.sendMessage( this.forceSource.tab.id, response );
+			let response = { task: BG_TASK.UPDATE_CSS };
+			let promise = browser.tabs.sendMessage( this.forceSource.tab.id, response );
 			promise.then(
 				null,
 				function( err ) {
@@ -1179,7 +1152,7 @@ var Updater = {
 		this.emoteCSS = {};
 		this.emotes = {};
 		this.xhrProgress = 0;
-	}
+	},
 
 
 };
@@ -1192,11 +1165,11 @@ var Updater = {
  * @param {Object} sender (Chrome and Firefox only)
  * @param {Object} sendResponse (Chrome only)
  */
-function handleMessage( ev, sender, sendResponse ) {
-	var response = {};
-	var data = ev.data ? ev.data : ev;
-	var source = sender ? sender : ev.source;
-	var broadcast = false;
+function handleMessage( ev, sender, _sendResponse ) {
+	let response = {};
+	let data = ev.data ? ev.data : ev;
+	let source = sender ? sender : ev.source;
+	let broadcast = false;
 
 	// Only handle messages which come with a set task.
 	if( !data.task ) {
@@ -1222,13 +1195,13 @@ function handleMessage( ev, sender, sendResponse ) {
 			break;
 
 		case BG_TASK.UPDATE_LIST_NAME:
-			var u = data.update;
-
-			changeListName( u.oldName, u.newName );
-			saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
-
-			response.update = u;
-			broadcast = true;
+			{
+				let u = data.update;
+				changeListName( u.oldName, u.newName );
+				saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
+				response.update = u;
+				broadcast = true;
+			}
 			break;
 
 		case BG_TASK.UPDATE_LIST_DELETE:
@@ -1254,12 +1227,12 @@ function handleMessage( ev, sender, sendResponse ) {
 			break;
 
 		case BG_TASK.SAVE_CONFIG:
-			var config = data.config || data.update;
-
-			CURRENT_CONFIG = mergeWithConfig( config );
-			response = saveToStorage( PREF.CONFIG, CURRENT_CONFIG );
-
-			response.config = CURRENT_CONFIG;
+			{
+				let config = data.config || data.update;
+				CURRENT_CONFIG = mergeWithConfig( config );
+				response = saveToStorage( PREF.CONFIG, CURRENT_CONFIG );
+				response.config = CURRENT_CONFIG;
+			}
 			break;
 
 		case BG_TASK.RESET_CONFIG:
@@ -1302,9 +1275,9 @@ function handleMessage( ev, sender, sendResponse ) {
  * @param {String} newName New name for the list.
  */
 function changeListName( oldName, newName ) {
-	var emotesNew = {};
+	let emotesNew = {};
 
-	for( var key in CURRENT_EMOTES ) {
+	for( const key in CURRENT_EMOTES ) {
 		if( key == oldName ) {
 			emotesNew[newName] = CURRENT_EMOTES[key];
 		}
@@ -1347,7 +1320,7 @@ function loadConfigAndEmotes( response, sender, loadMeta ) {
  * @return {Object} Updated emote lists.
  */
 function mergeEmotesWithUpdate( emotes ) {
-	for( var key in emotes ) {
+	for( const key in emotes ) {
 		CURRENT_EMOTES[key] = emotes[key];
 	}
 }
@@ -1361,22 +1334,22 @@ function mergeEmotesWithUpdate( emotes ) {
  * @return {Object}
  */
 function mergeWithConfig( obj ) {
-	var obj_new = {};
+	let obj_new = {};
 
 	if( !CURRENT_CONFIG ) {
 		loadConfigAndEmotes( {} );
 	}
 
 	// Remove unknown config keys
-	for( var key in obj ) {
-		if( CURRENT_CONFIG.hasOwnProperty( key ) ) {
+	for( const key in obj ) {
+		if( Object.prototype.hasOwnProperty.call( CURRENT_CONFIG, key ) ) {
 			obj_new[key] = obj[key];
 		}
 	}
 
 	// Add missing config keys
-	for( var key in CURRENT_CONFIG ) {
-		if( !obj_new.hasOwnProperty( key ) ) {
+	for( const key in CURRENT_CONFIG ) {
+		if( !Object.prototype.hasOwnProperty.call( obj_new, key ) ) {
 			obj_new[key] = CURRENT_CONFIG[key];
 		}
 	}
@@ -1392,10 +1365,10 @@ function mergeWithConfig( obj ) {
  * @return {Object}     Default value. Same as parameter "obj".
  */
 function saveDefaultToStorage( key, obj ) {
-	var r = saveToStorage( key, obj );
-	var msg = r.success ?
-	          'Background process: "' + key + '" not in extension preferences yet. Created default.' :
-	          'Background process: Could not save default value.';
+	let r = saveToStorage( key, obj );
+	let msg = r.success ?
+		`Background process: "${key}" not in extension preferences yet. Created default.` :
+		'Background process: Could not save default value.';
 
 	MyBrowser.logError( msg );
 
@@ -1410,7 +1383,7 @@ function saveDefaultToStorage( key, obj ) {
  * @return {Object}     Contains key "success" with a boolean value.
  */
 function saveToStorage( key, obj ) {
-	var obj_json;
+	let obj_json;
 
 	if( !obj ) {
 		return { success: false };
@@ -1438,11 +1411,12 @@ function saveToStorage( key, obj ) {
  * @return {Object}               The updated object.
  */
 function updateObject( current, defaultValues, storageKey ) {
-	for( var key in defaultValues ) {
-		if( !current.hasOwnProperty( key ) ) {
+	for( const key in defaultValues ) {
+		if( !Object.prototype.hasOwnProperty.call( current, key ) ) {
 			current[key] = defaultValues[key];
 		}
 	}
+
 	saveToStorage( storageKey, current );
 
 	return current;

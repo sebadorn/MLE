@@ -1,7 +1,8 @@
 'use strict';
 
 
-var BG_TASK = {
+// eslint-disable-next-line no-redeclare, no-unused-vars
+const BG_TASK = {
 	LOAD: 1,
 	SAVE_CONFIG: 2,
 	SAVE_EMOTES: 3,
@@ -12,5 +13,5 @@ var BG_TASK = {
 	UPDATE_LIST_ORDER: 8,
 	UPDATE_LIST_NAME: 9,
 	UPDATE_LIST_DELETE: 10,
-	UPDATE_CSS: 11
+	UPDATE_CSS: 11,
 };

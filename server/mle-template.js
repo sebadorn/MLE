@@ -6,9 +6,9 @@
  * Register click event on nav elements.
  */
 function registerEventToggleNav() {
-	var nav = document.querySelectorAll( 'nav label' );
+	const nav = document.querySelectorAll( 'nav label' );
 
-	for( var i = 0; i < nav.length; i++ ) {
+	for( let i = 0; i < nav.length; i++ ) {
 		nav[i].addEventListener( 'click', toggleNav, false );
 	}
 }
@@ -18,13 +18,13 @@ function registerEventToggleNav() {
  * Add-on install trigger for Firefox.
  */
 function setFirefoxInstallTrigger() {
-	if( typeof InstallTrigger != 'undefined' ) {
-		var lff = document.getElementById( 'install_firefox' );
+	if( typeof InstallTrigger !== 'undefined' ) {
+		const lff = document.getElementById( 'install_firefox' );
 
 		lff && lff.addEventListener( 'click', function( ev ) {
 			ev.preventDefault();
 
-			var params = {
+			const params = {
 				'MLE': {
 					URL: ev.target.href,
 					IconURL: '//sebadorn.de/mlp/mle/MLE_32.png',
@@ -43,7 +43,7 @@ function setFirefoxInstallTrigger() {
  * Set current version of MLE in headline.
  */
 function setVersion() {
-	var v = document.getElementById( 'version' );
+	const v = document.getElementById( 'version' );
 	v.textContent = '%MLE_VERSION%';
 }
 
@@ -53,9 +53,9 @@ function setVersion() {
  * @param {Event} ev
  */
 function toggleNav( ev ) {
-	var nav = document.querySelectorAll( 'nav label' );
+	const nav = document.querySelectorAll( 'nav label' );
 
-	for( var i = 0; i < nav.length; i++ ) {
+	for( let i = 0; i < nav.length; i++ ) {
 		if( nav[i] != ev.target ) {
 			nav[i].className = '';
 		}

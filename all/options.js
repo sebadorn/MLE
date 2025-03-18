@@ -1,11 +1,11 @@
 'use strict';
 
 
-var CONFIG = null;
-var EMOTES = null;
-var META = null;
+let CONFIG = null;
+let EMOTES = null;
+let META = null;
 
-var OPT_CFG = {
+let OPT_CFG = {
 	MSG_TIMEOUT: 8000 // [ms]
 };
 
@@ -13,22 +13,18 @@ var OPT_CFG = {
 
 /**
  * Export current config.
- * @param {Event} ev
  */
-function exportConfig( ev ) {
-	var ta = document.getElementById( 'export-config-ta' );
-
+function exportConfig() {
+	const ta = document.getElementById( 'export-config-ta' );
 	ta.value = JSON.stringify( CONFIG );
 }
 
 
 /**
  * Export emotes in JSON.
- * @param {Event} ev
  */
-function exportEmotes( ev ) {
-	var ta = document.getElementById( 'export-emotes-ta' );
-
+function exportEmotes() {
+	const ta = document.getElementById( 'export-emotes-ta' );
 	ta.value = JSON.stringify( EMOTES );
 	showMsg( ta.value.length + ' bytes', 'info' );
 }
@@ -44,7 +40,7 @@ function forceUpdate( ev ) {
 	ev.target.removeEventListener( 'click', forceUpdate, false );
 	ev.target.setAttribute( 'readonly', 'readonly' );
 
-	postMessage( { task: BG_TASK.UPDATE_CSS } );
+	sendMessage( { task: BG_TASK.UPDATE_CSS } );
 }
 
 
@@ -62,7 +58,7 @@ function getOptionValue( select ) {
  * @param {Event} ev
  */
 function handleBackgroundMessages( ev ) {
-	var data = ev.data ? ev.data : ev;
+	let data = ev.data ? ev.data : ev;
 
 	if( !data.task ) {
 		console.warn( 'MyLittleEmotebox: Message from background process didn\'t contain the handled task.' );
@@ -94,19 +90,17 @@ function handleBackgroundMessages( ev ) {
  * Hide the message box.
  */
 function hideMsg() {
-	var msg_box = document.getElementById( 'msgbox' );
-
+	const msg_box = document.getElementById( 'msgbox' );
 	msg_box.className = '';
 }
 
 
 /**
  * Import a config in JSON.
- * @param {Event} ev
  */
-function importConfig( ev ) {
-	var ta = document.getElementById( "import-config-ta" );
-	var cfg = ta.value.trim();
+function importConfig() {
+	let ta = document.getElementById( 'import-config-ta' );
+	let cfg = ta.value.trim();
 
 	if( cfg.length === 0 ) {
 		showMsg( 'Nothing to import.', 'err' );
@@ -124,7 +118,7 @@ function importConfig( ev ) {
 		return;
 	}
 
-	postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
+	sendMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
 	ta.value = '';
 	showMsg( ['Import (probably) successful.', 'Changes show after next page load.'], 'info' );
 }
@@ -132,11 +126,10 @@ function importConfig( ev ) {
 
 /**
  * Import emotes in JSON.
- * @param {Event} ev
  */
-function importEmotes( ev ) {
-	var importField = document.getElementById( 'import-emotes-ta' );
-	var imported = null;
+function importEmotes() {
+	let importField = document.getElementById( 'import-emotes-ta' );
+	let imported = null;
 
 	importField.value = importField.value.trim();
 
@@ -157,11 +150,11 @@ function importEmotes( ev ) {
 		return;
 	}
 
-	var count = 0;
+	let count = 0;
 
 	// Parsing successful, but empty?
-	for( var ele in imported ) {
-		if( imported.hasOwnProperty( ele ) ) {
+	for( let ele in imported ) {
+		if( Object.prototype.hasOwnProperty.call( imported, ele ) ) {
 			count++;
 			break;
 		}
@@ -184,12 +177,12 @@ function importEmotes( ev ) {
  * Insert the META data where it should be displayed.
  */
 function insertMetaData() {
-	var lastCheck = document.getElementById( 'lastSubredditCheck' );
-	var date = new Date( META.lastSubredditCheck );
-	var month = date.getMonth() + 1;
-	var day = date.getDate();
-	var hours = date.getHours();
-	var minutes = date.getMinutes();
+	let lastCheck = document.getElementById( 'lastSubredditCheck' );
+	let date = new Date( META.lastSubredditCheck );
+	let month = date.getMonth() + 1;
+	let day = date.getDate();
+	let hours = date.getHours();
+	let minutes = date.getMinutes();
 
 	if( month < 10 ) { month = '0' + month; }
 	if( day < 10 ) { day = '0' + day; }
@@ -226,7 +219,7 @@ function isColor( color ) {
  * Load config through background process.
  */
 function loadConfig() {
-	postMessage( { task: BG_TASK.LOAD, loadMeta: true } );
+	sendMessage( { task: BG_TASK.LOAD, loadMeta: true } );
 }
 
 
@@ -234,13 +227,9 @@ function loadConfig() {
  * Send a message to the background process.
  * @param {Object} msg Message to send.
  */
-function postMessage( msg ) {
-	// Opera
-	if( typeof opera !== 'undefined' ) {
-		opera.extension.postMessage( msg );
-	}
+function sendMessage( msg ) {
 	// Firefox (WebExt)
-	else if( typeof browser !== 'undefined' ) {
+	if( typeof browser !== 'undefined' ) {
 		browser.runtime.sendMessage( msg ).then(
 			function( response ) {
 				if( response ) {
@@ -256,10 +245,6 @@ function postMessage( msg ) {
 	else if( typeof chrome !== 'undefined' ) {
 		chrome.runtime.sendMessage( msg, handleBackgroundMessages );
 	}
-	// probably Firefox
-	else {
-		self.postMessage( msg );
-	}
 }
 
 
@@ -268,22 +253,22 @@ function postMessage( msg ) {
  * immediately change the related setting.
  */
 function registerEventSettingChanged() {
-	var d = document;
-	var selects = d.querySelectorAll( 'select' );
-	var checkboxes = d.querySelectorAll( 'input[type="checkbox"]' );
-	var numbers = d.querySelectorAll( 'input[type="number"]' );
-	var texts = d.querySelectorAll( 'input[type="text"]' );
-	var exportEmotesBtn = d.getElementById( 'export-emotes' );
-	var importEmotesBtn = d.getElementById( 'import-emotes' );
-	var resetEmotesBtn = d.getElementById( 'reset-emotes' );
-	var forceUpdateBtn = d.getElementById( 'force-update' );
-	var exportCfg = d.getElementById( 'export-config' );
-	var importCfg = d.getElementById( 'import-config' );
-	var resetCfg = d.getElementById( 'reset-config' );
+	const d = document;
+	let selects = d.querySelectorAll( 'select' );
+	let checkboxes = d.querySelectorAll( 'input[type="checkbox"]' );
+	let numbers = d.querySelectorAll( 'input[type="number"]' );
+	let texts = d.querySelectorAll( 'input[type="text"]' );
+	let exportEmotesBtn = d.getElementById( 'export-emotes' );
+	let importEmotesBtn = d.getElementById( 'import-emotes' );
+	let resetEmotesBtn = d.getElementById( 'reset-emotes' );
+	let forceUpdateBtn = d.getElementById( 'force-update' );
+	let exportCfg = d.getElementById( 'export-config' );
+	let importCfg = d.getElementById( 'import-config' );
+	let resetCfg = d.getElementById( 'reset-config' );
 
 	// <select>s
-	for( var i = 0; i < selects.length; i++ ) {
-		var select = selects[i];
+	for( let i = 0; i < selects.length; i++ ) {
+		let select = selects[i];
 
 		if( select.hasAttribute( 'data-meta' ) ) {
 			continue;
@@ -291,7 +276,7 @@ function registerEventSettingChanged() {
 		select.addEventListener( 'change', saveSetting, false );
 
 		// Select currently set <option>
-		for( var j = 0; j < select.options.length; j++ ) {
+		for( let j = 0; j < select.options.length; j++ ) {
 			if( select.options[j].value == String( CONFIG[select.id] ) ) {
 				select.selectedIndex = j;
 			}
@@ -299,8 +284,8 @@ function registerEventSettingChanged() {
 	}
 
 	// <input type="checkbox">s
-	for( var i = 0; i < checkboxes.length; i++ ) {
-		var chkbox = checkboxes[i];
+	for( let i = 0; i < checkboxes.length; i++ ) {
+		let chkbox = checkboxes[i];
 
 		if( chkbox.hasAttribute( 'data-meta' ) ) {
 			continue;
@@ -310,8 +295,8 @@ function registerEventSettingChanged() {
 	}
 
 	// <input type="number">s
-	for( var i = 0; i < numbers.length; i++ ) {
-		var nmbr = numbers[i];
+	for( let i = 0; i < numbers.length; i++ ) {
+		let nmbr = numbers[i];
 
 		if( nmbr.hasAttribute( 'data-meta' ) ) {
 			continue;
@@ -321,8 +306,8 @@ function registerEventSettingChanged() {
 	}
 
 	// <input type="text">s
-	for( var i = 0; i < texts.length; i++ ) {
-		var txt = texts[i];
+	for( let i = 0; i < texts.length; i++ ) {
+		let txt = texts[i];
 
 		if( txt.hasAttribute( 'data-meta' ) ) {
 			continue;
@@ -350,9 +335,9 @@ function registerEventSettingChanged() {
  * Register click event on nav elements.
  */
 function registerEventToggleNav() {
-	var nav = document.querySelectorAll( 'nav label' );
+	let nav = document.querySelectorAll( 'nav label' );
 
-	for( var i = 0; i < nav.length; i++ ) {
+	for( let i = 0; i < nav.length; i++ ) {
 		nav[i].addEventListener( 'click', toggleNav, false );
 	}
 }
@@ -362,12 +347,8 @@ function registerEventToggleNav() {
  * Register for messages from the background process.
  */
 function registerForBackgroundMessages() {
-	// Opera
-	if( typeof opera !== 'undefined' ) {
-		opera.extension.onmessage = handleBackgroundMessages;
-	}
 	// Firefox (WebExt)
-	else if( typeof browser !== 'undefined' ) {
+	if( typeof browser !== 'undefined' ) {
 		browser.runtime.onMessage.addListener( function( msg ) {
 			handleBackgroundMessages( { data: msg } );
 		} );
@@ -376,21 +357,16 @@ function registerForBackgroundMessages() {
 	else if( typeof chrome !== 'undefined' ) {
 		chrome.runtime.onMessage.addListener( handleBackgroundMessages );
 	}
-	// probably Firefox
-	else {
-		self.on( 'message', handleBackgroundMessages );
-	}
 }
 
 
 /**
  * Reset the config back to the default values.
- * @param {Event} ev
  */
-function resetConfig( ev ) {
+function resetConfig() {
 	if( window.confirm( 'Do you really want to reset the config?' ) ) {
 		exportConfig();
-		postMessage( { task: BG_TASK.RESET_CONFIG } );
+		sendMessage( { task: BG_TASK.RESET_CONFIG } );
 		showMsg(
 			[
 				'Config has been reset.',
@@ -405,12 +381,11 @@ function resetConfig( ev ) {
 
 /**
  * Reset all lists/emotes to the default.
- * @param {Event} ev
  */
-function resetEmotes( ev ) {
+function resetEmotes() {
 	if( window.confirm( 'Do you really want to reset all lists and emotes?' ) ) {
 		exportEmotes();
-		postMessage( { task: BG_TASK.RESET_EMOTES } );
+		sendMessage( { task: BG_TASK.RESET_EMOTES } );
 		showMsg(
 			[
 				'Lists and emotes have been reset.',
@@ -428,7 +403,7 @@ function resetEmotes( ev ) {
  * @param {Object} emotes
  */
 function saveEmotes( emotes ) {
-	postMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
+	sendMessage( { task: BG_TASK.SAVE_EMOTES, emotes: emotes } );
 }
 
 
@@ -439,8 +414,8 @@ function saveEmotes( emotes ) {
  * @throws {Boolean}    If no valid config value can be extracted.
  */
 function saveHandleInput( ev ) {
-	var cfgName = ev.target.id;
-	var val = null;
+	let cfgName = ev.target.id;
+	let val = null;
 
 	switch( ev.target.type ) {
 		case 'checkbox':
@@ -478,7 +453,7 @@ function saveHandleInput( ev ) {
  * @return {mixed}    String or boolean.
  */
 function saveHandleSelect( ev ) {
-	var val = getOptionValue( ev.target );
+	let val = getOptionValue( ev.target );
 
 	if( ev.target.id == 'ctxMenu' ) {
 		val = ( val == 'true' );
@@ -492,10 +467,10 @@ function saveHandleSelect( ev ) {
  * @param {Event} ev
  */
 function saveSetting( ev ) {
-	var htmlTag = ev.target.tagName.toLowerCase();
-	var cfgName = ev.target.id;
-	var val = null;
-	var cfg = {};
+	let htmlTag = ev.target.tagName.toLowerCase();
+	let cfgName = ev.target.id;
+	let val = null;
+	let cfg = {};
 
 	switch( htmlTag ) {
 		case 'select':
@@ -506,13 +481,13 @@ function saveSetting( ev ) {
 			try {
 				val = saveHandleInput( ev );
 			}
-			catch( err ) { return; }
+			catch( _err ) { return; }
 			break;
 	}
 
 	if( val !== null ) {
 		cfg[cfgName] = val;
-		postMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
+		sendMessage( { task: BG_TASK.SAVE_CONFIG, config: cfg } );
 	}
 }
 
@@ -523,15 +498,15 @@ function saveSetting( ev ) {
  * @param {String}               mtype "err" or "info".
  */
 function showMsg( msg, mtype ) {
-	var msgContainer = document.getElementById( 'msg' );
+	const msgContainer = document.getElementById( 'msg' );
 	msgContainer.innerHTML = '';
 
 	if( typeof msg == 'string' ) {
 		msg = [msg];
 	}
 
-	for( var i = 0; i < msg.length; i++ ) {
-		var p = document.createElement( 'p' );
+	for( let i = 0; i < msg.length; i++ ) {
+		const p = document.createElement( 'p' );
 		p.textContent = msg[i];
 		msgContainer.appendChild(p);
 	}
@@ -547,9 +522,9 @@ function showMsg( msg, mtype ) {
  * @param {Event} ev
  */
 function toggleNav( ev ) {
-	var nav = document.querySelectorAll( 'nav label' );
+	const nav = document.querySelectorAll( 'nav label' );
 
-	for( var i = 0; i < nav.length; i++ ) {
+	for( let i = 0; i < nav.length; i++ ) {
 		if( nav[i] != ev.target ) {
 			nav[i].className = '';
 		}
@@ -557,7 +532,6 @@ function toggleNav( ev ) {
 
 	ev.target.className = 'active';
 }
-
 
 
 

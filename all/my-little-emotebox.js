@@ -4,7 +4,7 @@
 ( function() {
 
 
-	var GLOBAL = {
+	const GLOBAL = {
 		// Loaded config
 		config: null,
 		// Loaded emotes
@@ -20,7 +20,7 @@
 			'/bookmarklets',
 			'/buttons',
 			'/feedback',
-			'/widget'
+			'/widget',
 		],
 		// Keep track of mouse stats
 		MOUSE: {
@@ -28,50 +28,38 @@
 			lastY: null,
 			resizeDirection: null,
 			resizeLimitWidth: 400,
-			resizeLimitHeight: 200
+			resizeLimitHeight: 200,
 		},
 		// Reference to the timeout object for the notifier
 		msgTimeout: null,
 		// Noise for CSS classes and IDs, to minimise the probability
 		// of accidentally overwriting existing styles.
 		noise: '-bd6acd4a',
-		// Holding references to DOMElements
+		// Holding references to HTMLElements
 		REF: {
 			emoteBlocks: {},
+			/** @type {HTMLElement?} */
 			focusedInput: null,
 			inputAddEmote: null,
 			inputAddList: null,
 			lists: {},
 			listsCont: null,
+			/** @type {HTMLElement?} */
 			mainCont: null,
 			mngPage: null,
+			/** @type {HTMLElement?} */
 			msg: null,
 			searchPage: null,
 			selectListAddEmote: null,
-			selectListDelete: null
+			selectListDelete: null,
 		},
 		// String, key of block in REF.emoteBlocks
 		shownBlock: null,
 		// CSS for out-of-subreddit emote display
 		sub_css: null,
 		// Emotes found in the stylesheets
-		sub_emotes: null
+		sub_emotes: null,
 	};
-
-
-
-	/**
-	 * Append multiple children to a DOMElement.
-	 * @param  {DOMElement}        parent
-	 * @param  {Array<DOMElement>} children List of children to append.
-	 * @return {DOMElement}                 parent
-	 */
-	function appendChildren( parent, children ) {
-		for( var i = 0; i < children.length; i++ ) {
-			parent.appendChild( children[i] );
-		}
-		return parent;
-	}
 
 
 	/**
@@ -85,9 +73,11 @@
 		}
 
 		// 'usertext cloneable' is the whole reply-to-comment section
-		if( ev.target.className == 'usertext cloneable' ) {
-			var buttonMLE = ev.target.querySelector( '.mle-open-btn' );
-
+		if(
+			ev.target.classList.contains( 'usertext' ) &&
+			ev.target.classList.contains( 'cloneable' )
+		) {
+			const buttonMLE = ev.target.querySelector( '.mle-open-btn' );
 			buttonMLE.addEventListener( 'mouseover', rememberActiveTextarea, false );
 			buttonMLE.addEventListener( 'click', mainContainerShow, false );
 		}
@@ -99,14 +89,17 @@
 	 * @param {MutationRecord} mutations
 	 */
 	function buttonObserverMutation( mutations ) {
-		for( var i = 0; i < mutations.length; i++ ) {
-			var mutation = mutations[i];
+		for( let i = 0; i < mutations.length; i++ ) {
+			let mutation = mutations[i];
 
-			for( var j = 0; j < mutation.addedNodes.length; j++ ) {
-				var node = mutation.addedNodes[j];
+			for( let j = 0; j < mutation.addedNodes.length; j++ ) {
+				let node = mutation.addedNodes[j];
 
-				if( node.className == 'usertext cloneable' ) {
-					var buttonMLE = node.querySelector( '.mle-open-btn' );
+				if(
+					node.classList.contains( 'usertext' ) &&
+					node.classList.contains( 'cloneable' )
+				) {
+					let buttonMLE = node.querySelector( '.mle-open-btn' );
 
 					if( buttonMLE ) {
 						buttonMLE.addEventListener( 'mouseover', rememberActiveTextarea, false );
@@ -124,19 +117,19 @@
 	 * If this happens, add the "click" event listener to the inserted MLE button.
 	 */
 	function buttonObserverSetup() {
-		var MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
+		const MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
 
 		// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
 		if( MutationObserver ) {
-			var observer = new MutationObserver( buttonObserverMutation );
-			var observerConfig = {
+			const observer = new MutationObserver( buttonObserverMutation );
+			const observerConfig = {
 				attributes: false,
 				childList: true,
-				characterData: false
+				characterData: false,
 			};
-			var targets = document.querySelectorAll( '.child' );
+			const targets = document.querySelectorAll( '.child' );
 
-			for( var i = 0; i < targets.length; i++ ) {
+			for( let i = 0; i < targets.length; i++ ) {
 				observer.observe( targets[i], observerConfig );
 			}
 		}
@@ -155,7 +148,7 @@
 	 * @return {String}
 	 */
 	function convertListNameToConfigName( listName ) {
-		var cfg = GLOBAL.config;
+		const cfg = GLOBAL.config;
 
 		switch( listName ) {
 			case 'A':
@@ -191,15 +184,15 @@
 	 * @param {String} list
 	 */
 	function deleteEmote( emote, list ) {
-		var g = GLOBAL;
+		const g = GLOBAL;
 
 		// Emotes don't have a leading slash
-		if( emote.indexOf( '/' ) === 0 ) {
+		if( emote.startsWith( '/' ) ) {
 			emote = emote.substring( 1 );
 		}
 
 		// Remove from locale storage
-		var idx = g.emotes[list].indexOf( emote );
+		let idx = g.emotes[list].indexOf( emote );
 
 		if( idx === -1 ) {
 			return;
@@ -207,15 +200,15 @@
 
 		g.emotes[list].splice( idx, 1 );
 
-		var update = {};
+		let update = {};
 		update[list] = g.emotes[list];
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Remove from DOM
-		var emoteSlash = '/' + emote;
-		var children = g.REF.emoteBlocks[list].childNodes;
+		let emoteSlash = '/' + emote;
+		let children = g.REF.emoteBlocks[list].childNodes;
 
-		for( var i = 0; i < children.length; i++ ) {
+		for( let i = 0; i < children.length; i++ ) {
 			if( children[i].pathname == emoteSlash ) {
 				g.REF.emoteBlocks[list].removeChild( children[i] );
 				break;
@@ -225,7 +218,7 @@
 		// If it is from the search page
 		children = g.REF.searchPage.childNodes;
 
-		for( var i = 0; i < children.length; i++ ) {
+		for( let i = 0; i < children.length; i++ ) {
 			if( children[i].pathname == emoteSlash ) {
 				g.REF.searchPage.removeChild( children[i] );
 				break;
@@ -240,13 +233,12 @@
 	/**
 	 * Delete an emote list.
 	 * This will delete all the emotes in this list as well.
-	 * @param {Event} ev
 	 */
-	function deleteList( ev ) {
-		var g = GLOBAL;
+	function deleteList() {
+		const g = GLOBAL;
 
 		// Major decision. Better ask first.
-		var confirmDel = window.confirm(
+		let confirmDel = window.confirm(
 			'My Little Emotebox:\n\n' +
 			'If you delete the list, you will also DELETE ALL EMOTES in this list!\n\n' +
 			'Proceed?'
@@ -256,10 +248,10 @@
 			return;
 		}
 
-		var listNameEscaped = getOptionValue( g.REF.selectListDelete );
-		var listName = listNameEscaped.replace( /\\"/g, '"' );
+		let listNameEscaped = getOptionValue( g.REF.selectListDelete );
+		let listName = listNameEscaped.replace( /\\"/g, '"' );
 
-		var listToDel = g.REF.lists[listName];
+		let listToDel = g.REF.lists[listName];
 
 		// Delete from emote lists
 		delete g.emotes[listName];
@@ -269,12 +261,12 @@
 		delete g.REF.emoteBlocks[listName];
 		g.REF.listsCont.removeChild( listToDel );
 
-		var selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
+		let selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
 
-		for( var i = 0; i < selectLists.length; i++ ) {
-			var children = selectLists[i].childNodes;
+		for( let i = 0; i < selectLists.length; i++ ) {
+			let children = selectLists[i].childNodes;
 
-			for( var j = 0; j < children.length; j++ ) {
+			for( let j = 0; j < children.length; j++ ) {
 				if( children[j].value == listNameEscaped ) {
 					selectLists[i].removeChild( children[j] );
 					break;
@@ -300,8 +292,8 @@
 	 * @param {Event} ev Event sent from the background process.
 	 */
 	function handleBackgroundMessages( ev ) {
-		var g = GLOBAL;
-		var data = ev.data ? ev.data : ev;
+		const g = GLOBAL;
+		let data = ev.data ? ev.data : ev;
 
 		if( !data.task ) {
 			console.warn( 'MLE: Message from background process didn\'t contain the handled task.' );
@@ -316,7 +308,6 @@
 				g.sub_emotes = data.sub_emotes;
 
 				Init.initStep2();
-				Init = null;
 				break;
 
 			case BG_TASK.SAVE_EMOTES:
@@ -337,10 +328,12 @@
 				break;
 
 			case BG_TASK.UPDATE_LIST_NAME:
-				var u = data.update;
-				g.emotes[u.newName] = g.emotes[u.oldName].slice( 0 );
-				delete g.emotes[u.oldName];
-				Builder.updateListName( u.oldName, u.newName );
+				{
+					let u = data.update;
+					g.emotes[u.newName] = g.emotes[u.oldName].slice( 0 );
+					delete g.emotes[u.oldName];
+					Builder.updateListName( u.oldName, u.newName );
+				}
 				break;
 
 			case BG_TASK.UPDATE_LIST_DELETE:
@@ -358,8 +351,8 @@
 	function insertEmote( ev ) {
 		ev.preventDefault(); // Don't follow emote link
 
-		var g = GLOBAL;
-		var ta = g.REF.focusedInput;
+		const g = GLOBAL;
+		let ta = g.REF.focusedInput;
 
 		mainContainerHide( ev );
 
@@ -368,7 +361,7 @@
 		}
 
 		// Emote name
-		var emote = ev.target.href.split( '/' );
+		let emote = ev.target.href.split( '/' );
 		emote = emote[emote.length - 1];
 
 		// Insert reversed emote version
@@ -385,8 +378,8 @@
 			}
 		}
 
-		var selStart = ta.selectionStart;
-		var selEnd = ta.selectionEnd;
+		let selStart = ta.selectionStart;
+		let selEnd = ta.selectionEnd;
 
 		// Nothing selected, just insert at position
 		if( selStart == selEnd ) {
@@ -394,7 +387,7 @@
 		}
 		// Text marked, use for alt text
 		else {
-			var altText = ta.value.substring( selStart, selEnd );
+			let altText = ta.value.substring( selStart, selEnd );
 			emote = '[](/' + emote + ' "' + altText + '")';
 		}
 
@@ -404,7 +397,7 @@
 		}
 
 		// Insert emote
-		var taLen = ta.value.length;
+		let taLen = ta.value.length;
 		ta.value = ta.value.substring( 0, selStart ) + emote + ta.value.substring( selEnd, taLen );
 
 		// Focus to the textarea
@@ -415,15 +408,14 @@
 		);
 
 		// Fire input event, so that RedditEnhancementSuite updates the preview
-		var inputEvent = document.createEvent( 'Events' );
-		inputEvent.initEvent( 'input', true, true );
+		const inputEvent = new Event( 'input', { bubble: true, cancelable: true } );
 		ta.dispatchEvent( inputEvent );
 	}
 
 
 	/**
 	 * Checks if a given DOM node is an emote.
-	 * @param  {DOMElement} node
+	 * @param  {HTMLElement} node
 	 * @return {Boolean}    True if emote, false otherwise.
 	 */
 	function isEmote( node ) {
@@ -445,21 +437,21 @@
 			return false;
 		}
 
-		var nodeHTML = node.outerHTML;
+		let nodeHTML = node.outerHTML;
 
 		if(
-			nodeHTML.indexOf( 'href="/' ) < 0 ||
-			nodeHTML.indexOf( 'href="//' ) > -1 ||
-			nodeHTML.indexOf( 'href="/http://' ) > -1 ||
-			nodeHTML.indexOf( 'href="/https://' ) > -1 ||
+			!nodeHTML.includes( 'href="/' ) ||
+			nodeHTML.includes( 'href="//' ) ||
+			nodeHTML.includes( 'href="/http://' ) ||
+			nodeHTML.includes( 'href="/https://' ) ||
 			node.pathname == '/'
 		) {
 			return false;
 		}
 
 		// Links that are a normal part of reddit.
-		for( var i = 0; i < GLOBAL.ignoreLinks.length; i++ ) {
-			if( node.pathname.indexOf( GLOBAL.ignoreLinks[i] ) === 0 ) {
+		for( let i = 0; i < GLOBAL.ignoreLinks.length; i++ ) {
+			if( node.pathname.startsWith( GLOBAL.ignoreLinks[i] ) ) {
 				return false;
 			}
 		}
@@ -475,19 +467,19 @@
 	 * @return {Boolean}       True if the emote is from a default sub, false otherwise.
 	 */
 	function isFromDefaultSub( emote ) {
-		var cfg = GLOBAL.config;
-		var keys = [
+		const cfg = GLOBAL.config;
+		const keys = [
 			cfg.listNameTableA,
 			cfg.listNameTableB,
 			cfg.listNameTableC,
 			cfg.listNameTableE,
 			cfg.listNameTableF,
 			cfg.listNameTableG,
-			cfg.listNamePlounge
+			cfg.listNamePlounge,
 		];
 
-		for( var i = 0; i < keys.length; i++ ) {
-			var list = GLOBAL.emotes[keys[i]];
+		for( let i = 0; i < keys.length; i++ ) {
+			let list = GLOBAL.emotes[keys[i]];
 
 			if( list.indexOf( emote ) >= 0 ) {
 				return true;
@@ -500,11 +492,11 @@
 
 	/**
 	 * Checks if a given DOM node is a draggable list element.
-	 * @param  {DOMElement} node
+	 * @param  {HTMLElement} node
 	 * @return {Boolean}    True if list, false otherwise.
 	 */
 	function isList( node ) {
-		if( node.tagName.toLowerCase() != 'li' ) {
+		if( node.tagName.toLowerCase() !== 'li' ) {
 			return false;
 		}
 		if( !node.getAttribute( 'draggable' ) ) {
@@ -520,31 +512,30 @@
 	 * @param {Event} ev
 	 */
 	function mainContainerHide( ev ) {
-		var g = GLOBAL;
-		var mc = g.REF.mainCont;
+		const g = GLOBAL;
+		const mc = g.REF.mainCont;
 
 		ev.preventDefault();
 
 		// Wait with adding the event listener.
 		// Prevents the box from opening again, if mouse cursor hovers
 		// over the closing (CSS3 transition) box.
-		mc.className = mc.className.replace( ' show', '' );
+		mc.classList.remove( 'show' );
 
-		setTimeout( function() {
-			this.addEventListener( 'mouseover', mainContainerShow, false );
-		}.bind( mc ), g.config.boxAnimationSpeed + 100 );
+		setTimeout( () => {
+			mc.addEventListener( 'mouseover', mainContainerShow, false );
+		}, g.config.boxAnimationSpeed + 100 );
 	}
 
 
 	/**
 	 * Fully display main container.
-	 * @param {Event} ev
 	 */
-	function mainContainerShow( ev ) {
-		var mc = GLOBAL.REF.mainCont;
+	function mainContainerShow() {
+		const mc = GLOBAL.REF.mainCont;
 
-		if( mc.className.indexOf( ' show' ) < 0 ) {
-			mc.className += ' show';
+		if( !mc.classList.contains( 'show' ) ) {
+			mc.classList.add( 'show' );
 			mc.removeEventListener( 'mouseover', mainContainerShow, false );
 		}
 	}
@@ -555,7 +546,7 @@
 	 * @param {Object} emotes Changed lists with their emotes.
 	 */
 	function mergeEmotesWithUpdate( emotes ) {
-		for( var key in emotes ) {
+		for( const key in emotes ) {
 			GLOBAL.emotes[key] = emotes[key];
 		}
 	}
@@ -568,10 +559,10 @@
 	function moveMLE( ev ) {
 		ev.preventDefault();
 
-		var m = GLOBAL.MOUSE;
-		var mainCont = GLOBAL.REF.mainCont;
-		var moveX = ev.clientX - m.lastX;
-		var moveY = ev.clientY - m.lastY;
+		const m = GLOBAL.MOUSE;
+		const mainCont = GLOBAL.REF.mainCont;
+		let moveX = ev.clientX - m.lastX;
+		let moveY = ev.clientY - m.lastY;
 
 		if( GLOBAL.config.boxAlign == 'right' ) {
 			mainCont.style.right = ( parseInt( mainCont.style.right, 10 ) - moveX ) + 'px';
@@ -591,13 +582,9 @@
 	 * Send a message to the background process.
 	 * @param {Object} msg Message to send.
 	 */
-	function postMessage( msg ) {
-		// Opera
-		if( typeof opera !== 'undefined' ) {
-			opera.extension.postMessage( msg );
-		}
+	function sendMessage( msg ) {
 		// Firefox (WebExt)
-		else if( typeof browser !== 'undefined' ) {
+		if( typeof browser !== 'undefined' ) {
 			browser.runtime.sendMessage( msg ).then( function( response ) {
 				response && handleBackgroundMessages( { data: response } );
 			} );
@@ -606,17 +593,13 @@
 		else if( typeof chrome !== 'undefined' ) {
 			chrome.runtime.sendMessage( msg, handleBackgroundMessages );
 		}
-		// probably Firefox
-		else {
-			self.postMessage( msg );
-		}
 	}
 
 
 	/**
 	 * Remove all children from a node.
-	 * @param  {DOMElement} node
-	 * @return {DOMElement}
+	 * @param  {HTMLElement} node
+	 * @return {HTMLElement}
 	 */
 	function removeAllChildren( node ) {
 		while( node.firstChild ) {
@@ -637,10 +620,10 @@
 			return;
 		}
 
-		var g = GLOBAL;
-		var name = list.querySelector( 'strong' );
-		var listNameOld = name.textContent;
-		var listNameNew = ev.target.value;
+		const g = GLOBAL;
+		let name = list.querySelector( 'strong' );
+		let listNameOld = name.textContent;
+		let listNameNew = ev.target.value;
 
 		// Length: at least 1 char
 		if( listNameNew.length > 0 && listNameOld != listNameNew ) {
@@ -670,7 +653,7 @@
 				BG_TASK.UPDATE_LIST_NAME,
 				{
 					oldName: listNameOld,
-					newName: listNameNew
+					newName: listNameNew,
 				}
 			);
 		}
@@ -684,12 +667,11 @@
 	/**
 	 * Remember the currently focused/active textarea
 	 * (if there is one) as input for the emotes.
-	 * @param {Event} ev
 	 */
-	function rememberActiveTextarea( ev ) {
-		var ae = document.activeElement;
+	function rememberActiveTextarea() {
+		let ae = document.activeElement;
 
-		if( ae && ae.tagName && ae.tagName.toLowerCase() == 'textarea' ) {
+		if( ae?.tagName && ae.tagName.toLowerCase() === 'textarea' ) {
 			GLOBAL.REF.focusedInput = ae;
 		}
 	}
@@ -701,7 +683,7 @@
 	 * removed since only one is attached at any given moment.
 	 */
 	function removeAllBlocksAndPages() {
-		var g = GLOBAL;
+		const g = GLOBAL;
 
 		if( g.shownBlock !== null ) {
 			g.REF.mainCont.removeChild( g.REF.emoteBlocks[g.shownBlock] );
@@ -723,14 +705,14 @@
 	 * @return {Object} Reordered list.
 	 */
 	function reorderList( moving, inFrontOf ) {
-		var g = GLOBAL;
-		var reordered = {};
+		const g = GLOBAL;
+		let reordered = {};
 
 		if( moving == inFrontOf ) {
 			return g.emotes;
 		}
 
-		for( var block in g.emotes ) {
+		for( const block in g.emotes ) {
 			if( block == moving ) {
 				continue;
 			}
@@ -752,14 +734,14 @@
 	function resizeMLE( ev ) {
 		ev.preventDefault();
 
-		var g = GLOBAL;
-		var m = g.MOUSE;
-		var mainCont = g.REF.mainCont;
-		var moveX = ev.clientX - m.lastX;
-		var moveY = ev.clientY - m.lastY;
-		var newHeight = mainCont.offsetHeight + moveY;
-		var newWidth = mainCont.offsetWidth;
-		var adjustPosX = true;
+		const g = GLOBAL;
+		let m = g.MOUSE;
+		let mainCont = g.REF.mainCont;
+		let moveX = ev.clientX - m.lastX;
+		let moveY = ev.clientY - m.lastY;
+		let newHeight = mainCont.offsetHeight + moveY;
+		let newWidth = mainCont.offsetWidth;
+		let adjustPosX = true;
 
 		newWidth += ( m.resizeDirection == 'sw' ) ? -moveX : moveX;
 
@@ -775,11 +757,11 @@
 		// Move window only if width limit has not been reached
 		if( adjustPosX ) {
 			// X axis orientates to the left
-			if( g.config.boxAlign == 'left' && m.resizeDirection == 'sw' ) {
+			if( g.config.boxAlign === 'left' && m.resizeDirection === 'sw' ) {
 				mainCont.style.left = ( mainCont.offsetLeft + moveX ) + 'px';
 			}
 			// X axis oritentates to the right
-			else if( g.config.boxAlign == 'right' && m.resizeDirection == 'se' ) {
+			else if( g.config.boxAlign === 'right' && m.resizeDirection === 'se' ) {
 				mainCont.style.right = ( parseInt( mainCont.style.right, 10 ) - moveX ) + 'px';
 			}
 		}
@@ -798,7 +780,7 @@
 	 * @param {String} list
 	 */
 	function saveEmote( emote, list ) {
-		var g = GLOBAL;
+		const g = GLOBAL;
 
 		// Ignore empty
 		if( emote.length === 0 ) {
@@ -807,12 +789,12 @@
 		}
 
 		// Emotes are saved without leading slash
-		if( emote.indexOf( '/' ) === 0 ) {
+		if( emote.startsWith( '/' ) ) {
 			emote = emote.substring( 1 );
 		}
 
 		// Remove modifier flags
-		if( emote.indexOf( '-' ) > -1 ) {
+		if( emote.includes( '-' ) ) {
 			emote = emote.split( '-' )[0];
 		}
 
@@ -827,14 +809,14 @@
 			return;
 		}
 
-		var update = {};
+		let update = {};
 
 		g.emotes[list].push( emote );
 		update[list] = g.emotes[list];
 		saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
 		// Add to DOM
-		g.REF.emoteBlocks[list].appendChild( Builder.createEmote( '/' + emote ) );
+		g.REF.emoteBlocks[list].append( Builder.createEmote( '/' + emote ) );
 
 		// Update emote count of list
 		Builder.updateEmoteCount( list, g.emotes[list].length );
@@ -847,23 +829,22 @@
 	 * @param {Object}  update Change to update.
 	 */
 	function saveChangesToStorage( task, update ) {
-		postMessage( {
+		sendMessage( {
 			task: task,
-			update: update
+			update: update,
 		} );
 	}
 
 
 	/**
 	 * From the manage page: Save new emote.
-	 * @param {Event} ev
 	 */
-	function saveNewEmote( ev ) {
-		var g = GLOBAL;
-		var inputEmote = g.REF.inputAddEmote;
-		var selectHTML = g.REF.selectListAddEmote;
-		var list = getOptionValue( selectHTML );
-		var emote = inputEmote.value.trim();
+	function saveNewEmote() {
+		const g = GLOBAL;
+		let inputEmote = g.REF.inputAddEmote;
+		let selectHTML = g.REF.selectListAddEmote;
+		let list = getOptionValue( selectHTML );
+		let emote = inputEmote.value.trim();
 
 		saveEmote( emote, list );
 		inputEmote.value = '';
@@ -873,16 +854,15 @@
 
 	/**
 	 * From the manage page: Save new list.
-	 * @param {Event} ev
 	 */
-	function saveNewList( ev ) {
-		var g = GLOBAL;
-		var inputField = g.REF.inputAddList;
-		var listName = inputField.value.trim();
+	function saveNewList() {
+		const g = GLOBAL;
+		let inputField = g.REF.inputAddList;
+		let listName = inputField.value.trim();
 
 		// Ignore empty
 		if( listName.length === 0 ) {
-			showMsg( 'That ain\'t no valid name for a list.' );
+			showMsg( "That ain't no valid name for a list." );
 			return;
 		}
 
@@ -892,7 +872,7 @@
 			return;
 		}
 
-		var update = {};
+		let update = {};
 
 		g.emotes[listName] = [];
 		update[listName] = [];
@@ -907,10 +887,9 @@
 	 * Create and show manage page.
 	 * Only create manage elements when needed. Because
 	 * it won't be needed that often, probably.
-	 * @param {Event} ev
 	 */
-	function showManagePage( ev ) {
-		var gr = GLOBAL.REF;
+	function showManagePage() {
+		const gr = GLOBAL.REF;
 
 		toggleEmoteBlock( false );
 
@@ -919,7 +898,7 @@
 			Builder.createManagePage( gr.mngPage );
 		}
 
-		gr.mainCont.appendChild( gr.mngPage );
+		gr.mainCont.append( gr.mngPage );
 	}
 
 
@@ -928,17 +907,17 @@
 	 * @param {String} text Message text to display.
 	 */
 	function showMsg( text ) {
-		var g = GLOBAL;
+		const g = GLOBAL;
 
 		if( !g.REF.msg ) {
 			return;
 		}
 
 		clearTimeout( g.msgTimeout );
-		g.REF.msg.className += ' show';
+		g.REF.msg.classList.add( 'show' );
 		g.REF.msg.textContent = text;
 
-		g.msgTimeout = setTimeout( function() {
+		g.msgTimeout = setTimeout( () => {
 			GLOBAL.REF.msg.className = 'mle-msg' + GLOBAL.noise;
 		}, g.config.msgTimeout );
 	}
@@ -958,19 +937,18 @@
 	 * @param {Event} ev
 	 */
 	function toggleEmoteBlock( ev ) {
-		var g = GLOBAL;
-		var geb = g.REF.emoteBlocks;
-		var gnl = g.REF.lists;
-		var evTarget = ev.target;
+		const g = GLOBAL;
+		let geb = g.REF.emoteBlocks;
+		let gnl = g.REF.lists;
+		let evTarget = ev.target;
 
 		// In case a child element was clicked instead of the (parent) list element container
-		/* jshint validthis: true */
 		if( evTarget != this ) {
 			evTarget = evTarget.parentNode;
 		}
 
 		// Set chosen list to active
-		for( var key in gnl ) {
+		for( const key in gnl ) {
 			gnl[key].className = '';
 		}
 		if( ev ) {
@@ -981,11 +959,11 @@
 
 		// Show emotes of chosen block
 		if( ev ) {
-			for( var listName in geb ) {
-				var name = evTarget.querySelector( 'strong' );
+			for( const listName in geb ) {
+				let name = evTarget.querySelector( 'strong' );
 
 				if( name && name.textContent == listName ) {
-					g.REF.mainCont.appendChild( geb[listName] );
+					g.REF.mainCont.append( geb[listName] );
 					g.shownBlock = listName;
 					break;
 				}
@@ -996,32 +974,35 @@
 
 	/**
 	 * Keep track if the left mouse button is pressed.
-	 * @param {Event} ev
+	 * @param {MouseEvent} ev
 	 */
 	function trackMouseDown( ev ) {
 		ev.preventDefault();
 
 		// Move (drag) or Resize
-		var cn = ev.target.className;
-		var hasCase;
+		/** @type {DOMTokenList} */
+		let cl = ev.target.classList;
+		let hasCase = null;
 
-		if( cn.indexOf( 'mle-dragbar' ) >= 0 ) {
+		if( cl.contains( 'mle-dragbar' ) ) {
 			hasCase = 'MOVE';
 		}
-		else if( cn.indexOf( 'mle-resizer' ) >= 0 ) {
+		else if( cl.contains( 'mle-resizer' ) ) {
 			hasCase = 'RESIZE';
 		}
 
 		// In case of mouse down
-		if( ev.type == 'mousedown' && ev.which == 1 ) {
+		if( ev.type === 'mousedown' && ev.button === 0 ) {
 			switch( hasCase ) {
 				case 'MOVE':
 					trackMouseDownStart_Move( ev );
 					break;
 
 				case 'RESIZE':
-					var direction = ( cn.indexOf( 'mle-resizer0' ) >= 0 ) ? 'sw' : 'se';
-					trackMouseDownStart_Resize( ev, direction );
+					trackMouseDownStart_Resize(
+						ev,
+						cl.contains( 'mle-resizer0' ) ? 'sw' : 'se'
+					);
 					break;
 			}
 		}
@@ -1031,12 +1012,12 @@
 	/**
 	 * Start tracking the mouse movement and
 	 * adjust the window position.
-	 * @param {Event} ev
+	 * @param {Event} _ev
 	 */
-	function trackMouseDownEnd_Move( ev ) {
-		var g = GLOBAL;
-		var m = g.MOUSE;
-		var posX;
+	function trackMouseDownEnd_Move( _ev ) {
+		let g = GLOBAL;
+		let m = g.MOUSE;
+		let posX;
 
 		m.lastX = null;
 		m.lastY = null;
@@ -1048,7 +1029,7 @@
 			posX = parseInt( g.REF.mainCont.style.right, 10 );
 
 			// Workaround for Firefox: Troubles with scrollbar width.
-			if( typeof chrome == 'undefined' && typeof opera == 'undefined' ) {
+			if( typeof chrome === 'undefined' ) {
 				posX -= window.innerWidth - document.body.offsetWidth;
 			}
 		}
@@ -1060,9 +1041,9 @@
 		g.config.boxPosTop = g.REF.mainCont.offsetTop;
 		g.config.boxPosX = posX;
 
-		var update = {
+		const update = {
 			boxPosTop: g.REF.mainCont.offsetTop,
-			boxPosX: posX
+			boxPosX: posX,
 		};
 
 		saveChangesToStorage( BG_TASK.SAVE_CONFIG, update );
@@ -1074,8 +1055,7 @@
 	 * @param {MouseEvent} ev
 	 */
 	function trackMouseDownStart_Move( ev ) {
-		var m = GLOBAL.MOUSE;
-
+		const m = GLOBAL.MOUSE;
 		m.lastX = ev.clientX;
 		m.lastY = ev.clientY;
 
@@ -1086,18 +1066,18 @@
 
 	/**
 	 * Start tracking the mouse movement and adjust the window size.
-	 * @param {MouseEvent} ev
+	 * @param {MouseEvent} _ev
 	 */
-	function trackMouseDownEnd_Resize( ev ) {
-		var d = document;
-		var g = GLOBAL;
-		var m = g.MOUSE;
-		var mc = g.REF.mainCont;
-		var posX = mc.offsetLeft;
-		var boxWidth = parseInt( mc.style.width, 10 );
-		var boxHeight = parseInt( mc.style.height, 10 );
+	function trackMouseDownEnd_Resize( _ev ) {
+		const d = document;
+		const g = GLOBAL;
+		const m = g.MOUSE;
+		const mc = g.REF.mainCont;
+		let posX = mc.offsetLeft;
+		let boxWidth = parseInt( mc.style.width, 10 );
+		let boxHeight = parseInt( mc.style.height, 10 );
 
-		mc.className += ' transition';
+		mc.classList.add( 'transition' );
 
 		m.lastX = null;
 		m.lastY = null;
@@ -1109,7 +1089,7 @@
 		g.config.boxWidth = boxWidth;
 		g.config.boxHeight = boxHeight;
 
-		if( g.config.boxAlign == 'right' ) {
+		if( g.config.boxAlign === 'right' ) {
 			posX = parseInt( mc.style.right, 10 );
 		}
 		else {
@@ -1119,27 +1099,26 @@
 		// Update config in this tab – part 2
 		g.config.boxPosX = posX;
 
-		var update = {
+		const update = {
 			boxWidth: boxWidth,
 			boxHeight: boxHeight,
-			boxPosX: posX
+			boxPosX: posX,
 		};
 
 		saveChangesToStorage( BG_TASK.SAVE_CONFIG, update );
 
 		// Adjust CSS just until the next page reload
-		var tempStyle = d.getElementById( 'MLE-temp' + g.noise );
+		let tempStyle = d.getElementById( 'MLE-temp' + g.noise );
 
 		if( !tempStyle ) {
 			tempStyle = d.createElement( 'style' );
-			tempStyle.type = 'text/css';
 			tempStyle.id = 'MLE-temp' + g.noise;
 		}
 
-		tempStyle.textContent = '#mle' + g.noise + '.show {' +
-			' width: ' + boxWidth + 'px !important;' +
-			' height: ' + boxHeight + 'px !important; }';
-		d.getElementsByTagName( 'head' )[0].appendChild( tempStyle );
+		tempStyle.textContent = `#mle${g.noise}.show {` +
+			`width:${boxWidth}px !important;` +
+			`height:${boxHeight}px !important; }`;
+		d.getElementsByTagName( 'head' )[0].append( tempStyle );
 
 		mc.style.width = '';
 		mc.style.height = '';
@@ -1153,17 +1132,17 @@
 	 * @param {String}     direction "sw" or "se".
 	 */
 	function trackMouseDownStart_Resize( ev, direction ) {
-		var d = document;
-		var g = GLOBAL;
-		var m = g.MOUSE;
-		var mc = g.REF.mainCont;
-		var tempStyle = d.getElementById( 'MLE-temp' + g.noise );
+		const d = document;
+		const g = GLOBAL;
+		const m = g.MOUSE;
+		const mc = g.REF.mainCont;
+		let tempStyle = d.getElementById( 'MLE-temp' + g.noise );
 
 		if( tempStyle ) {
 			tempStyle.textContent = '';
 		}
 
-		mc.className = mc.className.replace( ' transition', '' );
+		mc.classList.remove( 'transition' );
 		mc.style.width = g.config.boxWidth + 'px';
 		mc.style.height = g.config.boxHeight + 'px';
 
@@ -1181,11 +1160,11 @@
 	 * @param {Event} ev
 	 */
 	function updatePreview( ev ) {
-		var previewId = 'preview' + ev.target.id;
-		var preview = document.getElementById( previewId );
-		var emoteLink = ev.target.value;
+		let previewId = 'preview' + ev.target.id;
+		let preview = document.getElementById( previewId );
+		let emoteLink = ev.target.value;
 
-		if( emoteLink.indexOf( '/' ) !== 0 ) {
+		if( !emoteLink.startsWith( '/' ) ) {
 			emoteLink = '/' + emoteLink;
 		}
 		if( emoteLink == preview.href ) {
@@ -1194,7 +1173,7 @@
 
 		preview.href = emoteLink;
 		preview.className = ''; // reset old classes
-		preview = Builder.addClassesForEmote( preview );
+		Builder.addClassesForEmote( preview );
 	}
 
 
@@ -1203,7 +1182,7 @@
 	 * Build all the HTML.
 	 * Or most of it. There is an extra "class" for the context menu.
 	 */
-	var Builder = {
+	const Builder = {
 
 
 		ploungeClass: 'mle-ploungemote',
@@ -1212,52 +1191,42 @@
 		/**
 		 * Add CSS classes to the emote so it will be displayed
 		 * if it is an out-of-sub emote.
-		 * @param  {DOMElement} emote
-		 * @return {DOMElement} The emote with CSS classes (or not).
+		 * @param {HTMLElement} emote
 		 */
-		addClassesForEmote: function( emote ) {
-			var cfg = GLOBAL.config;
-			var emoteName = emote.href.split( '/' );
+		addClassesForEmote( emote ) {
+			const cfg = GLOBAL.config;
 
+			let emoteName = emote.href.split( '/' );
 			emoteName = emoteName[emoteName.length - 1];
-
-			if( !emote.className ) {
-				emote.className = '';
-			}
 
 			// If BetterPonymotes is used for out-of-sub emotes
 			if( cfg.adjustForBetterPonymotes ) {
-				emote.className += ' bpmote-' + emoteName.toLowerCase();
+				emote.classList.add('bpmote-' + emoteName.toLowerCase());
 			}
 			// If GrEmB is used
 			if( cfg.adjustForGrEmB ) {
-				emote.className += ' G_' + emoteName + '_';
+				emote.classList.add( `G_${emoteName}_` );
 			}
-
-			emote.className = emote.className.trim();
-
-			return emote;
 		},
 
 
 		/**
 		 * Add CSS rules to the page inside a <style> tag in the head.
 		 */
-		addCSS: function() {
-			var g = GLOBAL;
-			var cfg = g.config;
-			var styleNode = document.createElement( 'style' );
-			var rules = '\n';
-			var zIndex, listDir;
+		addCSS() {
+			const g = GLOBAL;
+			const cfg = g.config;
+			let styleNode = document.createElement( 'style' );
+			let rules = '\n';
 
-			zIndex = cfg.boxUnderHeader ? 10 : 10000;
-			listDir = ( cfg.boxScrollbar == 'right' ) ? 'ltr' : 'rtl';
+			let zIndex = cfg.boxUnderHeader ? 10 : 10000;
+			let listDir = cfg.boxScrollbar === 'right' ? 'ltr' : 'rtl';
 
 			// Show out-of-sub emotes
 			this.addOutOfSubCSS();
 
 			// '%' will be replaced with noise
-			var css = {
+			const css = {
 				// Collection of same CSS
 				'#mle%.show,\
 				 #mle%.show ul,\
@@ -1277,12 +1246,12 @@
 						'background-color: #404040;',
 				// Inactive state
 				'#mle%':
-						'background-color: ' + cfg.boxBgColor + '; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; -moz-box-sizing: border-box; position: fixed; z-index: ' + zIndex + '; width: ' + cfg.boxWidthMinimized + 'px;',
+						`background-color: ${cfg.boxBgColor}; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; position: fixed; z-index: ' + zIndex + '; width: ${cfg.boxWidthMinimized}px;`,
 				'#mle%.transition':
-						'-moz-transition: width ' + cfg.boxAnimationSpeed + 'ms; -webkit-transition: width ' + cfg.boxAnimationSpeed + 'ms; -o-transition: width ' + cfg.boxAnimationSpeed + 'ms; transition: width ' + cfg.boxAnimationSpeed + 'ms;',
+						`transition: width ${cfg.boxAnimationSpeed}ms;`,
 				// Active state
 				'#mle%.show':
-						'width: ' + cfg.boxWidth + 'px; height: ' + cfg.boxHeight + 'px; padding: 36px 10px 10px; z-index: 10000;',
+						`width: ${cfg.boxWidth}px; height: ${cfg.boxHeight}px; padding: 36px 10px 10px; z-index: 10000;`,
 				// Dragging bars
 				'.mle-dragbar':
 						'display: none; position: absolute;',
@@ -1302,7 +1271,7 @@
 				'.mle-resizer0':
 						'border-top-right-radius: 2px; cursor: sw-resize; left: 0;',
 				'.mle-resizer1':
-						'border-top-left-radius: 2px; cursor: se-resize; right: 0; -o-transform: scaleX( -1 ); -webkit-transform: scaleX( -1 ); transform: scaleX( -1 );',
+						'border-top-left-radius: 2px; cursor: se-resize; right: 0; transform: scaleX( -1 );',
 				// Header
 				'#mle% .mle-header':
 						'display: block; color: #303030; font-weight: bold; padding: 6px 0; text-align: center;',
@@ -1332,9 +1301,9 @@
 						'right: 10px; z-index: 20; padding-left: 12px; padding-right: 12px;',
 				// Selection list
 				'#mle% ul':
-						'direction: ' + listDir + '; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;',
+						`direction: ${listDir}; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;`,
 				'#mle% li':
-						'background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; -moz-user-select: none; -o-user-select: none; -webkit-user-select: none; user-select: none;',
+						'background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; user-select: none;',
 				'#mle% li:first-child':
 						'border-top-width: 0;',
 				'#mle% li:last-child':
@@ -1350,22 +1319,22 @@
 				'#mle% li span':
 						'color: #909090; display: block; font-size: 9px; font-weight: normal !important; white-space: nowrap;',
 				'#mle% li input':
-						'box-sizing: border-box; -moz-box-sizing: border-box; width: 100%;',
+						'box-sizing: border-box; width: 100%;',
 				// Blocks and pages
 				'.mle-block%,\
 				 .mle-manage%,\
 				 .mle-search%':
-						'box-sizing: border-box; -moz-box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;',
+						'box-sizing: border-box; display: none; height: 100%; overflow: auto; padding: 10px;',
 				// Emote blocks
 				'.mle-block% a':
-						'display: inline-block !important; float: none !important; border: 1px solid ' + cfg.boxEmoteBorder + '; border-radius: 2px; box-sizing: content-box; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;',
+						`display: inline-block !important; float: none !important; border: 1px solid ${cfg.boxEmoteBorder}; border-radius: 2px; box-sizing: content-box; margin: 1px; min-height: 10px; min-width: 10px; vertical-align: top;`,
 				'.mle-block% a:hover':
 						'border-color: #96BFE9;',
 				'.mle-warning':
 						'color: #808080; margin-bottom: 10px; text-align: center; text-shadow: 1px 1px 0 #ffffff;',
 				// Notifier
 				'.mle-msg%':
-						'background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; ' + cfg.msgPosition + ': -200px; padding: 19px 0; text-align: center; width: 100%; z-index: 10100; -moz-transition: ' + cfg.msgPosition + ' ' + cfg.msgAnimationSpeed + 'ms; -webkit-transition: ' + cfg.msgPosition + ' ' + cfg.msgAnimationSpeed + 'ms; -o-transition: ' + cfg.msgPosition + ' ' + cfg.msgAnimationSpeed + 'ms; transition: ' + cfg.msgPosition + ' ' + cfg.msgAnimationSpeed + 'ms;',
+						`background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; ${cfg.msgPosition}: -200px; padding: 19px 0; text-align: center; width: 100%; z-index: 10100; transition: ${cfg.msgPosition} ${cfg.msgAnimationSpeed}ms;`,
 				'.mle-msg%.show':
 						cfg.msgPosition + ': 0;',
 				// Manage page
@@ -1389,63 +1358,57 @@
 						'margin-top: 10px;',
 				'.mle-manage% th,\
 				 .mle-manage% td':
-						'border: 1px solid #e0e0e0; padding: 2px 4px; vertical-align: top;'
+						'border: 1px solid #e0e0e0; padding: 2px 4px; vertical-align: top;',
 			};
 
-			if( cfg.boxTrigger != 'float' ) {
+			if( cfg.boxTrigger !== 'float' ) {
 				css['#mle%'] += ' display: none;';
 			}
 
-			if( cfg.boxTrigger == 'button' ) {
+			if( cfg.boxTrigger === 'button' ) {
 				css['.mle-open-btn'] = 'margin: 0 0 0 4px !important; vertical-align: top;';
 			}
 
 			if( cfg.ctxMenu ) {
-				css['#mle-ctxmenu%,\
-				     .diag'] =
-						'color: ' + cfg.ctxStyleColor + '; cursor: default; display: none; position: fixed; z-index: 50000000; white-space: nowrap; background-color: ' + cfg.ctxStyleBgColor + '; border: 1px solid ' + cfg.ctxStyleBorderColor + '; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;';
-				css['#mle-ctxmenu% li'] =
-						'display: none;';
+				css['#mle-ctxmenu%,.diag'] =
+					`color: ${cfg.ctxStyleColor}; cursor: default; display: none; position: fixed; z-index: 50000000; white-space: nowrap; background-color: ${cfg.ctxStyleBgColor}; border: 1px solid ${cfg.ctxStyleBorderColor}; border-radius: 1px; box-shadow: 2px 1px 6px -2px rgba( 80, 80, 80, 0.4 ); font-size: 12px; list-style-type: none; margin: 0; padding: 0;`;
+				css['#mle-ctxmenu% li'] = 'display: none;';
 				css['#mle-ctxmenu% li,\
-				     .diag li'] =
-						'margin: 2px 0; padding: 5px 14px;';
+				     .diag li'] = 'margin: 2px 0; padding: 5px 14px;';
 				css['#mle-ctxmenu% li:hover,\
-				     .diag li:hover'] =
-						'background-color: ' + cfg.ctxStyleHoverColor + ';';
+				     .diag li:hover'] = `background-color: ${cfg.ctxStyleHoverColor};`;
 				css['#mle-ctxmenu%.in-box .in,\
-				     #mle-ctxmenu%.out-of-box .out'] =
-						'display: block;';
+				     #mle-ctxmenu%.out-of-box .out'] = 'display: block;';
 				css['.diag'] =
-						'max-height: ' + ContextMenu.CONFIG.menuMaxHeight + 'px; overflow: auto; width: ' + ContextMenu.CONFIG.menuWidth + 'px; z-index: 50000010;';
+					`max-height: ${ContextMenu.CONFIG.menuMaxHeight}px; overflow: auto; width: ${ContextMenu.CONFIG.menuWidth}px; z-index: 50000010;`;
 			}
 
 			if( cfg.showEmoteTitleText ) {
-				var display = 'float: left;';
+				let display = 'float: left;';
 
-				if( cfg.showTitleStyleDisplay == 'block' ) {
+				if( cfg.showTitleStyleDisplay === 'block' ) {
 					display = 'display: block;';
 				}
 
 				css['.mle-titletext'] =
-						'background-color: ' + cfg.showTitleStyleBgColor + '; border: 1px solid ' + cfg.showTitleStyleBorderColor + '; border-radius: 2px; color: ' + cfg.showTitleStyleColor + '; margin-right: 4px; padding: 0 4px; ' + display;
+					`background-color: ${cfg.showTitleStyleBgColor}; border: 1px solid ${cfg.showTitleStyleBorderColor}; border-radius: 2px; color: ${cfg.showTitleStyleColor}; margin-right: 4px; padding: 0 4px; ${display}`;
 			}
 
 			if( cfg.revealUnknownEmotes ) {
 				css['.mle-revealemote'] =
-						'background-color: ' + cfg.revealStyleBgColor + '; border: 1px solid ' + cfg.revealStyleBorderColor + '; border-radius: 2px; color: ' + cfg.revealStyleColor + '; display: inline-block; float: left; margin-right: 4px; padding: 2px 6px;' ;
+					`background-color: ${cfg.revealStyleBgColor}; border: 1px solid ${cfg.revealStyleBorderColor}; border-radius: 2px; color: ${cfg.revealStyleColor}; display: inline-block; float: left; margin-right: 4px; padding: 2px 6px;`;
 			}
 
-			styleNode.type = 'text/css';
 			styleNode.id = 'MLE' + g.noise;
 
-			for( var rule in css ) {
+			for( let rule in css ) {
 				rules += rule.replace( /%/g, g.noise );
 				rules += '{' + css[rule] + '}';
 			}
 
 			styleNode.textContent = rules;
 
-			document.getElementsByTagName( 'head' )[0].appendChild( styleNode );
+			document.getElementsByTagName( 'head' )[0].append( styleNode );
 
 			// The CSS variable is a little big and we won't need this function again, sooo...
 			// Leave this function for the Garbage Collector.
@@ -1456,106 +1419,101 @@
 		/**
 		 * Add the HTML to the page.
 		 */
-		addHTML: function() {
-			var d = document;
-			var g = GLOBAL;
-			var fragmentNode = d.createDocumentFragment();
+		addHTML() {
+			const d = document;
+			const g = GLOBAL;
+			const fragmentNode = d.createDocumentFragment();
 
 			// Add headline
-			var labelMain = d.createElement( 'strong' );
+			const labelMain = d.createElement( 'strong' );
 			labelMain.className = 'mle-header';
 			labelMain.textContent = g.config.boxLabelMinimized;
 
 			// Add close button
-			var close = d.createElement( 'span' );
+			const close = d.createElement( 'span' );
 			close.className = 'mle-close mle-btn';
 			close.textContent = 'x';
 			close.addEventListener( 'click', mainContainerHide, false );
 
 			// Add manage link
-			var mngTrigger = d.createElement( 'span' );
+			const mngTrigger = d.createElement( 'span' );
 			mngTrigger.className = 'mle-mng-link mle-btn';
 			mngTrigger.textContent = 'Manage';
 			mngTrigger.addEventListener( 'click', showManagePage, false );
 
 			// Add options link
-			var optTrigger = d.createElement( 'span' );
+			const optTrigger = d.createElement( 'span' );
 			optTrigger.className = 'mle-opt-link mle-btn';
 			optTrigger.textContent = 'Options';
 			optTrigger.title = 'Opens the options page';
-			optTrigger.addEventListener( 'click', function( e ) {
-				postMessage( { task: BG_TASK.OPEN_OPTIONS } );
+			optTrigger.addEventListener( 'click', function() {
+				sendMessage( { task: BG_TASK.OPEN_OPTIONS } );
 			}, false );
 
 			// Add search field
-			var searchTrigger = d.createElement( 'input' );
+			const searchTrigger = d.createElement( 'input' );
 			searchTrigger.className = 'mle-search';
 			searchTrigger.value = 'search';
 			searchTrigger.addEventListener( 'click', Search.activate, false );
 			searchTrigger.addEventListener( 'keyup', Search.submit.bind( Search ), false );
 
 			// Add search page
-			var searchPage = d.createElement( 'div' );
+			const searchPage = d.createElement( 'div' );
 			searchPage.className = 'mle-block' + g.noise;
 			this.preventOverScrolling( searchPage );
 
 			// Add manage page
-			var mngPage = d.createElement( 'div' );
+			const mngPage = d.createElement( 'div' );
 			mngPage.className = 'mle-manage' + g.noise;
 
 			// Add most-of-the-time-hidden message block
 			// (NOT a part of the main container)
-			var msg = d.createElement( 'p' );
+			const msg = d.createElement( 'p' );
 			msg.className = 'mle-msg' + g.noise;
 
 			// Add dragging bars
-			var dragbar;
-			for( var i = 0; i < 4; i++ ) {
-				dragbar = d.createElement( 'div' );
+			for( let i = 0; i < 4; i++ ) {
+				const dragbar = d.createElement( 'div' );
 				dragbar.className = 'mle-dragbar mle-dragbar' + i;
 				dragbar.addEventListener( 'mousedown', trackMouseDown, false );
 				dragbar.addEventListener( 'mouseup', trackMouseDown, false );
 
-				fragmentNode.appendChild( dragbar );
+				fragmentNode.append( dragbar );
 			}
 
 			// Add resize handles
-			var resizer;
-			for( var i = 0; i < 2; i++ ) {
-				resizer = d.createElement( 'div' );
+			for( let i = 0; i < 2; i++ ) {
+				const resizer = d.createElement( 'div' );
 				resizer.className = 'mle-resizer mle-resizer' + i;
 				resizer.addEventListener( 'mousedown', trackMouseDown, false );
 				resizer.addEventListener( 'mouseup', trackMouseDown, false );
 
-				fragmentNode.appendChild( resizer );
+				fragmentNode.append( resizer );
 			}
 
 			// Append all the above to the DOM fragment
-			fragmentNode = appendChildren(
-				fragmentNode,
-				[
-					mngTrigger,
-					optTrigger,
-					searchTrigger,
-					labelMain,
-					close,
-					this.createEmoteBlocksAndNav()
-				]
+			fragmentNode.append(
+				mngTrigger,
+				optTrigger,
+				searchTrigger,
+				labelMain,
+				close,
+				this.createEmoteBlocksAndNav(),
 			);
 
 			// Add list and emote blocks to main container
 			g.REF.mainCont = this.createMainContainer();
-			g.REF.mainCont.appendChild( fragmentNode );
+			g.REF.mainCont.append( fragmentNode );
 
 			g.REF.msg = msg;
 			g.REF.mngPage = mngPage;
 			g.REF.searchPage = searchPage;
 
-			d.body.appendChild( g.REF.mainCont );
-			d.body.appendChild( msg );
+			d.body.append( g.REF.mainCont );
+			d.body.append( msg );
 
 			if( g.config.ctxMenu ) {
-				d.body.appendChild( ContextMenu.create() );
+				d.body.append( ContextMenu.create() );
 			}
 
 			if( g.config.boxTrigger == 'button' ) {
@@ -1567,14 +1525,14 @@
 		/**
 		 * Add buttons top open MLE next to every textarea.
 		 */
-		addMLEButtons: function() {
-			var d = document;
-			var textareas = d.querySelectorAll( '.help-toggle' );
+		addMLEButtons() {
+			const d = document;
+			let textareas = d.querySelectorAll( '.help-toggle' );
 
-			for( var i = 0; i < textareas.length; i++ ) {
-				var ta = textareas[i];
+			for( let i = 0; i < textareas.length; i++ ) {
+				let ta = textareas[i];
 
-				var button = d.createElement( 'button' );
+				let button = d.createElement( 'button' );
 				button.className = 'mle-open-btn';
 				button.type = 'button';
 				button.textContent = 'open MLE';
@@ -1582,8 +1540,8 @@
 				button.addEventListener( 'click', mainContainerShow, false );
 
 				// Place MLE button to the left of the BPM button
-				var refEle = ta.querySelector( '.bpm-search-toggle' );
-				refEle ? ta.insertBefore( button, refEle ) : ta.appendChild( button );
+				let refEle = ta.querySelector( '.bpm-search-toggle' );
+				refEle ? ta.insertBefore( button, refEle ) : ta.append( button );
 			}
 
 			buttonObserverSetup();
@@ -1594,16 +1552,14 @@
 		 * Switch the name of the list with an input field to change the name.
 		 * @param {Event} ev
 		 */
-		addRenameListField: function( ev ) {
-			var name = ev.target.textContent;
-			var parent = ev.target.parentNode;
-			var input = document.createElement( 'input' );
+		addRenameListField( ev ) {
+			let name = ev.target.textContent;
+			let parent = ev.target.parentNode;
+			let input = document.createElement( 'input' );
 
 			input.type = 'text';
 			input.value = name;
-			input.addEventListener( 'keydown', function( ev ) {
-				renameList( parent, ev );
-			}, false );
+			input.addEventListener( 'keydown', ev => renameList( parent, ev ), false );
 
 			ev.target.setAttribute( 'hidden', 'hidden' );
 			parent.insertBefore( input, parent.firstChild );
@@ -1613,23 +1569,22 @@
 		/**
 		 * Add a stylesheet to display out-of-sub emotes.
 		 */
-		addOutOfSubCSS: function() {
-			var g = GLOBAL;
+		addOutOfSubCSS() {
+			const g = GLOBAL;
 
 			if( !g.config.displayEmotesOutOfSub ) {
 				return;
 			}
 
-			var styleNode = document.createElement( 'style' );
-			styleNode.type = 'text/css';
+			let styleNode = document.createElement( 'style' );
 			styleNode.id = 'MLE-emotes' + g.noise;
 
 			// Not very graceful, but at the moment this extension
 			// is build under the assumption that no more subreddits
 			// will be added in the future.
 
-			var here = window.location.pathname.toLowerCase();
-			var subCSS;
+			let here = window.location.pathname.toLowerCase();
+			let subCSS = null;
 
 			// Don't include CSS on the subreddit it originates from
 			if( !/^\/r\/mlplounge\//i.test( here ) ) {
@@ -1666,7 +1621,7 @@
 			// Not needed anymore, leave it for the Garbage Collector
 			g.sub_css = {};
 
-			var head = document.getElementsByTagName( 'head' )[0];
+			const head = document.getElementsByTagName( 'head' )[0];
 			head.insertBefore( styleNode, head.firstChild );
 		},
 
@@ -1674,50 +1629,50 @@
 		/**
 		 * Create emote blocks filled with emotes and the navigation.
 		 */
-		createEmoteBlocksAndNav: function() {
-			var d = document;
-			var g = GLOBAL;
-			var countBlocks = 0;
-			var fragmentNode = d.createDocumentFragment();
-			var here = window.location.pathname.toLowerCase();
-			var listNav = d.createElement( 'ul' );
+		createEmoteBlocksAndNav() {
+			const d = document;
+			const g = GLOBAL;
+			let countBlocks = 0;
+			let fragmentNode = d.createDocumentFragment();
+			let here = window.location.pathname.toLowerCase();
+			let listNav = d.createElement( 'ul' );
 
 			// Add navigation
 			this.preventOverScrolling( listNav );
-			fragmentNode.appendChild( listNav );
+			fragmentNode.append( listNav );
 
-			for( var listName in g.emotes ) {
-				var emoteList = g.emotes[listName];
+			for( const listName in g.emotes ) {
+				let emoteList = g.emotes[listName];
 
 				// Create list navigation
-				var listLink = this.createListLink( listName, g.emotes[listName].length );
-				listNav.appendChild( listLink );
+				let listLink = this.createListLink( listName, g.emotes[listName].length );
+				listNav.append( listLink );
 
 				// Create emotes section
-				var emoteBlock = d.createElement( 'div' );
+				let emoteBlock = d.createElement( 'div' );
 				emoteBlock.className = 'mle-block' + g.noise;
 				this.preventOverScrolling( emoteBlock );
 
 				// Display a little warning for the Plounge emote list, if opened in
 				// r/mylittlepony since those emotes won't be visible for not-pony-script-users.
 				if(
-					here.indexOf( '/r/mylittlepony/' ) === 0 &&
+					here.startsWith( '/r/mylittlepony/' ) &&
 					listName == g.config.listNamePlounge
 				) {
-					var warn = document.createElement( 'p' );
+					let warn = document.createElement( 'p' );
 					warn.className = 'mle-warning';
-					warn.textContent = 'Please remember that the emotes of this list won\'t be visible to people without an extension like MLE or BPM in this subreddit.';
-					emoteBlock.appendChild( warn );
+					warn.textContent = "Please remember that the emotes of this list won't be visible to people without an extension like MLE or BPM in this subreddit.";
+					emoteBlock.append( warn );
 				}
 
 				// Add the emotes to the block
-				emoteBlock.appendChild( this.createEmotesOfList( emoteList ) );
+				emoteBlock.append( this.createEmotesOfList( emoteList ) );
 
 				// Display first emote section per default
 				if( countBlocks === 0 ) {
 					listLink.className = 'activelist';
 					g.shownBlock = listName;
-					fragmentNode.appendChild( emoteBlock );
+					fragmentNode.append( emoteBlock );
 				}
 
 				g.REF.lists[listName] = listLink;
@@ -1735,12 +1690,12 @@
 		/**
 		 * Fill an emote block with emotes.
 		 */
-		createEmotesOfList: function( emoteList ) {
-			var fragment = document.createDocumentFragment();
+		createEmotesOfList( emoteList ) {
+			const fragment = document.createDocumentFragment();
 
-			for( var i = 0; i < emoteList.length; i++ ) {
-				var emoteLink = '/' + emoteList[i];
-				fragment.appendChild( this.createEmote( emoteLink ) );
+			for( let i = 0; i < emoteList.length; i++ ) {
+				let emoteLink = '/' + emoteList[i];
+				fragment.append( this.createEmote( emoteLink ) );
 			}
 
 			return fragment;
@@ -1752,15 +1707,15 @@
 		 * @param {String}  link
 		 * @param {Boolean} draggable If the emote shall be draggable.
 		 */
-		createEmote: function( link, draggable ) {
-			var emote = document.createElement( 'a' );
+		createEmote( link, draggable ) {
+			const emote = document.createElement( 'a' );
 
-			if( typeof draggable == 'undefined' ) {
+			if( typeof draggable === 'undefined' ) {
 				draggable = true;
 			}
 
 			emote.href = link;
-			emote = this.addClassesForEmote( emote );
+			this.addClassesForEmote( emote );
 
 			emote.addEventListener( 'click', insertEmote, false );
 
@@ -1786,11 +1741,10 @@
 		/**
 		 * Create a header for the search page results.
 		 * @param  {String}     listName Name of the list.
-		 * @return {DOMElement}
+		 * @return {HTMLElement}
 		 */
-		createHeaderForSearch: function( listName ) {
-			var header = document.createElement( 'strong' );
-
+		createHeaderForSearch( listName ) {
+			const header = document.createElement( 'strong' );
 			header.className = 'search-header' + GLOBAL.noise;
 			header.textContent = listName;
 
@@ -1802,13 +1756,13 @@
 		 * Create list element to toggle display of the corresponding emote box.
 		 * @param  {String}     listName     Name of list.
 		 * @param  {Integer}    elementCount Number of emotes in this list.
-		 * @return {DOMElement}
+		 * @return {HTMLElement}
 		 */
-		createListLink: function( listName, elementCount ) {
-			var d = document;
-			var listLink = d.createElement( 'li' );
-			var name = d.createElement( 'strong' );
-			var count = d.createElement( 'span' );
+		createListLink( listName, elementCount ) {
+			const d = document;
+			const listLink = d.createElement( 'li' );
+			const name = d.createElement( 'strong' );
+			const count = d.createElement( 'span' );
 
 			name.textContent = listName;
 			name.addEventListener( 'dblclick', this.addRenameListField, false );
@@ -1820,7 +1774,7 @@
 			listLink.addEventListener( 'dragstart', DragAndDrop.dragstartMoveList.bind( DragAndDrop ), false );
 			DragAndDrop.makeDropZone( listLink, DragAndDrop.dropMoveList );
 
-			appendChildren( listLink, [name, count] );
+			listLink.append( name, count );
 
 			return listLink;
 		},
@@ -1829,10 +1783,10 @@
 		/**
 		 * Create a label.
 		 * @param  {String}     text Text for the label.
-		 * @return {DOMElement}      The label.
+		 * @return {HTMLElement}      The label.
 		 */
-		createLabel: function( text ) {
-			var label = document.createElement( 'label' );
+		createLabel( text ) {
+			const label = document.createElement( 'label' );
 			label.textContent = text;
 
 			return label;
@@ -1843,16 +1797,17 @@
 		 * Create a HTML select of all existing emote lists/blocks.
 		 * @param {String} selId Value for ID attribute of the <select>.
 		 */
-		createListSelect: function( selId ) {
-			var selList = document.createElement( 'select' );
+		createListSelect( selId ) {
+			const selList = document.createElement( 'select' );
 
-			for( var listName in GLOBAL.emotes ) {
-				var optList = document.createElement( 'option' );
+			for( const listName in GLOBAL.emotes ) {
+				const optList = document.createElement( 'option' );
 				optList.value = listName.replace( /"/g, '\\"' );
 				optList.textContent = listName;
 
-				selList.appendChild( optList );
+				selList.append( optList );
 			}
+
 			selList.id = selId;
 
 			return selList;
@@ -1862,19 +1817,19 @@
 		/**
 		 * Create the main container without its later children,
 		 * but set up with event listeners and style.
-		 * @return {DOMElement} Main container.
+		 * @return {HTMLElement} Main container.
 		 */
-		createMainContainer: function() {
-			var cfg = GLOBAL.config;
-			var main = document.createElement( 'div' );
+		createMainContainer() {
+			const cfg = GLOBAL.config;
+			const main = document.createElement( 'div' );
 
 			main.id = 'mle' + GLOBAL.noise;
-			main.className = ' transition';
+			main.className = 'transition';
 			main.addEventListener( 'mouseover', rememberActiveTextarea, false );
 			main.addEventListener( 'mouseover', mainContainerShow, false );
 
 			// Add style for position of main container
-			if( cfg.boxAlign == 'right' ) {
+			if( cfg.boxAlign === 'right' ) {
 				main.style.right = cfg.boxPosX + 'px';
 			}
 			else {
@@ -1889,10 +1844,10 @@
 
 		/**
 		 * Create the parts of the manage page.
-		 * @param {DOMElement} form The manage page (container).
+		 * @param {HTMLElement} form The manage page (container).
 		 */
-		createManagePage: function( form ) {
-			var areas = [
+		createManagePage( form ) {
+			const areas = [
 				this.mngAreaForNewEmote(),
 				this.mngAreaForNewList(),
 				this.mngAreaForDelList(),
@@ -1929,21 +1884,23 @@
 				this.mngAreaForNote(
 					'Did you know?',
 					'You can move this window. Just grab it close to its border.'
-				)
+				),
 			];
-			var frag = appendChildren( document.createDocumentFragment(), areas );
+
+			const frag = document.createDocumentFragment();
+			frag.append( ...areas );
 
 			this.preventOverScrolling( form );
-			form.appendChild( frag );
+			form.append( frag );
 		},
 
 
 		/**
 		 * Display the title text of an emote next to it.
-		 * @param {DOMElement} emote
+		 * @param {HTMLElement} emote
 		 */
-		emoteShowTitleText: function( emote ) {
-			var pathNoFlags = emote.pathname.split( '-' )[0];
+		emoteShowTitleText( emote ) {
+			let pathNoFlags = emote.pathname.split( '-' )[0];
 
 			if(
 				emote.title.length === 0 ||
@@ -1958,8 +1915,8 @@
 				return;
 			}
 
-			var text = document.createElement( 'span' );
-			var evaluated = this.linkifyURLs( emote.title );
+			let text = document.createElement( 'span' );
+			let evaluated = this.linkifyURLs( emote.title );
 
 			text.className = 'mle-titletext';
 
@@ -1977,30 +1934,32 @@
 		/**
 		 * Add an additional CSS class to every emote found on the page.
 		 */
-		findAndAddClassToPloungeEmotes: function() {
-			if( GLOBAL.config.adjustEmotesInInbox ) {
-				var targets = document.querySelectorAll( '.comment, .message' );
+		findAndAddClassToPloungeEmotes() {
+			if( !GLOBAL.config.adjustEmotesInInbox ) {
+				return;
+			}
 
-				for( var i = 0; i < targets.length; i++ ) {
-					var target = targets[i];
-					var subreddit = target.querySelector( '.parent a.subreddit' );
-					var subjectLink = target.querySelector( '.subject a' );
-					var from;
+			let targets = document.querySelectorAll( '.comment, .message' );
 
-					if( subreddit ) {
-						from = subreddit.pathname.toLowerCase();
-					}
-					else if( subjectLink ) {
-						from = subjectLink.pathname.toLowerCase();
-					}
-					else {
-						continue;
-					}
+			for( let i = 0; i < targets.length; i++ ) {
+				let target = targets[i];
+				let subreddit = target.querySelector( '.parent a.subreddit' );
+				let subjectLink = target.querySelector( '.subject a' );
+				let from = null;
 
-					if( from.indexOf( '/r/mlplounge/' ) === 0 ) {
-						var emotes = target.querySelectorAll( '.md a' );
-						this.ploungeEmotesAddClass( emotes );
-					}
+				if( subreddit ) {
+					from = subreddit.pathname.toLowerCase();
+				}
+				else if( subjectLink ) {
+					from = subjectLink.pathname.toLowerCase();
+				}
+				else {
+					continue;
+				}
+
+				if( from.startsWith( '/r/mlplounge/' ) ) {
+					let emotes = target.querySelectorAll( '.md a' );
+					this.ploungeEmotesAddClass( emotes );
 				}
 			}
 		},
@@ -2008,30 +1967,31 @@
 
 		/**
 		 * Get the base HTML object for the RES live preview.
-		 * @param  {DOMElement} ele
-		 * @return {DOMElement|Boolean}
+		 * @param  {HTMLElement} ele
+		 * @return {HTMLElement|boolean}
 		 */
-		getBaseForLivePreview: function( ele ) {
-			var base = false;
+		getBaseForLivePreview( ele ) {
+			let base = false;
+			let tagName = ele.tagName.toLowerCase();
 
 			// Textarea
-			if( ele.tagName.toLowerCase() == 'textarea' ) {
-				base = ele.parentNode.parentNode.parentNode;
+			if( tagName === 'textarea' ) {
+				base = ele.parentNode?.parentNode?.parentNode;
 			}
 			// Reply
 			else if(
-				ele.tagName.toLowerCase() == 'a' &&
-				ele.outerHTML.indexOf( 'onclick="return reply(this)"' ) >= 0
+				tagName === 'a' &&
+				ele.outerHTML.includes( 'onclick="return reply(this)"' )
 			) {
 				// I'm sorry.
-				base = ele.parentNode.parentNode.parentNode.parentNode.parentNode.querySelector( '.child > form.usertext' );
+				base = ele.parentNode?.parentNode?.parentNode?.parentNode?.parentNode?.querySelector( '.child > form.usertext' );
 			}
 			// Edit
 			else if(
-				ele.tagName.toLowerCase() == 'a' &&
-				ele.outerHTML.indexOf( 'onclick="return edit_usertext(this)"' ) >= 0
+				tagName === 'a' &&
+				ele.outerHTML.includes( 'onclick="return edit_usertext(this)"' )
 			) {
-				base = ele.parentNode.parentNode.parentNode.querySelector( 'form.usertext' );
+				base = ele.parentNode?.parentNode?.parentNode?.querySelector( 'form.usertext' );
 			}
 
 			return base;
@@ -2043,7 +2003,7 @@
 		 * @param  {String} text String to evaluate.
 		 * @return {String}      Evaluated String.
 		 */
-		linkifyURLs: function( text ) {
+		linkifyURLs( text ) {
 			if( !GLOBAL.config.showTitleConvertURLs ) {
 				return text;
 			}
@@ -2063,9 +2023,9 @@
 		 * Iterates over all the emotes on the page in order
 		 * to maybe modify them in some way.
 		 */
-		modifyAllOnPageEmotes: function() {
-			var d = document;
-			var cfg = GLOBAL.config;
+		modifyAllOnPageEmotes() {
+			const d = document;
+			const cfg = GLOBAL.config;
 
 			// If we ain't gonna modify anything, then there's no reason
 			// to iterate through all the links, now is there?
@@ -2080,7 +2040,7 @@
 			d.addEventListener( 'click', this.scanForLivePreview );
 
 			// Iterate all the links
-			for( var i = 0; i < d.links.length; i++ ) {
+			for( let i = 0; i < d.links.length; i++ ) {
 				this.modifyEmote( d.links[i] );
 			}
 		},
@@ -2088,14 +2048,14 @@
 
 		/**
 		 * Modify an emote: Stop link following, show title, reveal unknown ones.
-		 * @param {DOMElement} emote
+		 * @param {HTMLElement} emote
 		 */
-		modifyEmote: function( emote ) {
+		modifyEmote( emote ) {
 			if( !isEmote( emote ) ) {
 				return;
 			}
 
-			var cfg = GLOBAL.config;
+			const cfg = GLOBAL.config;
 
 			// Prevent following of the link (what an emote basically is)
 			if( cfg.stopEmoteLinkFollowing ) {
@@ -2119,7 +2079,7 @@
 		 * Callback function for the DOMNodeInserted event.
 		 * @param {Event} ev
 		 */
-		modifyEmotesDOMEvent: function( ev ) {
+		modifyEmotesDOMEvent( ev ) {
 			// nodeType = 3 = TEXT_NODE
 			if( ev.target.nodeType == 3 ) {
 				return;
@@ -2135,9 +2095,9 @@
 				return;
 			}
 
-			var links = ev.target.querySelectorAll( 'a[href]' );
+			let links = ev.target.querySelectorAll( 'a[href]' );
 
-			for( var i = 0; i < links.length; i++ ) {
+			for( let i = 0; i < links.length; i++ ) {
 				this.modifyEmote( links[i] );
 			}
 		},
@@ -2148,21 +2108,21 @@
 		 * Callback function for the MutationObserver.
 		 * @param {MutationRecord} mutations
 		 */
-		modifyEmotesMutationObserver: function( mutations ) {
-			for( var i = 0; i < mutations.length; i++ ) {
-				var mutation = mutations[i];
+		modifyEmotesMutationObserver( mutations ) {
+			for( let i = 0; i < mutations.length; i++ ) {
+				let mutation = mutations[i];
 
-				for( var j = 0; j < mutation.addedNodes.length; j++ ) {
-					var node = mutation.addedNodes[j];
+				for( let j = 0; j < mutation.addedNodes.length; j++ ) {
+					let node = mutation.addedNodes[j];
 
 					// nodeType = 3 = TEXT_NODE
 					if( node.nodeType == 3 ) {
 						continue;
 					}
 
-					var links = node.querySelectorAll( 'a[href]' );
+					let links = node.querySelectorAll( 'a[href]' );
 
-					for( var k = 0; k < links.length; k++ ) {
+					for( let k = 0; k < links.length; k++ ) {
 						this.modifyEmote( links[k] );
 					}
 				}
@@ -2173,12 +2133,12 @@
 		/**
 		 * Create manage area for adding new emotes to lists.
 		 */
-		mngAreaForNewEmote: function() {
-			var d = document;
-			var g = GLOBAL;
-			var inputEmote = d.createElement( 'input' );
-			var preview = d.createElement( 'a' );
-			var submitEmote = d.createElement( 'input' );
+		mngAreaForNewEmote() {
+			const d = document;
+			const g = GLOBAL;
+			let inputEmote = d.createElement( 'input' );
+			let preview = d.createElement( 'a' );
+			let submitEmote = d.createElement( 'input' );
 
 			inputEmote.type = 'text';
 			inputEmote.id = 'addemote' + g.noise;
@@ -2194,17 +2154,15 @@
 			submitEmote.value = 'save emote';
 			submitEmote.addEventListener( 'click', saveNewEmote, false );
 
-			return appendChildren(
-				d.createElement( 'div' ),
-				[
-					this.createLabel( 'Add emote' ),
-					inputEmote,
-					d.createTextNode( ' to ' ),
-					g.REF.selectListAddEmote,
-					submitEmote,
-					d.createElement( 'br' ),
-					preview
-				]
+			const wrap = d.createElement( 'div' );
+			wrap.append(
+				this.createLabel( 'Add emote' ),
+				inputEmote,
+				d.createTextNode( ' to ' ),
+				g.REF.selectListAddEmote,
+				submitEmote,
+				d.createElement( 'br' ),
+				preview,
 			);
 		},
 
@@ -2212,26 +2170,24 @@
 		/**
 		 * Create manage area for adding new lists.
 		 */
-		mngAreaForNewList: function() {
-			var d = document;
+		mngAreaForNewList() {
+			const d = document;
 
-			var inputList = d.createElement( 'input' );
+			const inputList = d.createElement( 'input' );
 			inputList.type = 'text';
 			inputList.id = 'addlist' + GLOBAL.noise;
 			GLOBAL.REF.inputAddList = inputList;
 
-			var submitList = d.createElement( 'input' );
+			const submitList = d.createElement( 'input' );
 			submitList.type = 'submit';
 			submitList.value = 'create new list';
 			submitList.addEventListener( 'click', saveNewList, false );
 
-			return appendChildren(
-				d.createElement( 'div' ),
-				[
-					this.createLabel( 'Add list' ),
-					inputList,
-					submitList
-				]
+			const wrap = d.createElement( 'div' );
+			wrap.append(
+				this.createLabel( 'Add list' ),
+				inputList,
+				submitList,
 			);
 		},
 
@@ -2239,23 +2195,21 @@
 		/**
 		 * Create manage area for deleting lists.
 		 */
-		mngAreaForDelList: function() {
-			var g = GLOBAL;
+		mngAreaForDelList() {
+			const g = GLOBAL;
 
 			g.REF.selectListDelete = this.createListSelect( 'dellist' + g.noise );
 
-			var submitDel = document.createElement( 'input' );
+			const submitDel = document.createElement( 'input' );
 			submitDel.type = 'submit';
 			submitDel.value = 'delete list';
 			submitDel.addEventListener( 'click', deleteList, false );
 
-			return appendChildren(
-				document.createElement( 'div' ),
-				[
-					this.createLabel( 'Delete list' ),
-					g.REF.selectListDelete,
-					submitDel
-				]
+			const wrap = document.createElement( 'div' );
+			wrap.append(
+				this.createLabel( 'Delete list' ),
+				g.REF.selectListDelete,
+				submitDel,
 			);
 		},
 
@@ -2264,32 +2218,27 @@
 		 * Create manage area with contains just a hint.
 		 * @param  {String} title
 		 * @param  {String} text
-		 * @return {DOMElement}
+		 * @return {HTMLElement}
 		 */
-		mngAreaForNote: function( title, text ) {
-			var note = document.createElement( 'div' );
+		mngAreaForNote( title, text ) {
+			const note = document.createElement( 'div' );
 			note.innerHTML = text;
 
-			return appendChildren(
-				document.createElement( 'div' ),
-				[
-					this.createLabel( title ),
-					note
-				]
-			);
+			const wrap = document.createElement( 'div' );
+			wrap.append( this.createLabel( title ), note );
 		},
 
 
 		/**
 		 * Add a plounge emote CSS class to the list of given emotes.
-		 * @param {Array<DOMElement>} emotes List of emotes.
+		 * @param {HTMLElement[]} emotes List of emotes.
 		 */
-		ploungeEmotesAddClass: function( emotes ) {
-			for( var i = 0; i < emotes.length; i++ ) {
-				var emote = emotes[i];
+		ploungeEmotesAddClass( emotes ) {
+			for( let i = 0; i < emotes.length; i++ ) {
+				let emote = emotes[i];
 
 				if( isEmote( emote ) ) {
-					emote.className += ' ' + this.ploungeClass;
+					emote.classList.add( this.ploungeClass );
 				}
 			}
 		},
@@ -2298,17 +2247,10 @@
 		/**
 		 * When scrolled to the end of a node,
 		 * prevent the main window from scrolling.
-		 * @param {DOMElement} node
+		 * @param {HTMLElement} node
 		 */
-		preventOverScrolling: function( node ) {
-			// Chrome, Opera
-			node.addEventListener(
-				'mousewheel', this.stopScrolling.bind( node ), false
-			);
-			// Firefox, the actual standard
-			node.addEventListener(
-				'wheel', this.stopScrolling.bind( node ), false
-			);
+		preventOverScrolling( node ) {
+			node.addEventListener( 'wheel', ev => this.stopScrolling( ev, node ), false );
 		},
 
 
@@ -2316,14 +2258,17 @@
 		 * Remove a list.
 		 * @param {String} listName Name of the list.
 		 */
-		removeList: function( listName ) {
-			var g = GLOBAL;
-			var gr = g.REF;
-			var selectLists = [gr.selectListDelete, gr.selectListAddEmote];
+		removeList( listName ) {
+			const g = GLOBAL;
+			const gr = g.REF;
+			const selectLists = [
+				gr.selectListDelete,
+				gr.selectListAddEmote,
+			];
 
 			// Remove list from DOM
-			for( var key in gr.lists ) {
-				var li = gr.lists[key].querySelector( 'strong' );
+			for( const key in gr.lists ) {
+				const li = gr.lists[key].querySelector( 'strong' );
 
 				if( li.textContent == listName ) {
 					gr.listsCont.removeChild( gr.lists[key] );
@@ -2342,14 +2287,14 @@
 			delete gr.emoteBlocks[listName];
 
 			// Remove list name from <select>s
-			for( var i = 0; i < selectLists.length; i++ ) {
+			for( let i = 0; i < selectLists.length; i++ ) {
 				if( !selectLists[i] ) {
 					continue;
 				}
 
-				var children = selectLists[i].childNodes;
+				const children = selectLists[i].childNodes;
 
-				for( var j = 0; j < children.length; j++ ) {
+				for( let j = 0; j < children.length; j++ ) {
 					if( children[j].value == listName ) {
 						selectLists[i].removeChild( children[j] );
 						break;
@@ -2364,14 +2309,14 @@
 
 		/**
 		 * Reveal an unknown emote.
-		 * @param {DOMElement} emote
+		 * @param {HTMLElement} emote
 		 */
-		revealUnknownEmote: function( emote ) {
+		revealUnknownEmote( emote ) {
 			// Give other scripts (BPM) a little time to apply CSS to emotes.
 			// An attempt to reduce the false positive rate for unknown emotes.
-			window.setTimeout( function( ev ) {
+			window.setTimeout( () => {
 				// Special emote, nevermind
-				if( emote.pathname.indexOf( '/sp' ) === 0 ) {
+				if( emote.pathname.startsWith( '/sp' ) ) {
 					return;
 				}
 
@@ -2380,14 +2325,14 @@
 					return;
 				}
 
-				var emoteStyle = window.getComputedStyle( emote );
+				const emoteStyle = window.getComputedStyle( emote );
 
 				if(
 					( emoteStyle.width == '0px' || emoteStyle.width == 'auto' ) &&
 					( emoteStyle.height == '0px' || emoteStyle.height == 'auto' ) &&
 					emoteStyle.backgroundImage == 'none'
 				) {
-					emote.className += ' mle-revealemote';
+					emote.classList.add( 'mle-revealemote' );
 					emote.textContent = emote.pathname;
 				}
 			}, 250 );
@@ -2398,25 +2343,26 @@
 		 * Add an observer to every RES live preview element that pops up.
 		 * @param {Event} ev
 		 */
-		scanForLivePreview: function( ev ) {
-			var base = Builder.getBaseForLivePreview( ev.target );
+		scanForLivePreview( ev ) {
+			const base = Builder.getBaseForLivePreview( ev.target );
 
 			if( !base ) {
 				return;
 			}
 
-			var previewBox = base.querySelector( '.livePreview .md' );
+			/** @type {HTMLElement?} */
+			const previewBox = base.querySelector( '.livePreview .md' );
 
-			if( !previewBox || previewBox.className.indexOf( 'mle-lp-' + base.id ) >= 0 ) {
+			if( !previewBox || previewBox.classList.contains( 'mle-lp-' + base.id ) ) {
 				return;
 			}
 
-			var MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
+			const MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
 
 			// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
 			if( MutationObserver ) {
-				var observer = new MutationObserver( Builder.modifyEmotesMutationObserver.bind( Builder ) );
-				var observerConfig = {
+				const observer = new MutationObserver( Builder.modifyEmotesMutationObserver.bind( Builder ) );
+				const observerConfig = {
 					attributes: false,
 					childList: true,
 					characterData: false
@@ -2429,19 +2375,19 @@
 				previewBox.addEventListener( 'DOMNodeInserted', Builder.modifyEmotesDOMEvent.bind( Builder ), false );
 			}
 
-			previewBox.className += ' mle-lp-' + base.id;
+			previewBox.classList.add( 'mle-lp-' + base.id );
 		},
 
 
 		/**
 		 * Stop scrolling if top or bottom of node has been reached.
-		 * this == node
 		 * @param {Event} ev
+		 * @param {HTMLElement} node
 		 */
-		stopScrolling: function( ev ) {
-			var scrolledToBottom = ( this.scrollHeight - this.scrollTop == this.clientHeight );
-			var scrolledToTop = ( this.scrollTop === 0 );
-			var wheelDeltaY = ( ev.wheelDeltaY || -ev.deltaY );
+		stopScrolling( ev, node ) {
+			const scrolledToBottom = ( node.scrollHeight - node.scrollTop == node.clientHeight );
+			const scrolledToTop = node.scrollTop === 0;
+			const wheelDeltaY = ev.wheelDeltaY || -ev.deltaY;
 
 			if( scrolledToBottom && wheelDeltaY < 0 ) {
 				ev.preventDefault();
@@ -2457,8 +2403,8 @@
 		 * @param {String}  listName Name of the list to update the counter of.
 		 * @param {Integer} count    New number of emotes.
 		 */
-		updateEmoteCount: function( listName, count ) {
-			var counterDisplay = GLOBAL.REF.lists[listName].querySelector( 'span' );
+		updateEmoteCount( listName, count ) {
+			const counterDisplay = GLOBAL.REF.lists[listName].querySelector( 'span' );
 			counterDisplay.textContent = count + ' emotes';
 		},
 
@@ -2468,9 +2414,9 @@
 		 * @param {String} oldName Old name of the list.
 		 * @param {String} newName New name for the list.
 		 */
-		updateListName: function( oldName, newName ) {
-			var g = GLOBAL;
-			var gr = g.REF;
+		updateListName( oldName, newName ) {
+			const g = GLOBAL;
+			const gr = g.REF;
 
 			gr.emoteBlocks[newName] = gr.emoteBlocks[oldName];
 			delete gr.emoteBlocks[oldName];
@@ -2482,8 +2428,8 @@
 				g.shownBlock = newName;
 			}
 
-			for( var name in gr.lists ) {
-				var strong = gr.lists[name].querySelector( 'strong' );
+			for( const name in gr.lists ) {
+				const strong = gr.lists[name].querySelector( 'strong' );
 
 				if( strong && strong.textContent == oldName ) {
 					strong.textContent = newName;
@@ -2499,17 +2445,17 @@
 		 * Rebuild list navigation.
 		 * @param {Object} lists All lists with all their emotes.
 		 */
-		updateListOrder: function( lists ) {
-			var g = GLOBAL;
-			var ul = g.REF.listsCont;
+		updateListOrder( lists ) {
+			const g = GLOBAL;
+			const ul = g.REF.listsCont;
 
 			removeAllChildren( ul );
 
 			g.REF.lists = {};
 
-			for( var listName in lists ) {
-				var listLink = this.createListLink( listName, lists[listName].length );
-				ul.appendChild( listLink );
+			for( const listName in lists ) {
+				const listLink = this.createListLink( listName, lists[listName].length );
+				ul.append( listLink );
 				g.REF.lists[listName] = listLink;
 			}
 		},
@@ -2519,12 +2465,12 @@
 		 * Rebuild the lists that changed or add new ones.
 		 * @param {Object} lists Lists and their emotes, that changed.
 		 */
-		updateLists: function( lists ) {
-			var emoteBlocks = GLOBAL.REF.emoteBlocks;
+		updateLists( lists ) {
+			const emoteBlocks = GLOBAL.REF.emoteBlocks;
 
-			for( var key in lists ) {
+			for( const key in lists ) {
 				// Only the content of an existing list changed
-				if( emoteBlocks.hasOwnProperty( key ) ) {
+				if( Object.prototype.hasOwnProperty.call( emoteBlocks, key ) ) {
 					this.updateListsChangeExisting( emoteBlocks[key], lists[key] );
 					this.updateEmoteCount( key, lists[key].length );
 				}
@@ -2540,31 +2486,31 @@
 		 * Add a new list.
 		 * @param {String} listName Name of the new (empty) list.
 		 */
-		updateListsAddNew: function( listName ) {
-			var g = GLOBAL;
-			var block = document.createElement( 'div' );
-			var listLink = this.createListLink( listName, 0 );
-			var selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
+		updateListsAddNew( listName ) {
+			const g = GLOBAL;
+			const block = document.createElement( 'div' );
+			const listLink = this.createListLink( listName, 0 );
+			const selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
 
 			// Add new block
 			block.className = 'mle-block' + g.noise;
 			g.REF.emoteBlocks[listName] = block;
 
 			// Add new list
-			g.REF.listsCont.appendChild( listLink );
+			g.REF.listsCont.append( listLink );
 			g.REF.lists[listName] = listLink;
 
 			// Add <option>s to <select>s
-			for( var i = 0; i < selectLists.length; i++ ) {
+			for( let i = 0; i < selectLists.length; i++ ) {
 				if( !selectLists[i] ) {
 					continue;
 				}
 
-				var selOption = document.createElement( 'option' );
+				const selOption = document.createElement( 'option' );
 				selOption.value = listName.replace( /"/g, '\\"' );
 				selOption.textContent = listName;
 
-				selectLists[i].appendChild( selOption );
+				selectLists[i].append( selOption );
 			}
 
 			// Destroy context menus. Will be rebuild when needed.
@@ -2574,14 +2520,14 @@
 
 		/**
 		 * Update an existing list.
-		 * @param {DOMElement} block  The emote block.
+		 * @param {HTMLElement} block  The emote block.
 		 * @param {Array}      emotes Emotes of the list.
 		 */
-		updateListsChangeExisting: function( block, emotes ) {
+		updateListsChangeExisting( block, emotes ) {
 			removeAllChildren( block );
 
 			// Add all emotes of the updated list
-			block.appendChild( this.createEmotesOfList( emotes ) );
+			block.append( this.createEmotesOfList( emotes ) );
 		},
 
 
@@ -2590,20 +2536,23 @@
 		 * @param {String} oldName Old list name.
 		 * @param {String} newName New list name.
 		 */
-		updateManageSelects: function( oldName, newName ) {
-			var g = GLOBAL;
-			var selectLists = [g.REF.selectListDelete, g.REF.selectListAddEmote];
+		updateManageSelects( oldName, newName ) {
+			const g = GLOBAL;
+			const selectLists = [
+				g.REF.selectListDelete,
+				g.REF.selectListAddEmote,
+			];
 
-			for( var i = 0; i < selectLists.length; i++ ) {
+			for( let i = 0; i < selectLists.length; i++ ) {
 				if( !selectLists[i] ) {
 					continue;
 				}
 
-				var options = selectLists[i].childNodes;
+				const options = selectLists[i].childNodes;
 
-				for( var j = 0; j < options.length; j++ ) {
+				for( let j = 0; j < options.length; j++ ) {
 					if( options[j].value == oldName ) {
-						var newOption = document.createElement( 'option' );
+						const newOption = document.createElement( 'option' );
 						newOption.value = newName.replace( /"/g, '\\"' );
 						newOption.textContent = newName;
 
@@ -2612,7 +2561,7 @@
 					}
 				}
 			}
-		}
+		},
 
 
 	};
@@ -2623,10 +2572,10 @@
 	 * Everything Drag&Drop.
 	 * @type {Object}
 	 */
-	var DragAndDrop = {
+	const DragAndDrop = {
 
 
-		// References to DOMElements associated with Drag&Drop
+		// References to HTMLElements associated with Drag&Drop
 		REF: {
 			draggedEmote: null,
 			draggedList: null
@@ -2637,7 +2586,7 @@
 		 * Remember the currently dragged around emote.
 		 * @param {Event} ev
 		 */
-		dragstartMoveEmote: function( ev ) {
+		dragstartMoveEmote( ev ) {
 			this.REF.draggedEmote = ev.target;
 		},
 
@@ -2646,7 +2595,7 @@
 		 * Remember the currently dragged around list element.
 		 * @param {Event} ev
 		 */
-		dragstartMoveList: function( ev ) {
+		dragstartMoveList( ev ) {
 			this.REF.draggedList = ev.target;
 
 			// Drag&Drop won't work on the list in Firefox 14 without set data.
@@ -2659,8 +2608,8 @@
 		 * and remove it from the old one.
 		 * @param {Event} ev
 		 */
-		dropMoveEmote: function( ev ) {
-			var g = GLOBAL;
+		dropMoveEmote( ev ) {
+			const g = GLOBAL;
 
 			ev.preventDefault();
 
@@ -2675,8 +2624,8 @@
 				return;
 			}
 
-			var emoteNameSource = this.REF.draggedEmote.pathname.substring( 1 );
-			var emoteNameTarget = ev.target.pathname.substring( 1 );
+			let emoteNameSource = this.REF.draggedEmote.pathname.substring( 1 );
+			let emoteNameTarget = ev.target.pathname.substring( 1 );
 
 			// Do nothing if source and target are the same
 			if( emoteNameSource == emoteNameTarget ) {
@@ -2688,12 +2637,12 @@
 			ev.target.parentNode.insertBefore( this.REF.draggedEmote, ev.target );
 
 			// Save new order to local storage
-			var list = g.emotes[g.shownBlock];
-			var emoteIdxSource = list.indexOf( emoteNameSource );
+			let list = g.emotes[g.shownBlock];
+			let emoteIdxSource = list.indexOf( emoteNameSource );
 
 			if( emoteIdxSource > -1 ) {
 				list.splice( emoteIdxSource, 1 );
-				var emoteIdxTarget = list.indexOf( emoteNameTarget );
+				let emoteIdxTarget = list.indexOf( emoteNameTarget );
 
 				// Same position? Well, back where you belong.
 				if( emoteIdxTarget == -1 ) {
@@ -2702,7 +2651,7 @@
 				list.splice( emoteIdxTarget, 0, emoteNameSource );
 			}
 
-			var update = {};
+			const update = {};
 			update[g.shownBlock] = list;
 			saveChangesToStorage( BG_TASK.UPDATE_EMOTES, update );
 
@@ -2715,9 +2664,9 @@
 		 * and remove it from the old one.
 		 * @param {Event} ev
 		 */
-		dropMoveList: function( ev ) {
-			var g = GLOBAL;
-			var evTarget = ev.target;
+		dropMoveList( ev ) {
+			const g = GLOBAL;
+			let evTarget = ev.target;
 
 			ev.preventDefault();
 
@@ -2750,10 +2699,10 @@
 			evTarget.parentNode.insertBefore( this.REF.draggedList, evTarget );
 
 			// Reorder and save to storage
-			var nameSource = this.REF.draggedList.querySelector( 'strong' ).textContent;
-			var nameTarget = evTarget.querySelector( 'strong' ).textContent;
+			let nameSource = this.REF.draggedList.querySelector( 'strong' ).textContent;
+			let nameTarget = evTarget.querySelector( 'strong' ).textContent;
 
-			var reordered = reorderList( nameSource, nameTarget );
+			let reordered = reorderList( nameSource, nameTarget );
 
 			g.emotes = reordered;
 			saveChangesToStorage( BG_TASK.UPDATE_LIST_ORDER, g.emotes );
@@ -2764,14 +2713,14 @@
 
 		/**
 		 * Adds a function to the drop event and stops interfering drag events.
-		 * @param {DOMElement}   node     The DOMElement to listen to drop events.
+		 * @param {HTMLElement}   node     The HTMLElement to listen to drop events.
 		 * @param {Function}     callback Function to call in case of drop.
 		 */
-		makeDropZone: function( node, callback ) {
+		makeDropZone( node, callback ) {
 			node.addEventListener( 'dragenter', stopEvent, false );
 			node.addEventListener( 'dragover', stopEvent, false );
 			node.addEventListener( 'drop', callback.bind( this ), false );
-		}
+		},
 
 
 	};
@@ -2782,7 +2731,7 @@
 	 * Everything context menu related.
 	 * @type {Object}
 	 */
-	var ContextMenu = {
+	const ContextMenu = {
 
 
 		CONFIG: {
@@ -2791,53 +2740,53 @@
 			menuWidth: 126 // [px]
 		},
 
-		// References to DOMElements associated with the HTML context menu
+		// References to HTMLElements associated with the HTML context menu
 		REF: {
 			menu: null,
 			dialogMoveEmote: null,
 			dialogSaveEmote: null,
 			selectedEmote: null,
-			// DOMElement that triggered the context menu
+			// HTMLElement that triggered the context menu
 			trigger: null
 		},
 
 
 		/**
 		 * Create a context/right-click menu.
-		 * @return {DOMElement} Context menu.
+		 * @return {HTMLElement} Context menu.
 		 */
-		create: function() {
-			var d = document;
-			var g = GLOBAL;
-			var menu = d.createElement( 'ul' );
-			var items = [
+		create() {
+			const d = document;
+			const g = GLOBAL;
+			const menu = d.createElement( 'ul' );
+			const items = [
 				{
 					className: 'out',
 					text: 'Save Emote',
-					onclick: this.itemActionSaveEmote
+					onclick: this.itemActionSaveEmote,
 				},
 				{
 					className: 'in',
 					text: 'Delete Emote',
-					onclick: this.itemActionDeleteEmote
+					onclick: this.itemActionDeleteEmote,
 				},
 				{
 					className: 'in',
 					text: 'Move to List',
-					onclick: this.itemActionMoveEmote
-				}
+					onclick: this.itemActionMoveEmote,
+				},
 			];
 
 			menu.id = 'mle-ctxmenu' + g.noise;
 
 			// Add items to menu
-			for( var i = 0; i < items.length; i++ ) {
-				var item = d.createElement( 'li' );
+			for( let i = 0; i < items.length; i++ ) {
+				const item = d.createElement( 'li' );
 				item.className = items[i].className;
 				item.textContent = items[i].text;
 				item.addEventListener( 'click', items[i].onclick.bind( this ), false );
 
-				menu.appendChild( item );
+				menu.append( item );
 			}
 
 			// Add listener for context menu (will only be used on emotes)
@@ -2856,24 +2805,24 @@
 		 * @param {Number} x X coordinate from the left.
 		 * @param {Number} y Y coordinate from the top.
 		 */
-		createDialogMoveEmote: function( x, y ) {
+		createDialogMoveEmote( x, y ) {
 			if( !this.REF.dialogMoveEmote ) {
-				var d = document;
-				var emotes = GLOBAL.emotes;
-				var cont = d.createElement( 'ul' );
+				const d = document;
+				const emotes = GLOBAL.emotes;
+				const cont = d.createElement( 'ul' );
 
 				// Add available lists
-				for( var listName in emotes ) {
-					var list = d.createElement( 'li' );
-					list.appendChild( d.createTextNode( listName ) );
+				for( const listName in emotes ) {
+					const list = d.createElement( 'li' );
+					list.append( d.createTextNode( listName ) );
 					list.addEventListener( 'click', this.moveEmoteToList.bind( this ), false );
 
-					cont.appendChild( list );
+					cont.append( list );
 				}
 
 				Builder.preventOverScrolling( cont );
 				this.REF.dialogMoveEmote = cont;
-				d.body.appendChild( cont );
+				d.body.append( cont );
 			}
 
 			this.REF.dialogMoveEmote.className = 'diag show';
@@ -2887,24 +2836,24 @@
 		 * @param {Integer} x X coordinate from the left.
 		 * @param {Integer} y Y coordinate from the top.
 		 */
-		createDialogSaveEmote: function( x, y ) {
+		createDialogSaveEmote( x, y ) {
 			if( !this.REF.dialogSaveEmote ) {
-				var d = document;
-				var emotes = GLOBAL.emotes;
-				var cont = d.createElement( 'ul' );
+				const d = document;
+				const emotes = GLOBAL.emotes;
+				const cont = d.createElement( 'ul' );
 
 				// Add available lists
-				for( var listName in emotes ) {
-					var list = d.createElement( 'li' );
-					list.appendChild( d.createTextNode( listName ) );
+				for( const listName in emotes ) {
+					const list = d.createElement( 'li' );
+					list.append( d.createTextNode( listName ) );
 					list.addEventListener( 'click', this.saveEmoteToList.bind( this ), false );
 
-					cont.appendChild( list );
+					cont.append( list );
 				}
 
 				Builder.preventOverScrolling( cont );
 				this.REF.dialogSaveEmote = cont;
-				d.body.appendChild( cont );
+				d.body.append( cont );
 			}
 
 			this.REF.dialogSaveEmote.className = 'diag show';
@@ -2916,8 +2865,8 @@
 		/**
 		 * Destroy the context menu parts that have to do with the emote lists.
 		 */
-		destroyMenus: function() {
-			var ctx = this.REF;
+		destroyMenus() {
+			const ctx = this.REF;
 
 			if( ctx.dialogMoveEmote ) {
 				ctx.dialogMoveEmote.parentNode.removeChild( ctx.dialogMoveEmote );
@@ -2932,12 +2881,12 @@
 
 		/**
 		 * Get the x and y coordinate for the context sub-menu.
-		 * @param  {DOMElement} menu The ctx menu.
+		 * @param  {HTMLElement} menu The ctx menu.
 		 * @return {Object}          Object with the attributes "x" and "y".
 		 */
-		getPosForMenu: function( menu ) {
-			var x = menu.offsetLeft;
-			var y = menu.offsetTop;
+		getPosForMenu( menu ) {
+			let x = menu.offsetLeft;
+			let y = menu.offsetTop;
 
 			x += menu.offsetWidth + this.CONFIG.menuMargin;
 
@@ -2947,7 +2896,7 @@
 			}
 
 			// Correct y
-			var diffY = window.innerHeight - y - this.CONFIG.menuMaxHeight;
+			let diffY = window.innerHeight - y - this.CONFIG.menuMaxHeight;
 
 			if( diffY < 0 ) {
 				y += diffY - this.CONFIG.menuMargin;
@@ -2960,8 +2909,8 @@
 		/**
 		 * Hide the context menu of this userscript.
 		 */
-		hide: function() {
-			var ctx = this.REF;
+		hide() {
+			const ctx = this.REF;
 
 			ctx.trigger = null;
 			ctx.menu.className = '';
@@ -2979,11 +2928,10 @@
 
 		/**
 		 * Delete the selected emote from the list.
-		 * @param {Event} ev
 		 */
-		itemActionDeleteEmote: function( ev ) {
-			var emote = this.REF.selectedEmote.pathname;
-			var list = GLOBAL.shownBlock;
+		itemActionDeleteEmote() {
+			let emote = this.REF.selectedEmote.pathname;
+			let list = GLOBAL.shownBlock;
 
 			// If the emote is from the search page
 			if( list === null ) {
@@ -3002,8 +2950,8 @@
 		 * Move the selected emote to another list.
 		 * @param {Event} ev
 		 */
-		itemActionMoveEmote: function( ev ) {
-			var pos = this.getPosForMenu( ev.target.parentNode );
+		itemActionMoveEmote( ev ) {
+			const pos = this.getPosForMenu( ev.target.parentNode );
 
 			this.createDialogMoveEmote( pos.x, pos.y );
 			ev.stopPropagation(); // Keep context menu open.
@@ -3014,8 +2962,8 @@
 		 * Show available lists for the emote.
 		 * @param {Event} ev
 		 */
-		itemActionSaveEmote: function( ev ) {
-			var pos = this.getPosForMenu( ev.target.parentNode );
+		itemActionSaveEmote( ev ) {
+			const pos = this.getPosForMenu( ev.target.parentNode );
 
 			this.createDialogSaveEmote( pos.x, pos.y );
 			ev.stopPropagation(); // Keep context menu open.
@@ -3026,10 +2974,10 @@
 		 * Move an emote to the chosen list.
 		 * @param {Event} ev
 		 */
-		moveEmoteToList: function( ev ) {
-			var emote = this.REF.selectedEmote.pathname;
-			var listNew = ev.target.textContent;
-			var listOld = GLOBAL.shownBlock;
+		moveEmoteToList( ev ) {
+			const emote = this.REF.selectedEmote.pathname;
+			let listNew = ev.target.textContent;
+			let listOld = GLOBAL.shownBlock;
 
 			// If the emote is from the search page
 			if( listOld === null ) {
@@ -3056,17 +3004,17 @@
 		 * Save an emote to the chosen list.
 		 * @param {Event} ev
 		 */
-		saveEmoteToList: function( ev ) {
-			var emote = this.REF.selectedEmote;
-			var list = ev.target.textContent;
-			var name = null;
+		saveEmoteToList( ev ) {
+			const emote = this.REF.selectedEmote;
+			let list = ev.target.textContent;
+			let name = null;
 
 			// Regular link emote
-			if( typeof emote.pathname != 'undefined' ) {
+			if( typeof emote.pathname !== 'undefined' ) {
 				name = emote.pathname;
 			}
 			// Emote inside the BPM window
-			else if( !!emote.getAttribute( 'data-emote' ) ) {
+			else if( emote.getAttribute( 'data-emote' ) ) {
 				name = emote.getAttribute( 'data-emote' );
 			}
 
@@ -3079,10 +3027,10 @@
 
 		/**
 		 * Show the context menu for either an emote or list element.
-		 * @param {Event} ev
+		 * @param {MouseEvent} ev
 		 */
-		show: function( ev ) {
-			var bIsEmote = isEmote( ev.target );
+		show( ev ) {
+			const bIsEmote = isEmote( ev.target );
 
 			if( !bIsEmote ) {
 				this.hide();
@@ -3107,18 +3055,18 @@
 		 * Show the context menu for an emote.
 		 * @param {Event} ev
 		 */
-		showDialogEmote: function( ev ) {
+		showDialogEmote( ev ) {
 			this.REF.selectedEmote = ev.target;
 
 			// Click occured in emote box.
 			// This changes some of the available options.
-			if( ev.target.parentNode.className.indexOf( 'mle-block' ) > -1 ) {
-				this.REF.menu.className += ' in-box';
+			if( ev.target.parentNode.classList.contains( 'mle-block' ) ) {
+				this.REF.menu.classList.add( 'in-box' );
 			}
 			else {
-				this.REF.menu.className += ' out-of-box';
+				this.REF.menu.classList.add( 'out-of-box' );
 			}
-		}
+		},
 
 
 	};
@@ -3129,7 +3077,7 @@
 	 * The search.
 	 * @type {Object}
 	 */
-	var Search = {
+	const Search = {
 
 
 		MODE: {
@@ -3144,7 +3092,7 @@
 		 * Activate the search field, because the user clicked it.
 		 * @param {Event} ev
 		 */
-		activate: function( ev ) {
+		activate( ev ) {
 			if( ev.target.value == 'search' ) {
 				ev.target.value = '';
 			}
@@ -3156,8 +3104,8 @@
 		 * @param  {String} firstPart The first part of the search term before a ":".
 		 * @return {Number}           A Search.MODE. Defaults to NORMAL.
 		 */
-		getMode: function( firstPart ) {
-			var mode = null;
+		getMode( firstPart ) {
+			let mode = null;
 
 			switch( firstPart.trim() ) {
 				case 'regex':
@@ -3185,8 +3133,8 @@
 		 * @param  {Number}   mode Search.MODE
 		 * @return {Function}
 		 */
-		getSearchFunc: function( mode ) {
-			var searchFunc = null;
+		getSearchFunc( mode ) {
+			let searchFunc = null;
 
 			switch( mode ) {
 				case this.MODE.REGEX:
@@ -3215,8 +3163,8 @@
 		 * @param  {Array<String>} parts Parts of the provided search term.
 		 * @return {String|RegExp}
 		 */
-		prepareSearchTerm: function( mode, parts ) {
-			var term;
+		prepareSearchTerm( mode, parts ) {
+			let term = null;
 
 			// Get the search term without a possible mode prefix
 			if( parts.length == 1 ) {
@@ -3248,26 +3196,26 @@
 		 * @param {String|RegExp} term
 		 * @param {Function}      searchFunc
 		 */
-		routineForNormalMode: function( term, searchFunc ) {
-			var g = GLOBAL;
-			var searchPage = g.REF.searchPage;
+		routineForNormalMode( term, searchFunc ) {
+			const g = GLOBAL;
+			const searchPage = g.REF.searchPage;
 
-			for( var listName in g.emotes ) {
-				var list = g.emotes[listName];
-				var header = false;
+			for( const listName in g.emotes ) {
+				const list = g.emotes[listName];
+				let header = false;
 
-				for( var i = 0; i < list.length; i++ ) {
-					var emote = list[i];
+				for( let i = 0; i < list.length; i++ ) {
+					let emote = list[i];
 
 					if( searchFunc( emote, term ) ) {
 						if( !header && g.config.searchGroupEmotes ) {
 							header = Builder.createHeaderForSearch( listName );
-							searchPage.appendChild( header );
+							searchPage.append( header );
 						}
 
-						var buildEmote = Builder.createEmote( '/' + emote, false );
+						const buildEmote = Builder.createEmote( '/' + emote, false );
 						buildEmote.setAttribute( 'data-list', listName );
-						searchPage.appendChild( buildEmote );
+						searchPage.append( buildEmote );
 					}
 				}
 			}
@@ -3278,24 +3226,24 @@
 		 * The routine for doing a search in TAG mode.
 		 * @param {String} term
 		 */
-		routineForTagMode: function( term ) {
-			var g = GLOBAL;
-			var searchPage = g.REF.searchPage;
-			var taggedEmotes = this.searchTag( term );
+		routineForTagMode( term ) {
+			const g = GLOBAL;
+			const searchPage = g.REF.searchPage;
+			const taggedEmotes = this.searchTag( term );
 
-			for( var listName in taggedEmotes ) {
-				var group = taggedEmotes[listName];
-				var adjustedListName = convertListNameToConfigName( listName );
+			for( const listName in taggedEmotes ) {
+				const group = taggedEmotes[listName];
+				const adjustedListName = convertListNameToConfigName( listName );
 
 				if( g.config.searchGroupEmotes ) {
-					var header = Builder.createHeaderForSearch( adjustedListName );
-					searchPage.appendChild( header );
+					const header = Builder.createHeaderForSearch( adjustedListName );
+					searchPage.append( header );
 				}
 
-				for( var i = 0; i < group.length; i++ ) {
-					var buildEmote = Builder.createEmote( '/' + group[i], false );
+				for( let i = 0; i < group.length; i++ ) {
+					const buildEmote = Builder.createEmote( '/' + group[i], false );
 					buildEmote.setAttribute( 'data-list', adjustedListName );
-					searchPage.appendChild( buildEmote );
+					searchPage.append( buildEmote );
 				}
 			}
 		},
@@ -3309,19 +3257,19 @@
 		 * @return {Boolean}       True if term is contained in emote or
 		 *                         an alternate name for that emote.
 		 */
-		searchAlt: function( emote, term ) {
-			var subEmotes = GLOBAL.sub_emotes;
-			var alternatives = [];
+		searchAlt( emote, term ) {
+			const subEmotes = GLOBAL.sub_emotes;
+			let alternatives = [];
 
 			// Get all the alternative names of the emote
-			for( var subreddit in subEmotes ) {
-				var emoteLists = subEmotes[subreddit];
+			for( const subreddit in subEmotes ) {
+				const emoteLists = subEmotes[subreddit];
 
-				for( var i = 0; i < emoteLists.length; i++ ) {
-					var emoteList = emoteLists[i];
+				for( let i = 0; i < emoteLists.length; i++ ) {
+					const emoteList = emoteLists[i];
 
-					for( var j = 0; j < emoteList.length; j++ ) {
-						var group = emoteList[j];
+					for( let j = 0; j < emoteList.length; j++ ) {
+						const group = emoteList[j];
 
 						// Emote is from this group, check the alternative names
 						if( group.indexOf( emote ) >= 0 ) {
@@ -3333,7 +3281,7 @@
 
 			// Check the alternative names
 			// + the original one, of course
-			for( var i = 0; i < alternatives.length; i++ ) {
+			for( let i = 0; i < alternatives.length; i++ ) {
 				if( alternatives[i].indexOf( term ) >= 0 ) {
 					return true;
 				}
@@ -3350,8 +3298,8 @@
 		 * @param  {String}  term  Search term.
 		 * @return {Boolean}       True if term is contained in emote.
 		 */
-		searchNormal: function( emote, term ) {
-			return emote.indexOf( term ) >= 0;
+		searchNormal( emote, term ) {
+			return emote.includes( term );
 		},
 
 
@@ -3362,7 +3310,7 @@
 		 * @param  {RegExp}  term  Regular expression.
 		 * @return {Boolean}       True if the regexp matches the emote name.
 		 */
-		searchRegex: function( emote, term ) {
+		searchRegex( emote, term ) {
 			return term.test( emote );
 		},
 
@@ -3372,32 +3320,29 @@
 		 * @param  {String} tag A tag like "happy" or "sad".
 		 * @return {Object}     List of all the emotes tagged with the given tag, organized by list.
 		 */
-		searchTag: function( tag ) {
-			if( !TAGS.hasOwnProperty( tag ) ) {
-				return [];
-			}
-			return TAGS[tag];
+		searchTag( tag ) {
+			return TAGS[tag] || {};
 		},
 
 
 		/**
 		 * Show the search result page.
 		 */
-		show: function() {
-			var gr = GLOBAL.REF;
+		show() {
+			const gr = GLOBAL.REF;
 
 			toggleEmoteBlock( false );
-			gr.mainCont.appendChild( gr.searchPage );
+			gr.mainCont.append( gr.searchPage );
 		},
 
 
 		/**
 		 * Start the search.
-		 * @param {DOMElement} searchInput The search field.
+		 * @param {HTMLElement} searchInput The search field.
 		 */
-		start: function( searchInput ) {
-			var searchPage = GLOBAL.REF.searchPage;
-			var term = searchInput.value.trim();
+		start( searchInput ) {
+			let searchPage = GLOBAL.REF.searchPage;
+			let term = searchInput.value.trim();
 
 			if( term.length === 0 ) {
 				return;
@@ -3406,11 +3351,11 @@
 			removeAllChildren( searchPage );
 
 			// Determine the search mode to use
-			var parts = term.split( ':' );
-			var mode = this.getMode( parts[0].toLowerCase() );
+			let parts = term.split( ':' );
+			let mode = this.getMode( parts[0].toLowerCase() );
 
 			// Set the search method according to the mode
-			var searchFunc = this.getSearchFunc( mode );
+			let searchFunc = this.getSearchFunc( mode );
 			term = this.prepareSearchTerm( mode, parts );
 
 			// Special search routine for tags
@@ -3423,7 +3368,7 @@
 			}
 
 			if( searchPage.childNodes.length === 0 ) {
-				searchPage.appendChild( document.createTextNode( 'No emotes found.' ) );
+				searchPage.append( document.createTextNode( 'No emotes found.' ) );
 			}
 		},
 
@@ -3432,12 +3377,12 @@
 		 * If the enter key has beend pressed, submit the search value.
 		 * @param {KeyEvent} ev
 		 */
-		submit: function( ev ) {
+		submit( ev ) {
 			if( ev.keyCode == 13 ) { // [Enter]
 				this.show();
 				this.start( ev.target );
 			}
-		}
+		},
 
 
 	};
@@ -3450,7 +3395,7 @@
 	 * @see  handleBackgroundMessages
 	 * @type {Object}
 	 */
-	var Init = {
+	const Init = {
 
 
 		// Hostnames where this extension should be active.
@@ -3460,10 +3405,10 @@
 		/**
 		 * Starting point.
 		 */
-		initStep1: function() {
+		initStep1() {
 			if( !this.isRedditDown() ) {
 				// Load storage (config and emotes)
-				postMessage( { task: BG_TASK.LOAD } );
+				sendMessage( { task: BG_TASK.LOAD } );
 			}
 		},
 
@@ -3471,7 +3416,7 @@
 		/**
 		 * Called after preferences have been loaded from the background script.
 		 */
-		initStep2: function() {
+		initStep2() {
 			Builder.addCSS();
 			Builder.addHTML();
 			Builder.modifyAllOnPageEmotes();
@@ -3482,11 +3427,11 @@
 		 * Checks if this is a page, where MLE should be active.
 		 * @return {Boolean}
 		 */
-		isAllowedHostname: function() {
-			var hn = window.location.hostname;
+		isAllowedHostname() {
+			let hn = window.location.hostname;
 
 			// FIXME: Only a workaround for .co.uk TLDs. What about others?
-			var sliceLen = ( hn.substr( hn.length - 6 ) == '.co.uk' ) ? -3 : -2;
+			let sliceLen = hn.endsWith( '.co.uk' ) ? -3 : -2;
 			hn = hn.split( '.' ).slice( sliceLen ).join( '.' );
 
 			return ( this.ALLOWED_HOSTNAMES.indexOf( hn ) > -1 );
@@ -3497,31 +3442,23 @@
 		 * Checks if the site is in maintenance mode.
 		 * @return {Boolean}
 		 */
-		isRedditDown: function() {
-			var title = document.getElementsByTagName( 'title' )[0].textContent;
-			return ( title == 'reddit is down' || title == 'Ow! -- reddit.com' );
+		isRedditDown() {
+			let title = document.getElementsByTagName( 'title' )[0]?.textContent;
+			return ( title === 'reddit is down' || title === 'Ow! -- reddit.com' );
 		},
 
 
 		/**
 		 * Register for messages from the background process.
 		 */
-		registerForBackgroundMessages: function() {
-			// Opera
-			if( typeof opera !== 'undefined' ) {
-			    opera.extension.onmessage = handleBackgroundMessages;
-			}
-			// Firefox (WebExt)
-			else if( typeof browser !== 'undefined' ) {
+		registerForBackgroundMessages() {
+			// Firefox
+			if( typeof browser !== 'undefined' ) {
 				browser.runtime.onMessage.addListener( handleBackgroundMessages );
 			}
 			// Chrome
 			else if( typeof chrome !== 'undefined' ) {
 				chrome.runtime.onMessage.addListener( handleBackgroundMessages );
-			}
-			// probably Firefox
-			else {
-			    self.on( 'message', handleBackgroundMessages );
 			}
 		},
 
@@ -3529,7 +3466,7 @@
 		/**
 		 * First function to be called.
 		 */
-		start: function() {
+		start() {
 			if( this.isAllowedHostname() ) {
 				this.registerForBackgroundMessages();
 
@@ -3542,7 +3479,7 @@
 					window.addEventListener( 'DOMContentLoaded', this.initStep1.bind( this ), false );
 				}
 			}
-		}
+		},
 
 
 	};
@@ -3557,7 +3494,7 @@
 	 * Based on Snivian_Moon's emote stats for r/mylittlepony.
 	 * Extended with pony names.
 	 */
-	var TAGS = {
+	const TAGS = {
 		// mood/feeling
 		'happy': {
 			'A': [
@@ -3933,9 +3870,6 @@
 			'C': ['zecora']
 		}
 	};
-
-	/* jshint -W069 */
-	// jshint -W069: Ignore the message "[…] is better written in dot notation".
 
 	// Alternative names for certain tags
 	TAGS['derped'] = TAGS['crazed'];
