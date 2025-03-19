@@ -11,7 +11,10 @@
 </head>
 <body>
 
-<h1>My Little Emotebox</h1>
+<h1>
+	<img src="icons/MLE_48.png" alt="MLE icon" />
+	<span class="text">My Little Emotebox</span>
+</h1>
 
 <div id="msgbox" class="">
 	<div id="msg" class=""></div>
@@ -31,6 +34,9 @@
 	<fieldset>
 		<input type="radio" name="page" id="behaviour" hidden checked />
 		<ul class="form">
+			<li class="headline">
+				<h2>General</h2>
+			</li>
 			<li>
 				<select id="boxTrigger">
 					<option value="float">float</option>
@@ -291,7 +297,7 @@
 				<label>Export emotes</label>
 				<div class="textarea-and-button">
 					<textarea id="export-emotes-ta" readonly></textarea>
-					<input type="submit" id="export-emotes" value="export" />
+					<input type="submit" id="export-emotes" value="Export" />
 				</div>
 				<p class="explain">Export format is <a href="https://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
 			</li>
@@ -299,12 +305,12 @@
 				<label>Import emotes</label>
 				<div class="textarea-and-button">
 					<textarea id="import-emotes-ta"></textarea>
-					<input type="submit" id="import-emotes" value="import" />
+					<input type="submit" id="import-emotes" value="Import" />
 				</div>
 				<p class="explain">Import format is <a href="https://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
 			</li>
 			<li>
-				<input type="submit" id="reset-emotes" class="reset" value="reset emotes" />
+				<input type="submit" id="reset-emotes" class="reset" value="Reset emotes" />
 				<p class="explain">Turns the lists and emotes back to the default.</p>
 			</li>
 
@@ -351,7 +357,7 @@
 				<h2>Emote Updates</h2>
 			</li>
 			<li>
-				<input type="submit" id="force-update" class="update" value="force stylesheet update" />
+				<input type="submit" id="force-update" class="update" value="Force stylesheet update" />
 				<p class="explain">Get and parse the stylesheets from r/mylittlepony and r/MLPLounge for emotes. This may take a few seconds.</p>
 			</li>
 			<li>
@@ -399,7 +405,7 @@
 				<label>Export config</label>
 				<div class="textarea-and-button">
 					<textarea id="export-config-ta" readonly></textarea>
-					<input type="submit" id="export-config" value="export" />
+					<input type="submit" id="export-config" value="Export" />
 				</div>
 				<p class="explain">Export format is <a href="https://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
 			</li>
@@ -407,12 +413,12 @@
 				<label>Import config</label>
 				<div class="textarea-and-button">
 					<textarea id="import-config-ta"></textarea>
-					<input type="submit" id="import-config" value="import" />
+					<input type="submit" id="import-config" value="Import" />
 				</div>
 				<p class="explain">Import format is <a href="https://en.wikipedia.org/wiki/JSON">JSON</a>.</p>
 			</li>
 			<li>
-				<input type="submit" id="reset-config" class="reset" value="reset config" />
+				<input type="submit" id="reset-config" class="reset" value="Reset config" />
 				<p class="explain">Turns the configuration back to the default settings. If an import goes wrong, this may come in handy.</p>
 			</li>
 		</ul>
