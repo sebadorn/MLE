@@ -5,7 +5,7 @@
 	"description": "An easy way to insert and manage emotes.",
 	"homepage_url": "%MLE_URL%/",
 
-	"applications": {
+	"browser_specific_settings": {
 		"gecko": {
 			"id": "mle@sebadorn.de",
 			"update_url": "%MLE_URL%/updates-firefox.json"
