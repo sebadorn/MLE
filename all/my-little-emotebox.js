@@ -1847,7 +1847,7 @@
 		 * @param {HTMLElement} form The manage page (container).
 		 */
 		createManagePage( form ) {
-			const areas = [
+			form.append(
 				this.mngAreaForNewEmote(),
 				this.mngAreaForNewList(),
 				this.mngAreaForDelList(),
@@ -1885,13 +1885,9 @@
 					'Did you know?',
 					'You can move this window. Just grab it close to its border.'
 				),
-			];
-
-			const frag = document.createDocumentFragment();
-			frag.append( ...areas );
+			);
 
 			this.preventOverScrolling( form );
-			form.append( frag );
 		},
 
 
@@ -2164,6 +2160,8 @@
 				d.createElement( 'br' ),
 				preview,
 			);
+
+			return wrap;
 		},
 
 
@@ -2189,6 +2187,8 @@
 				inputList,
 				submitList,
 			);
+
+			return wrap;
 		},
 
 
@@ -2211,14 +2211,16 @@
 				g.REF.selectListDelete,
 				submitDel,
 			);
+
+			return wrap;
 		},
 
 
 		/**
 		 * Create manage area with contains just a hint.
-		 * @param  {String} title
-		 * @param  {String} text
-		 * @return {HTMLElement}
+		 * @param {String} title
+		 * @param {String} text
+		 * @returns {HTMLElement}
 		 */
 		mngAreaForNote( title, text ) {
 			const note = document.createElement( 'div' );
@@ -2226,6 +2228,8 @@
 
 			const wrap = document.createElement( 'div' );
 			wrap.append( this.createLabel( title ), note );
+
+			return wrap;
 		},
 
 
