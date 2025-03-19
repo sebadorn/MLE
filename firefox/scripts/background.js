@@ -3,27 +3,37 @@
 
 // Set an individual User-Agent for our XMLHttpRequests.
 browser.webRequest.onBeforeSendHeaders.addListener(
-	// Modify user-agent
+	/**
+	 * Modify user-agent
+	 * @param {BlockingResponse} details
+	 * @returns {BlockingResponse}
+	 */
 	details => {
-		let headers = details.requestHeaders;
-		let flagMLE = false;
+		/** @type {object[]} */
+		const headers = details.requestHeaders || [];
+		const headerIndexMLE = headers.findIndex( header => header.name === 'MLE-Firefox' );
 
-		for( let i = 0; i < headers.length; i++ ) {
-			if( headers[i].name === 'MLE-Firefox' ) {
-				flagMLE = true;
-			}
-			else if( headers[i].name.toLowerCase() === 'user-agent' ) {
-				headers[i].value = Updater.xhrUserAgent;
+		if( headerIndexMLE > -1 ) {
+			headers.splice( headerIndexMLE, 1 );
+
+			for( let i = 0; i < headers.length; i++ ) {
+				const header = headers[i];
+
+				if( header.name.toLowerCase() === 'user-agent' ) {
+					header.value = Updater.xhrUserAgent;
+					break;
+				}
 			}
 		}
 
-		return { requestHeaders: flagMLE ? headers : details.requestHeaders };
+		return details;
 	},
 	// filter
 	{
-		urls: ['<all_urls>'],
-		types: ['xmlhttprequest']
+		urls: ['*://*/*'],
+		types: ['xmlhttprequest'],
 	},
+	// extraInfoSpec
 	['requestHeaders', 'blocking']
 );
 
@@ -74,7 +84,7 @@ const DEFAULT_CONFIG = {
 	ctxStyleHoverColor: '#cee3f8',
 	displayEmotesOutOfSub: true,
 	injectEmoteCSS: true,
-	intervalToCheckCSS: 43200000, // [ms] // Default is 12 hours.
+	intervalToCheckCSS: 172800000, // [ms], default is 2 days.
 	keyReverse: 17, // ctrl
 	listNameTableA: 'A', // Name of the list for the emotes of table A
 	listNameTableB: 'B', // Name of the list for the emotes of table B
@@ -367,13 +377,12 @@ const MyBrowser = {
 
 	/**
 	 * Send a XMLHttpRequest.
-	 * @param {String}   method    POST or GET.
-	 * @param {String}   url       URL to send the request to.
-	 * @param {Boolean}  async     If to make the request async.
-	 * @param {String}   userAgent The User-Agent to sent. (NOT USED IN CHROME.)
-	 * @param {Function} callback  Callback function to handle the response.
+	 * @param {String}   method   POST or GET.
+	 * @param {String}   url      URL to send the request to.
+	 * @param {Boolean}  async    If to make the request async.
+	 * @param {Function} callback Callback function to handle the response.
 	 */
-	sendRequest( method, url, async, userAgent, callback ) {
+	sendRequest( method, url, async, callback ) {
 		console.debug( '[MyBrowser.sendRequest]', method, url );
 
 		const xhr = new XMLHttpRequest();
@@ -401,7 +410,7 @@ const Updater = {
 		'r/mylittlepony',
 		'r/mlplounge',
 	],
-	xhrUserAgent: 'MLE/2.10.11 (by meinstuhlknarrt)',
+	xhrUserAgent: 'MLE/2.11.0',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,
@@ -605,9 +614,7 @@ const Updater = {
 		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
 		this.xhrProgress++;
 
-		MyBrowser.sendRequest(
-			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.handleCSSCallback
-		);
+		MyBrowser.sendRequest( this.xhrMethod, url, this.xhrAsync, this.handleCSSCallback );
 	},
 
 
@@ -632,9 +639,7 @@ const Updater = {
 		// Fetch a small page which uses the subreddit CSS.
 		const url = 'https://old.reddit.com/' + this.xhrCurrentTarget;
 
-		MyBrowser.sendRequest(
-			this.xhrMethod, url, this.xhrAsync, this.xhrUserAgent, this.getCSSURLsCallback
-		);
+		MyBrowser.sendRequest( this.xhrMethod, url, this.xhrAsync, this.getCSSURLsCallback );
 	},
 
 
