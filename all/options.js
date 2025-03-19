@@ -6,7 +6,8 @@ let EMOTES = null;
 let META = null;
 
 let OPT_CFG = {
-	MSG_TIMEOUT: 8000 // [ms]
+	INIT_DONE: false,
+	MSG_TIMEOUT: 8000, // [ms]
 };
 
 
@@ -539,6 +540,12 @@ function toggleNav( ev ) {
  * Get started.
  */
 function init() {
+	// Already done. Happens if options page is still open
+	// and another tab triggers loading of config.
+	if( OPT_CFG.INIT_DONE ) {
+		return;
+	}
+
 	console.debug( '[init]' );
 	registerForBackgroundMessages();
 	loadConfig();
@@ -550,9 +557,16 @@ function init() {
  * Second setup phase after receiving the config, emotes and meta data.
  */
 function init2() {
+	// Already done. Happens if options page is still open
+	// and another tab triggers loading of config.
+	if( OPT_CFG.INIT_DONE ) {
+		return;
+	}
+
 	console.debug( '[init2]' );
 	registerEventSettingChanged();
 	insertMetaData();
+	OPT_CFG.INIT_DONE = true;
 }
 
 

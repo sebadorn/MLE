@@ -296,7 +296,7 @@
 		let data = ev.data ? ev.data : ev;
 
 		if( !data.task ) {
-			console.warn( 'MLE: Message from background process didn\'t contain the handled task.' );
+			console.warn( "MLE: Message from background process didn't contain the handled task." );
 			return;
 		}
 
@@ -312,7 +312,7 @@
 
 			case BG_TASK.SAVE_EMOTES:
 				if( !data.success ) {
-					showMsg( 'I\'m sorry, but the changes could not be saved.' );
+					showMsg( "I'm sorry, but the changes could not be saved." );
 					console.error( 'MLE: Could not save emotes.' );
 				}
 				break;
@@ -1368,7 +1368,7 @@
 			}
 
 			if( cfg.boxTrigger === 'button' ) {
-				css['.mle-open-btn'] = 'margin: 0 0 0 4px !important; vertical-align: top;';
+				css['.mle-open-btn'] = 'margin: 0 0 0 8px !important; vertical-align: top;';
 			}
 
 			if( cfg.ctxMenu ) {
@@ -3440,7 +3440,7 @@
 			let sliceLen = hn.endsWith( '.co.uk' ) ? -3 : -2;
 			hn = hn.split( '.' ).slice( sliceLen ).join( '.' );
 
-			return ( this.ALLOWED_HOSTNAMES.indexOf( hn ) > -1 );
+			return this.ALLOWED_HOSTNAMES.includes( hn );
 		},
 
 
