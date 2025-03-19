@@ -76,7 +76,6 @@ const DEFAULT_CONFIG = {
 	boxTrigger: 'button', // "float" or "button"
 	boxWidth: 650, // [px]
 	boxWidthMinimized: 70, // [px]
-	boxUnderHeader: true,
 	ctxMenu: true,
 	ctxStyleBgColor: '#ffffff',
 	ctxStyleBorderColor: '#d0d0d0',

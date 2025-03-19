@@ -1218,8 +1218,6 @@
 			const cfg = g.config;
 			let styleNode = document.createElement( 'style' );
 			let rules = '\n';
-
-			let zIndex = cfg.boxUnderHeader ? 10 : 10000;
 			let listDir = cfg.boxScrollbar === 'right' ? 'ltr' : 'rtl';
 
 			// Show out-of-sub emotes
@@ -1535,7 +1533,7 @@
 				let button = d.createElement( 'button' );
 				button.className = 'mle-open-btn';
 				button.type = 'button';
-				button.textContent = 'open MLE';
+				button.textContent = 'Open MLE';
 				button.addEventListener( 'mouseover', rememberActiveTextarea, false );
 				button.addEventListener( 'click', mainContainerShow, false );
 
