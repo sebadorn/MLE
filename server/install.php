@@ -26,7 +26,6 @@
 	<nav class="tabs">
 		<label for="tab_chrome" class="active">Chrome</label>
 		<label for="tab_firefox">Firefox</label>
-		<label for="tab_opera">Opera</label>
 	</nav>
 
 	<div class="browsers">
@@ -45,16 +44,6 @@
 		<div class="tab-content firefox">
 			<a class="install_trigger firefox" href="mle-webext.xpi" id="install_firefox">Install MLE in Firefox</a>
 			<p><strong>Install –</strong> Click the button.</p>
-		</div>
-
-		<input type="radio" name="browser" id="tab_opera" hidden />
-		<div class="tab-content opera">
-			<a class="install_trigger opera" href="mle.oex" id="install_opera12">Install MLE in Opera 12</a>
-			<p><strong>Install –</strong> You have to add this domain (<code>https://sebadorn.de/</code>) to the list of trusted websites. (<a href="//sebadorn.de/mlp/mle/mle_install_opera.png">Screenshot.</a>) Then click the button.</p>
-			<hr />
-			<a class="install_trigger opera" href="mle.crx" id="install_opera15">Install MLE in Opera 15+</a>
-			<p><strong>Install –</strong> Drag&amp;drop the <code>mle.crx</code> file into Opera. You may have to enable it afterwards in the Opera extensions overview.</p>
-			<p><strong>Alternative –</strong> Use <a href="https://addons.opera.com/en/extensions/details/download-chrome-extension-9">this extension</a> and install MLE from the <a href="https://chrome.google.com/webstore/detail/my-little-emotebox/akkkkifniibnnabhagkppchajlbaggbp">Chrome Web Store</a>.</p>
 		</div>
 	</div>
 </section>
