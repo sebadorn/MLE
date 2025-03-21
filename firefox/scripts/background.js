@@ -91,6 +91,7 @@ const DEFAULT_CONFIG = {
 	listNameTableE: 'E', // Name of the list for the emotes of table E
 	listNameTableF: 'F', // Name of the list for the emotes of table F
 	listNameTableG: 'G', // Name of the list for the emotes of table G
+	listNameTableH: 'H', // Name of the list for the emotes of table H
 	listNamePlounge: 'Plounge', // Name of the list for the non-table emotes of the Plounge
 	msgAnimationSpeed: 1000, // [ms]
 	msgPosition: 'top', // "top" or "bottom"
@@ -120,7 +121,7 @@ const DEFAULT_EMOTES = {
 		'swagintosh', 'grannysmith', 'flutterwhoa', 'flutterroll', 'flutterjerk',
 		'rdcry', 'scootaderp', 'scootaplease', 'scootacheer', 'ohcomeon',
 		'sbbook', 'raritypaper', 'raritydaww', 'rarityreally', 'rarishock',
-		'shiningarmor', 'cadence', 'chrysalis', 'priceless', 'silverspoon'
+		'shiningarmor', 'cadence', 'chrysalis', 'priceless', 'silverspoon',
 	],
 	'B': [
 		'ppseesyou', 'ppshrug', 'ppboring', 'rdcool', 'rdsmile',
@@ -130,7 +131,7 @@ const DEFAULT_EMOTES = {
 		'spikenervous', 'takealetter', 'noooo', 'spikepushy', 'manspike',
 		'facehoof', 'twisquint', 'twirage', 'dumbfabric', 'rarityyell',
 		'raritywhine', 'raritydress', 'rarityannoyed', 'raritywut', 'raritywhy',
-		'rarityjudge', 'rarityprimp', 'trixiesmug', 'dj', 'cockatrice'
+		'rarityjudge', 'rarityprimp', 'trixiesmug', 'dj', 'cockatrice',
 	],
 	'C': [
 		'rdsitting', 'rdhappy', 'rdannoyed', 'gross', 'louder',
@@ -140,7 +141,7 @@ const DEFAULT_EMOTES = {
 		'whattheflut', 'fluttercry', 'raritysad', 'fabulous', 'sneakybelle',
 		'scootaloo', 'derpyhappy', 'derp', 'derpyshock', 'lunasad',
 		'lunagasp', 'celestia', 'cadencesmile', 'shiningpride', 'angel',
-		'allmybits', 'zecora', 'photofinish', 'trixiesad', 'changeling'
+		'allmybits', 'zecora', 'photofinish', 'trixiesad', 'changeling',
 	],
 	'E': [
 		'fillytgap', 'rdhuh', 'rdsalute', 'awwyeah', 'twiponder',
@@ -150,7 +151,7 @@ const DEFAULT_EMOTES = {
 		'nmm', 'berry', 'whooves', 'octavia', 'colgate',
 		'cheerilee', 'lily', 'gilda', 'snails', 'dealwithit',
 		'discentia', 'maud', 'discordsad', 'lunamad', 'pinkiepout',
-		'twisecret', 'spikehappy', 'scootablue', 'sunsetshimmer', 'sunsetsneaky'
+		'twisecret', 'spikehappy', 'scootablue', 'sunsetshimmer', 'sunsetsneaky',
 	],
 	'F': [
 		'pinkiesad', 'diamondtiara', 'sombra', 'sbshocked', 'guard',
@@ -160,15 +161,35 @@ const DEFAULT_EMOTES = {
 		'ajdoubt', 'spikewhoa', 'wasntme', 'twipbbt', 'flimflam',
 		'cocosmile', 'skeptiloo', 'limestonegrin', 'raritygrump', 'goodjob',
 		'flutterhay', 'sbwtf', 'nightmaregrin', 'spikeapproves', 'flutternice',
-		'ppdont', 'ajgrump', 'sgpopcorn', 'raritysquee', 'gummystare'
+		'ppdont', 'ajgrump', 'sgpopcorn', 'raritysquee', 'gummystare',
 	],
 	'G': [
-		'karma', 'discentiajudge', 'twisnide', 'pinkie', 'cococold',
-		'quibble', 'rdthis', 'flutterbrow'
+		'karma', 'sbfocus', 'lunagrump', 'twisheepish',
+		'discentiajudge', 'sgsneaky', 'sgeesh', 'skystarfine',
+		'twisnide', 'trixieww', 'twieek', 'ajeesh',
+		'pinkie', 'flutterplz', 'tempest', 'pinkiesugar',
+		'cococold', 'emberwtf', 'tempestsmile', 'flutternope',
+		'quibble', 'sunsetwhyme', 'squeestar', 'twishame',
+		'rdthis', 'abteehee', 'appleroll', 'pinkiesmoosh',
+		'flutterbrow', 'squintyglam', 'spikeholdup', 'starlightspittle',
+		'celestiahurt', 'rdsup', 'tempestgaze', 'sunburstnervous',
+		'sgconcern', 'celestiahappy', 'squeekiepie', 'spikewoke',
+	],
+	'H': [
+		'abgrump', 'gallus', 'cozyglow', 'smolderscowl',
+		'celestiawink', 'sandbaruhh', 'shiningsmug', 'pinkiesmug',
+		'celestiasquint', 'silverbored', 'rarischeme', 'peekaloo',
+		'sunsetgrump', 'ocellus', 'twipudding', 'flutterball',
+		'sunspicious', 'smolder', 'scootaglance', 'tirek',
+		'twicoffee', 'smolderwelp', 'crazyglow', 'winxie',
+		'twiomg', 'silverstream', 'starlightsly', 'spikescowl',
+		'yak', 'ajpuzzle', 'rdeyy', 'starlightno',
+		'starlightisee', 'pinkieeager', 'galluswtf', 'smolderrage',
+		'yona', 'trixiecheer', 'twifret', 'lunaloom',
 	],
 	'Plounge': [
-		'fillyrarity', 'twidur', 'amzingmagic', 'karmasalute', 'dishappy',
-		'karmastare', 'ohnoes', 'filly'
+		'fillyrarity', 'twidurr', 'amazingmagic', 'karmasalute', 'dishappy',
+		'karmastare', 'ohnoes', 'filly', 'sabee', 'gayagenda', 'happybee',
 	],
 };
 
@@ -425,7 +446,7 @@ const Updater = {
 
 	linkStart: 'a[href|="/',
 	linkStartReverse: 'a[href^="/r"]',
-	tableCodeRegex: /^[abcefg][0-9]{2}$/i,
+	tableCodeRegex: /^[abcefgh][0-9]{2}$/i,
 
 	emoteCSS: {},
 	emotes: {},
@@ -982,6 +1003,10 @@ const Updater = {
 
 					case 'G':
 						table = cfg.listNameTableG;
+						break;
+
+					case 'H':
+						table = cfg.listNameTableH;
 						break;
 				}
 

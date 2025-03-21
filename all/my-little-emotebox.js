@@ -150,6 +150,9 @@
 			case 'G':
 				return cfg.listNameTableG;
 
+			case 'H':
+				return cfg.listNameTableH;
+
 			case 'Plounge':
 				return cfg.listNamePlounge;
 
@@ -369,47 +372,43 @@
 		}
 
 		let element = g.REF.focusedInput;
+		let emoteCode = `[](/${emote})`;
 
 		if( !element ) {
+			g.REF.emoteCode.value = emoteCode;
 			return;
 		}
 
-		if( isOldReddit() ) {
-			const selStart = element.selectionStart;
-			const selEnd = element.selectionEnd;
+		const selStart = element.selectionStart;
+		const selEnd = element.selectionEnd;
 
-			// Nothing selected, just insert at position
-			if( selStart == selEnd ) {
-				emote = `[](/${emote})`;
-			}
-			// Text marked, use for alt text
-			else {
-				let altText = element.value.substring( selStart, selEnd );
-				emote = `[](/${emote} "${altText}")`;
-			}
-
-			// Add a blank after the emote
-			if( g.config.addBlankAfterInsert ) {
-				emote += ' ';
-			}
-
-			g.REF.emoteCode.value = emote;
-
-			// Insert emote
-			let taLen = element.value.length;
-			element.value = element.value.substring( 0, selStart ) + emote + element.value.substring( selEnd, taLen );
-
-			// Focus to the textarea
-			element.focus();
-			element.setSelectionRange(
-				selStart + emote.length,
-				selStart + emote.length
-			);
-
-			// Fire input event, so that RedditEnhancementSuite updates the preview
-			const inputEvent = new Event( 'input', { bubble: true, cancelable: true } );
-			element.dispatchEvent( inputEvent );
+		// Text marked, use for alt text
+		if( selStart !== selEnd ) {
+			let altText = element.value.substring( selStart, selEnd );
+			emoteCode = `[](/${emote} "${altText}")`;
 		}
+
+		// Add a blank after the emote
+		if( g.config.addBlankAfterInsert ) {
+			emoteCode += ' ';
+		}
+
+		g.REF.emoteCode.value = emoteCode;
+
+		// Insert emote
+		let taLen = element.value.length;
+		element.value = element.value.substring( 0, selStart ) + emoteCode + element.value.substring( selEnd, taLen );
+
+		// Focus to the textarea
+		element.focus();
+		element.setSelectionRange(
+			selStart + emoteCode.length,
+			selStart + emoteCode.length
+		);
+
+		// Fire input event, so that RedditEnhancementSuite updates the preview
+		const inputEvent = new Event( 'input', { bubble: true, cancelable: true } );
+		element.dispatchEvent( inputEvent );
 	}
 
 
@@ -475,6 +474,7 @@
 			cfg.listNameTableE,
 			cfg.listNameTableF,
 			cfg.listNameTableG,
+			cfg.listNameTableH,
 			cfg.listNamePlounge,
 		];
 
@@ -3611,7 +3611,7 @@
 				'spikeapproved', 'flutternice', 'raritysquee'
 			],
 			'G': ['karma', 'pinkie', 'rdthis'],
-			'Plounge': ['fillyrarity', 'dishappy', 'amzingmagic', 'filly']
+			'Plounge': ['fillyrarity', 'dishappy', 'amazingmagic', 'filly']
 		},
 		'sad': {
 			'A': ['rdcry', 'paperbagderpy', 'lunawait'],
@@ -3643,7 +3643,7 @@
 				'ppdont'
 			],
 			'G': ['discentiajudge', 'flutterbrow'],
-			'Plounge': ['twidur']
+			'Plounge': ['twidurr']
 		},
 		'scared': {
 			'A': ['ppfear'],
@@ -3664,7 +3664,7 @@
 			'B': ['rdwut'],
 			'C': ['pinkamina'],
 			'F': ['thcalm', 'flutterhay'],
-			'Plounge': ['twidur']
+			'Plounge': ['twidurr']
 		},
 		'thoughtful': {
 			'A': ['scootaplease'],
@@ -3737,7 +3737,9 @@
 			'A': ['abbored', 'abmeh'],
 			'B': ['abwut'],
 			'E': ['absmile', 'abhuh'],
-			'F': ['abstern']
+			'F': ['abstern'],
+			'G': ['abteehee'],
+			'H': ['abgrump']
 		},
 		'angel': {
 			'C': ['angel']
@@ -3747,7 +3749,9 @@
 			'B': ['squintyjack', 'ajsly', 'ajcower', 'ajugh', 'ajwut'],
 			'C': ['ajfrown', 'hmmm'],
 			'E': ['ajconfused'],
-			'F': ['ajcry', 'ajdoubt', 'ajgrump']
+			'F': ['ajcry', 'ajdoubt', 'ajgrump'],
+			'G': ['ajeesh', 'appleroll'],
+			'H': ['ajpuzzle'],
 		},
 		'berrypunch': {
 			'E': ['berry']
@@ -3764,7 +3768,9 @@
 		},
 		'celestia': {
 			'A': ['celestiawut', 'celestiamad'],
-			'C': ['celestia']
+			'C': ['celestia'],
+			'G': ['celestiahurt', 'celestiahappy'],
+			'H': ['celestiawink', 'celestiasquint'],
 		},
 		'changeling': {
 			'A': ['chrysalis'],
@@ -3805,7 +3811,8 @@
 			'B': ['fluttershh', 'fluttershy', 'fluttersrs', 'flutterfear', 'flutterwink', 'flutteryay'],
 			'C': ['flutterblush', 'loveme', 'whattheflut', 'fluttercry'],
 			'F': ['flutterkay', 'flutterhay', 'flutternice'],
-			'G': ['flutterbrow']
+			'G': ['flutterbrow', 'flutterplz', 'flutternope'],
+			'H': ['flutterball'],
 		},
 		'gilda': {
 			'E': ['gilda']
@@ -3831,7 +3838,9 @@
 			'A': ['lunateehee', 'lunawait'],
 			'C': ['lunasad', 'lunagasp'],
 			'E': ['happyluna', 'nmm', 'lunamad'],
-			'F': ['nightmaregrin']
+			'F': ['nightmaregrin'],
+			'G': ['lunagrump'],
+			'H': ['lunaloom'],
 		},
 		'lyra': {
 			'E': ['lyra']
@@ -3860,7 +3869,8 @@
 			'C': ['ohhi', 'party', 'hahaha', 'joy', 'pinkamina', 'ppreally'],
 			'E': ['huhhuh', 'pinkiepout'],
 			'F': ['pinkiesad', 'ooh', 'ppdont'],
-			'G': ['pinkie']
+			'G': ['pinkie', 'pinkiesugar', 'pinkiesmoosh', 'squeekiepie'],
+			'H': ['pinkiesmug', 'pinkieeager'],
 		},
 		'quibble': {
 			'G': ['quibble']
@@ -3871,7 +3881,8 @@
 			'C': ['rdsitting', 'rdhappy', 'rdannoyed', 'gross', 'louder', 'rdscared'],
 			'E': ['rdhuh', 'rdsalute', 'awwyeah'],
 			'F': ['rdsnrk', 'notangry'],
-			'G': ['rdthis']
+			'G': ['rdthis', 'rdsup'],
+			'H': ['rdeyy'],
 		},
 		'rarity': {
 			'A': ['raritypaper', 'raritydaww', 'rarityreally', 'rarishock'],
@@ -3879,23 +3890,29 @@
 			'C': ['raritysad', 'fabulous'],
 			'E': ['wahaha'],
 			'F': ['rarityeww', 'raritytired', 'raritygrump', 'raritysquee'],
+			'H': ['rarischeme'],
 			'Plounge': ['fillyrarity']
 		},
 		'scootaloo': {
 			'A': ['scootaderp', 'scootaplease', 'scootacheer'],
 			'C': ['scootaloo'],
 			'E': ['cutealoo', 'scootablue'],
-			'F': ['scootaeww', 'skeptiloo']
+			'F': ['scootaeww', 'skeptiloo'],
+			'H': ['peekaloo', 'scootaglance'],
 		},
 		'seafoam': {
 			'F': ['wasntme']
 		},
 		'shiningarmor': {
 			'A': ['shiningarmor'],
-			'E': ['shiningpride']
+			'E': ['shiningpride'],
+			'H': ['shiningsmug'],
 		},
 		'silverspoon': {
 			'A': ['silverspoon']
+		},
+		'smolder': {
+			'H': ['smolderscowl', 'smolder', 'smolderwelp', 'smolderrage'],
 		},
 		'snails': {
 			'E': ['snails']
@@ -3908,26 +3925,36 @@
 			'B': ['spikenervous', 'takealetter', 'noooo', 'spikepushy', 'manspike'],
 			'C': ['allmybits'],
 			'E': ['spikewtf', 'spikehappy'],
-			'F': ['spikewhoa', 'spikeapproves']
+			'F': ['spikewhoa', 'spikeapproves'],
+			'G': ['spikeholdup'],
+			'H': ['spikescowl'],
 		},
 		'spitfire': {
 			'E': ['spitfire']
 		},
 		'starlight': {
-			'F': ['starlightrage', 'goodjob', 'sgpopcorn']
+			'F': ['starlightrage', 'goodjob', 'sgpopcorn'],
+			'G': ['sgsneaky', 'sgeesh', 'squintyglam', 'starlightspittle', 'sgconcern'],
+			'H': ['starlightsly', 'starlightno', 'starlightisee'],
 		},
 		'stevenmagnet': {
 			'E': ['sotrue']
 		},
 		'sunsetshimmer': {
-			'E': ['sunsetshimmer', 'sunsetsneaky']
+			'E': ['sunsetshimmer', 'sunsetsneaky'],
+			'G': ['sunsetwhyme'],
+			'H': ['sunsetgrump', 'sunspicious'],
 		},
 		'sweetie': {
 			'A': ['ohcomeon', 'sbbook'],
 			'B': ['dumbfabric'],
 			'C': ['sneakybelle'],
 			'E': ['sbstare'],
-			'F': ['sbshocked', 'sbwtf']
+			'F': ['sbshocked', 'sbwtf'],
+			'G': ['sbfocus'],
+		},
+		'tempest': {
+			'G': ['tempest', 'tempestsmile', 'tempestgaze'],
 		},
 		'treehugger': {
 			'F': ['thcalm']
@@ -3936,7 +3963,9 @@
 			'B': ['trixiesmug'],
 			'C': ['trixiesad'],
 			'E': ['fillytgap'],
-			'Plounge': ['amzingmagic']
+			'G': ['trixieww'],
+			'H': ['winxie', 'trixiecheer'],
+			'Plounge': ['amazingmagic']
 		},
 		'troubleshoes': {
 			'F': ['troubleshoes']
@@ -3947,8 +3976,9 @@
 			'C': ['twistare', 'twismug', 'twismile', 'twidaw'],
 			'E': ['twiponder', 'twisad', 'twisecret'],
 			'F': ['twipbbt'],
-			'G': ['twisnide'],
-			'Plounge': ['twidur']
+			'G': ['twisnide', 'twisheepish', 'twieek', 'twishame'],
+			'H': ['twipudding', 'twicoffee', 'twiomg', 'twifret'],
+			'Plounge': ['twidurr']
 		},
 		'vinyl': {
 			'B': ['dj']
@@ -4002,6 +4032,7 @@
 	TAGS['steven'] = TAGS['stevenmagnet'];
 	TAGS['sunset'] = TAGS['sunsetshimmer'];
 	TAGS['sweetiebelle'] = TAGS['sweetie'];
+	TAGS['tempestshadow'] = TAGS['tempest'];
 	TAGS['tgap'] = TAGS['trixie'];
 	TAGS['tia'] = TAGS['celestia'];
 	TAGS['tree'] = TAGS['fluttershy'];
