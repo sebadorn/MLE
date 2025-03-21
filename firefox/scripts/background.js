@@ -346,7 +346,7 @@ const MyBrowser = {
 	 */
 	openOptions() {
 		const create = {
-			url: browser.extension.getURL( 'options.html' ),
+			url: browser.runtime.getURL( 'options.html' ),
 			active: true,
 		};
 
