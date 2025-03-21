@@ -160,9 +160,6 @@ h1, nav, #msg, .options {
 #msgbox {
 	position: fixed;
 	bottom: -200px;
-	-moz-transition: bottom 1200ms;
-	-webkit-transition: bottom 1200ms;
-	-o-transition: bottom 1200ms;
 	transition: bottom 1200ms;
 	width: 100%;
 	z-index: 100;
@@ -170,9 +167,6 @@ h1, nav, #msg, .options {
 
 #msgbox.show {
 	bottom: 0;
-	-moz-transition: bottom 1000ms;
-	-webkit-transition: bottom 1000ms;
-	-o-transition: bottom 1000ms;
 	transition: bottom 1000ms;
 }
 

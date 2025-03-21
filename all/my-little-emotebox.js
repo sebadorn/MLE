@@ -22,6 +22,7 @@
 			'/feedback',
 			'/widget',
 		],
+		isOldReddit: null,
 		// Keep track of mouse stats
 		MOUSE: {
 			lastX: null,
@@ -38,6 +39,8 @@
 		// Holding references to HTMLElements
 		REF: {
 			emoteBlocks: {},
+			/** @type {HTMLElement?} */
+			emoteCode: null,
 			/** @type {HTMLElement?} */
 			focusedInput: null,
 			inputAddEmote: null,
@@ -63,28 +66,6 @@
 
 
 	/**
-	 * Callback function for the DOMNodeInserted event.
-	 * @param {Event} ev
-	 */
-	function buttonObserverDOMEvent( ev ) {
-		// nodeType = 3 = TEXT_NODE
-		if( ev.target.nodeType == 3 ) {
-			return;
-		}
-
-		// 'usertext cloneable' is the whole reply-to-comment section
-		if(
-			ev.target.classList.contains( 'usertext' ) &&
-			ev.target.classList.contains( 'cloneable' )
-		) {
-			const buttonMLE = ev.target.querySelector( '.mle-open-btn' );
-			buttonMLE.addEventListener( 'mouseover', rememberActiveTextarea, false );
-			buttonMLE.addEventListener( 'click', mainContainerShow, false );
-		}
-	}
-
-
-	/**
 	 * Callback function for the MutationObserver.
 	 * @param {MutationRecord} mutations
 	 */
@@ -99,11 +80,16 @@
 					node.classList.contains( 'usertext' ) &&
 					node.classList.contains( 'cloneable' )
 				) {
-					let buttonMLE = node.querySelector( '.mle-open-btn' );
+					const buttonMLE = node.querySelector( '.mle-open-btn' );
 
 					if( buttonMLE ) {
-						buttonMLE.addEventListener( 'mouseover', rememberActiveTextarea, false );
-						buttonMLE.addEventListener( 'click', mainContainerShow, false );
+						// Just in case remove them first, but for
+						// some reason they aren't set anymore.
+						buttonMLE.removeEventListener( 'mouseover', rememberActiveTextarea );
+						buttonMLE.removeEventListener( 'click', mainContainerShow );
+
+						buttonMLE.addEventListener( 'mouseover', rememberActiveTextarea );
+						buttonMLE.addEventListener( 'click', mainContainerShow );
 						return;
 					}
 				}
@@ -119,7 +105,6 @@
 	function buttonObserverSetup() {
 		const MutationObserver = window.MutationObserver || window.WebkitMutationObserver;
 
-		// MutationObserver is implented in Chrome (vendor prefixed with "Webkit") and Firefox
 		if( MutationObserver ) {
 			const observer = new MutationObserver( buttonObserverMutation );
 			const observerConfig = {
@@ -132,10 +117,6 @@
 			for( let i = 0; i < targets.length; i++ ) {
 				observer.observe( targets[i], observerConfig );
 			}
-		}
-		// ... but not in Opera 12, so we have to do this the deprecated way
-		else {
-			document.addEventListener( 'DOMNodeInserted', buttonObserverDOMEvent, false );
 		}
 	}
 
@@ -352,13 +333,6 @@
 		ev.preventDefault(); // Don't follow emote link
 
 		const g = GLOBAL;
-		let ta = g.REF.focusedInput;
-
-		mainContainerHide( ev );
-
-		if( !ta ) {
-			return;
-		}
 
 		// Emote name
 		let emote = ev.target.href.split( '/' );
@@ -378,38 +352,64 @@
 			}
 		}
 
-		let selStart = ta.selectionStart;
-		let selEnd = ta.selectionEnd;
+		// Inserting the text into the comment editor
+		// in the new Reddit UI just does not work.
+		if( !isOldReddit() ) {
+			// Emote link needs some content or otherwise the markdown editor deletes it.
+			// \u200b is a zero-width space character.
+			emote = `[\u200b](/${emote})`;
 
-		// Nothing selected, just insert at position
-		if( selStart == selEnd ) {
-			emote = '[](/' + emote + ')';
-		}
-		// Text marked, use for alt text
-		else {
-			let altText = ta.value.substring( selStart, selEnd );
-			emote = '[](/' + emote + ' "' + altText + '")';
-		}
+			if( g.config.addBlankAfterInsert ) {
+				emote += ' ';
+			}
 
-		// Add a blank after the emote
-		if( g.config.addBlankAfterInsert ) {
-			emote += ' ';
+			g.REF.emoteCode.value = emote;
+
+			return;
 		}
 
-		// Insert emote
-		let taLen = ta.value.length;
-		ta.value = ta.value.substring( 0, selStart ) + emote + ta.value.substring( selEnd, taLen );
+		let element = g.REF.focusedInput;
 
-		// Focus to the textarea
-		ta.focus();
-		ta.setSelectionRange(
-			selStart + emote.length,
-			selStart + emote.length
-		);
+		if( !element ) {
+			return;
+		}
 
-		// Fire input event, so that RedditEnhancementSuite updates the preview
-		const inputEvent = new Event( 'input', { bubble: true, cancelable: true } );
-		ta.dispatchEvent( inputEvent );
+		if( isOldReddit() ) {
+			const selStart = element.selectionStart;
+			const selEnd = element.selectionEnd;
+
+			// Nothing selected, just insert at position
+			if( selStart == selEnd ) {
+				emote = `[](/${emote})`;
+			}
+			// Text marked, use for alt text
+			else {
+				let altText = element.value.substring( selStart, selEnd );
+				emote = `[](/${emote} "${altText}")`;
+			}
+
+			// Add a blank after the emote
+			if( g.config.addBlankAfterInsert ) {
+				emote += ' ';
+			}
+
+			g.REF.emoteCode.value = emote;
+
+			// Insert emote
+			let taLen = element.value.length;
+			element.value = element.value.substring( 0, selStart ) + emote + element.value.substring( selEnd, taLen );
+
+			// Focus to the textarea
+			element.focus();
+			element.setSelectionRange(
+				selStart + emote.length,
+				selStart + emote.length
+			);
+
+			// Fire input event, so that RedditEnhancementSuite updates the preview
+			const inputEvent = new Event( 'input', { bubble: true, cancelable: true } );
+			element.dispatchEvent( inputEvent );
+		}
 	}
 
 
@@ -508,6 +508,20 @@
 
 
 	/**
+	 *
+	 * @returns {boolean}
+	 */
+	function isOldReddit() {
+		if( typeof GLOBAL.isOldReddit !== 'boolean' ) {
+			const hostname = window.location.hostname;
+			GLOBAL.isOldReddit = hostname.startsWith( 'old.reddit.' );
+		}
+
+		return GLOBAL.isOldReddit;
+	}
+
+
+	/**
 	 * Minimize main container.
 	 * @param {Event} ev
 	 */
@@ -523,7 +537,7 @@
 		mc.classList.remove( 'show' );
 
 		setTimeout( () => {
-			mc.addEventListener( 'mouseover', mainContainerShow, false );
+			mc.addEventListener( 'mouseover', mainContainerShow );
 		}, g.config.boxAnimationSpeed + 100 );
 	}
 
@@ -536,7 +550,10 @@
 
 		if( !mc.classList.contains( 'show' ) ) {
 			mc.classList.add( 'show' );
-			mc.removeEventListener( 'mouseover', mainContainerShow, false );
+			mc.removeEventListener( 'mouseover', mainContainerShow );
+		}
+		else {
+			console.debug( '[mainContainerShow] Container is already open.' );
 		}
 	}
 
@@ -669,9 +686,10 @@
 	 * (if there is one) as input for the emotes.
 	 */
 	function rememberActiveTextarea() {
-		let ae = document.activeElement;
+		const ae = document.activeElement;
 
-		if( ae?.tagName && ae.tagName.toLowerCase() === 'textarea' ) {
+		// Only relevant for old.reddit.*
+		if( ae?.tagName === 'TEXTAREA' ) {
 			GLOBAL.REF.focusedInput = ae;
 		}
 	}
@@ -1022,8 +1040,8 @@
 		m.lastX = null;
 		m.lastY = null;
 
-		document.removeEventListener( 'mousemove', moveMLE, false );
-		document.removeEventListener( 'mouseup', trackMouseDownEnd_Move, false );
+		document.removeEventListener( 'mousemove', moveMLE );
+		document.removeEventListener( 'mouseup', trackMouseDownEnd_Move );
 
 		if( g.config.boxAlign == 'right' ) {
 			posX = parseInt( g.REF.mainCont.style.right, 10 );
@@ -1059,8 +1077,8 @@
 		m.lastX = ev.clientX;
 		m.lastY = ev.clientY;
 
-		document.addEventListener( 'mousemove', moveMLE, false );
-		document.addEventListener( 'mouseup', trackMouseDownEnd_Move, false );
+		document.addEventListener( 'mousemove', moveMLE );
+		document.addEventListener( 'mouseup', trackMouseDownEnd_Move );
 	}
 
 
@@ -1082,8 +1100,8 @@
 		m.lastX = null;
 		m.lastY = null;
 
-		d.removeEventListener( 'mousemove', resizeMLE, false );
-		d.removeEventListener( 'mouseup', trackMouseDownEnd_Resize, false );
+		d.removeEventListener( 'mousemove', resizeMLE );
+		d.removeEventListener( 'mouseup', trackMouseDownEnd_Resize );
 
 		// Update config in this tab – part 1
 		g.config.boxWidth = boxWidth;
@@ -1150,8 +1168,8 @@
 		m.lastY = ev.clientY;
 		m.resizeDirection = direction;
 
-		d.addEventListener( 'mousemove', resizeMLE, false );
-		d.addEventListener( 'mouseup', trackMouseDownEnd_Resize, false );
+		d.addEventListener( 'mousemove', resizeMLE );
+		d.addEventListener( 'mouseup', trackMouseDownEnd_Resize );
 	}
 
 
@@ -1223,6 +1241,8 @@
 			// Show out-of-sub emotes
 			this.addOutOfSubCSS();
 
+			const fontFamily = 'Verdana, Arial, Helvetica, "DejaVu Sans", sans-serif';
+
 			// '%' will be replaced with noise
 			const css = {
 				// Collection of same CSS
@@ -1231,19 +1251,24 @@
 				 #mle%.show .mle-dragbar,\
 				 #mle%.show .mle-btn,\
 				 #mle%.show .mle-search,\
+				 #mle%.show .mle-emote-code,\
 				 #mle%.show div,\
 				 #mle-ctxmenu%.show,\
 				 .diag.show':
 						'display: block;',
+				'#mle%.show .mle-topbar':
+						'align-items: flex-start; display: flex;',
 				'#mle%,\
 				 #mle-ctxmenu%':
-						'font: 12px Verdana, Arial, Helvetica, "DejaVu Sans", sans-serif; line-height: 14px; text-align: left;',
+						`font-family: ${fontFamily} !important; font-size: 12px; line-height: 14px; text-align: left;`,
 				'#mle% .mle-btn':
-						'background-color: #808080; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #ffffff; cursor: default; display: none; font-weight: bold; padding: 5px 0 6px; position: absolute; text-align: center; top: -1px;',
+						'background-color: #808080; border-bottom-left-radius: 2px; border-bottom-right-radius: 2px; border-top: 1px solid #404040; color: #fff; cursor: default; display: none; font-weight: bold; padding: 5px 0 6px; text-align: center;',
 				'#mle% .mle-btn:hover':
 						'background-color: #404040;',
 				'#mle% input,#mle% select,#mle% textarea':
-						'outline: none;',
+						`background-color: #fff; border-radius: 0; color: #000; font-family: ${fontFamily}; font-size: 13px; outline: none;`,
+				'#mle% .mle-topbar':
+						'display: none; left: 0; position: absolute; top: -1px; z-index: 10;',
 				// Inactive state
 				'#mle%':
 						`background-color: ${cfg.boxBgColor}; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; color: #202020; position: fixed; z-index: ' + zIndex + '; width: ${cfg.boxWidthMinimized}px;`,
@@ -1279,15 +1304,15 @@
 						'display: none;',
 				// Manage button
 				'#mle% .mle-mng-link':
-						'width: 72px; z-index: 10;',
+						'margin: 0 10px; width: 72px;',
 				// Options button
 				'#mle% .mle-opt-link':
-						'background-color: #f4f4f4 !important; border-top-color: #b0b0b0; color: #707070; font-weight: normal !important; left: 98px; padding-left: 8px; padding-right: 8px; z-index: 14;',
+						'background-color: #f4f4f4 !important; border-top-color: #b0b0b0; color: #707070; font-weight: normal !important; padding-left: 8px; padding-right: 8px;',
 				'#mle% .mle-opt-link:hover':
-						'border-top-color: #202020; color: #000000;',
+						'border-top-color: #202020; color: #000;',
 				// Search field
 				'#mle% .mle-search':
-						'border: 1px solid #e0e0e0; border-top-color: #b0b0b0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; color: #b0b0b0; display: none; left: 175px; padding: 3px 5px; position: absolute; top: -1px; width: 120px; z-index: 16;',
+						'border: 1px solid #e0e0e0; border-top-color: #b0b0b0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; color: #b0b0b0; display: none; margin: 0 10px; padding: 3px 5px; width: 120px;',
 				'#mle% .mle-search:active,\
 				 #mle% .mle-search:focus':
 						'color: #101010;',
@@ -1296,14 +1321,17 @@
 						'border-bottom: 1px solid #e0e0e0; color: #101010; display: block; font-size: 14px; font-weight: normal; margin: 14px 0 10px; padding-bottom: 2px;',
 				'strong.search-header%:first-child':
 						'margin-top: 0;',
+				// Emote code for copying
+				'#mle% .mle-emote-code':
+						'background-color: #f0f0f0; border: 1px solid #e0e0e0; border-top-color: #b0b0b0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: none; padding: 3px 5px; text-align: center; width: 200px;',
 				// Close button
 				'#mle% .mle-close':
-						'right: 10px; z-index: 20; padding-left: 12px; padding-right: 12px;',
+						'right: 10px; z-index: 20; padding-left: 12px; padding-right: 12px; position: absolute; top: -2px;',
 				// Selection list
 				'#mle% ul':
-						`direction: ${listDir}; display: none; overflow: auto; float: left; height: 100%; margin: 0; max-width: 150px; padding: 0;`,
+						`direction: ${listDir}; display: none; float: left; height: 100%; list-style-type: none; margin: 0; max-width: 150px; overflow: auto; padding: 0;`,
 				'#mle% li':
-						'background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #ffffff; direction: ltr; padding: 8px 16px; user-select: none;',
+						'background-color: #e0e0e0; color: #303030; cursor: default; border-bottom: 1px solid #c0c0c0; border-top: 1px solid #fff; direction: ltr; margin: 0; padding: 8px 16px; user-select: none;',
 				'#mle% li:first-child':
 						'border-top-width: 0;',
 				'#mle% li:last-child':
@@ -1331,25 +1359,25 @@
 				'.mle-block% a:hover':
 						'border-color: #96BFE9;',
 				'.mle-warning':
-						'color: #707070 !important; margin-bottom: 10px; text-align: center; text-shadow: 1px 1px 0 #ffffff;',
+						'color: #707070 !important; margin-bottom: 10px; text-align: center; text-shadow: 1px 1px 0 #fff;',
 				// Notifier
 				'.mle-msg%':
-						`background-color: rgba( 10, 10, 10, 0.6 ); color: #ffffff; font-size: 13px; position: fixed; left: 0; ${cfg.msgPosition}: -200px; padding: 19px 0; text-align: center; width: 100%; z-index: 10100; transition: ${cfg.msgPosition} ${cfg.msgAnimationSpeed}ms;`,
+						`background-color: rgba( 10, 10, 10, 0.6 ); color: #fff; font-size: 13px; position: fixed; left: 0; ${cfg.msgPosition}: -200px; padding: 19px 0; text-align: center; width: 100%; z-index: 10100; transition: ${cfg.msgPosition} ${cfg.msgAnimationSpeed}ms;`,
 				'.mle-msg%.show':
 						cfg.msgPosition + ': 0;',
 				// Manage page
 				'.mle-manage% label':
-						'border-bottom: 1px solid #e0e0e0; display: block; font-weight: bold; margin-bottom: 10px; padding-bottom: 4px;',
+						`border-bottom: 1px solid #e0e0e0; color: #000; display: block; font-family: ${fontFamily}; font-weight: bold; margin-bottom: 10px; padding-bottom: 4px;`,
 				'.mle-manage% div':
 						'padding-bottom: 20px;',
 				'.mle-manage% div:last-child':
 						'padding-bottom: 0;',
 				'.mle-manage% input[type="text"]':
-						'background-color: #ffffff; border: 1px solid #d0d0d0; padding: 2px 4px; width: 120px;',
+						'background-color: #fff; border: 1px solid #d0d0d0; padding: 2px 4px; width: 120px;',
 				'.mle-manage% select':
-						'background-color: #ffffff; border: 1px solid #d0d0d0; max-width: 100px; padding: 2px 4px;',
+						'background-color: #fff; border: 1px solid #d0d0d0; max-width: 100px; padding: 2px 4px;',
 				'.mle-manage% input[type="submit"]':
-						'background-color: #6189b5; border: 0; border-radius: 2px; color: #ffffff; margin-left: 12px; padding: 3px 8px;',
+						'background-color: #6189b5 !important; border: 0; border-radius: 2px; box-sizing: content-box; color: #fff !important; font-weight: normal; height: auto; line-height: initial; margin: 0 0 0 12px; padding: 3px 8px;',
 				'.mle-manage% input[type="submit"]:hover':
 						'background-color: #202020 !important;',
 				'#previewaddemote%':
@@ -1358,9 +1386,16 @@
 						'line-height: 16px; padding: 0;',
 				'.mle-manage% table':
 						'margin-top: 10px;',
+				'.mle-manage% tr':
+						'background: transparent;',
 				'.mle-manage% th,\
 				 .mle-manage% td':
-						'border: 1px solid #e0e0e0; padding: 2px 4px; vertical-align: top;',
+						'background: transparent; border: 1px solid #e0e0e0; padding: 2px 4px; vertical-align: top;',
+				'.mle-manage% code':
+						'background: transparent; border: 0; font-size: 12px; padding: 0;',
+				// Adjustments for the new Reddit UI
+				'.mle-open-btn.new-ui':
+						'float: right; padding: 0 10px; position: relative; top: -36px;',
 			};
 
 			if( cfg.boxTrigger !== 'float' ) {
@@ -1435,13 +1470,17 @@
 			const close = d.createElement( 'span' );
 			close.className = 'mle-close mle-btn';
 			close.textContent = 'x';
-			close.addEventListener( 'click', mainContainerHide, false );
+			close.addEventListener( 'click', mainContainerHide );
+
+			// Top bar
+			const topBar = d.createElement( 'div' );
+			topBar.className = 'mle-topbar';
 
 			// Add manage link
 			const mngTrigger = d.createElement( 'span' );
 			mngTrigger.className = 'mle-mng-link mle-btn';
 			mngTrigger.textContent = 'Manage';
-			mngTrigger.addEventListener( 'click', showManagePage, false );
+			mngTrigger.addEventListener( 'click', showManagePage );
 
 			// Add options link
 			const optTrigger = d.createElement( 'span' );
@@ -1450,14 +1489,20 @@
 			optTrigger.title = 'Opens the options page';
 			optTrigger.addEventListener( 'click', function() {
 				sendMessage( { task: BG_TASK.OPEN_OPTIONS } );
-			}, false );
+			} );
 
 			// Add search field
 			const searchTrigger = d.createElement( 'input' );
 			searchTrigger.className = 'mle-search';
 			searchTrigger.value = 'search';
-			searchTrigger.addEventListener( 'click', Search.activate, false );
-			searchTrigger.addEventListener( 'keyup', Search.submit.bind( Search ), false );
+			searchTrigger.addEventListener( 'click', Search.activate );
+			searchTrigger.addEventListener( 'keyup', Search.submit.bind( Search ) );
+
+			// Add emote code field
+			const emoteCode = d.createElement( 'input' );
+			emoteCode.className = 'mle-emote-code';
+			emoteCode.readOnly = true;
+			g.REF.emoteCode = emoteCode;
 
 			// Add search page
 			const searchPage = d.createElement( 'div' );
@@ -1477,8 +1522,8 @@
 			for( let i = 0; i < 4; i++ ) {
 				const dragbar = d.createElement( 'div' );
 				dragbar.className = 'mle-dragbar mle-dragbar' + i;
-				dragbar.addEventListener( 'mousedown', trackMouseDown, false );
-				dragbar.addEventListener( 'mouseup', trackMouseDown, false );
+				dragbar.addEventListener( 'mousedown', trackMouseDown );
+				dragbar.addEventListener( 'mouseup', trackMouseDown );
 
 				fragmentNode.append( dragbar );
 			}
@@ -1487,17 +1532,17 @@
 			for( let i = 0; i < 2; i++ ) {
 				const resizer = d.createElement( 'div' );
 				resizer.className = 'mle-resizer mle-resizer' + i;
-				resizer.addEventListener( 'mousedown', trackMouseDown, false );
-				resizer.addEventListener( 'mouseup', trackMouseDown, false );
+				resizer.addEventListener( 'mousedown', trackMouseDown );
+				resizer.addEventListener( 'mouseup', trackMouseDown );
 
 				fragmentNode.append( resizer );
 			}
 
+			topBar.append( mngTrigger, optTrigger, searchTrigger, emoteCode );
+
 			// Append all the above to the DOM fragment
 			fragmentNode.append(
-				mngTrigger,
-				optTrigger,
-				searchTrigger,
+				topBar,
 				labelMain,
 				close,
 				this.createEmoteBlocksAndNav(),
@@ -1526,27 +1571,63 @@
 
 		/**
 		 * Add buttons top open MLE next to every textarea.
+		 * @param {number} [retry = 0]
 		 */
-		addMLEButtons() {
+		addMLEButtons( retry = 0 ) {
 			const d = document;
-			let textareas = d.querySelectorAll( '.help-toggle' );
 
-			for( let i = 0; i < textareas.length; i++ ) {
-				let ta = textareas[i];
-
-				let button = d.createElement( 'button' );
+			function buildButton() {
+				const button = d.createElement( 'button' );
 				button.className = 'mle-open-btn';
 				button.type = 'button';
 				button.textContent = 'Open MLE';
-				button.addEventListener( 'mouseover', rememberActiveTextarea, false );
-				button.addEventListener( 'click', mainContainerShow, false );
+				button.addEventListener( 'mousedown', rememberActiveTextarea );
+				button.addEventListener( 'click', mainContainerShow );
 
-				// Place MLE button to the left of the BPM button
-				let refEle = ta.querySelector( '.bpm-search-toggle' );
-				refEle ? ta.insertBefore( button, refEle ) : ta.append( button );
+				return button;
 			}
 
-			buttonObserverSetup();
+			// old.reddit.*
+			if( isOldReddit() ) {
+				const textareas = d.querySelectorAll( '.help-toggle' );
+
+				for( let i = 0; i < textareas.length; i++ ) {
+					const ta = textareas[i];
+					const button = buildButton();
+
+					// Place MLE button to the left of the BPM button
+					const refEle = ta.querySelector( '.bpm-search-toggle' );
+					refEle ? ta.insertBefore( button, refEle ) : ta.append( button );
+				}
+
+				buttonObserverSetup();
+			}
+			// New reddit UI
+			else {
+				const pathname = window.location.pathname.toLowerCase();
+
+				if( !pathname.includes( '/comments/' ) ) {
+					return;
+				}
+
+				const commentArea = d.querySelector( 'comment-body-header' );
+
+				if( commentArea ) {
+					const button = buildButton();
+					button.classList.add( 'new-ui' );
+					commentArea.append( button );
+				}
+				else {
+					console.warn( '[Builder.addMLEButtons] Could not find <comment-body-header>. Retry: ' + retry );
+
+					// New UI is loading a bunch of JavaScript that
+					// renders the page. There will be a delay
+					// until everything is available. Retry a few times.
+					if( retry <= 3 ) {
+						setTimeout( () => this.addMLEButtons( retry + 1 ), 500 );
+					}
+				}
+			}
 		},
 
 
@@ -1561,7 +1642,7 @@
 
 			input.type = 'text';
 			input.value = name;
-			input.addEventListener( 'keydown', ev => renameList( parent, ev ), false );
+			input.addEventListener( 'keydown', ev => renameList( parent, ev ) );
 
 			ev.target.setAttribute( 'hidden', 'hidden' );
 			parent.insertBefore( input, parent.firstChild );
@@ -1578,25 +1659,24 @@
 				return;
 			}
 
-			let styleNode = document.createElement( 'style' );
+			const styleNode = document.createElement( 'style' );
 			styleNode.id = 'MLE-emotes' + g.noise;
+			styleNode.textContent = '';
 
-			// Not very graceful, but at the moment this extension
-			// is build under the assumption that no more subreddits
-			// will be added in the future.
-
-			let here = window.location.pathname.toLowerCase();
+			const here = window.location.pathname.toLowerCase();
 			let subCSS = null;
 
-			// Don't include CSS on the subreddit it originates from
-			if( !/^\/r\/mlplounge\//i.test( here ) ) {
+			// Don't include CSS on the subreddit it originates from, unless
+			// we are not on "old.reddit.*" because the new reddit UI does not
+			// have custom subreddit CSS.
+			if( !isOldReddit() || !here.startsWith( '/r/mlplounge/' ) ) {
 				// On the user/message page we know from which subreddit a
 				// comment comes from, therefore we can use the right emote.
 				if( /^\/(user\/|message\/|r\/friends\/comments)/i.test( here ) ) {
 					subCSS = g.sub_css['r/mlplounge'] + '\n\n';
 					subCSS = subCSS.replace(
 						/a\[href\|="(\/[a-zA-Z0-9-]+)"]/g,
-						'a.' + this.ploungeClass + '[href|="$1"],$&'
+						`a.${this.ploungeClass}[href|="$1"],$&`
 					);
 					this.findAndAddClassToPloungeEmotes();
 				}
@@ -1609,7 +1689,7 @@
 				}
 			}
 
-			if( !/^\/r\/mylittlepony\//i.test( here ) ) {
+			if( !isOldReddit() || !here.startsWith( '/r/mylittlepony/' ) ) {
 				subCSS = g.sub_css['r/mylittlepony'];
 
 				if( subCSS ) {
@@ -1719,21 +1799,21 @@
 			emote.href = link;
 			this.addClassesForEmote( emote );
 
-			emote.addEventListener( 'click', insertEmote, false );
+			emote.addEventListener( 'click', insertEmote );
 
 			if( draggable ) {
-				emote.addEventListener( 'dragstart', DragAndDrop.dragstartMoveEmote.bind( DragAndDrop ), false );
+				emote.addEventListener( 'dragstart', DragAndDrop.dragstartMoveEmote.bind( DragAndDrop ) );
 
 				// The "dragenter" and "dragover" events have
 				// to be stopped in order for "drop" to work.
-				emote.addEventListener( 'dragenter', stopEvent, false );
-				emote.addEventListener( 'dragover', stopEvent, false );
+				emote.addEventListener( 'dragenter', stopEvent );
+				emote.addEventListener( 'dragover', stopEvent );
 
 				// Stop "dragend" as well, so if the drop target isn't
 				// an emote, the browser doesn't open the emote URL.
-				emote.addEventListener( 'dragend', stopEvent, false );
+				emote.addEventListener( 'dragend', stopEvent );
 
-				emote.addEventListener( 'drop', DragAndDrop.dropMoveEmote.bind( DragAndDrop ), false );
+				emote.addEventListener( 'drop', DragAndDrop.dropMoveEmote.bind( DragAndDrop ) );
 			}
 
 			return emote;
@@ -1767,13 +1847,13 @@
 			const count = d.createElement( 'span' );
 
 			name.textContent = listName;
-			name.addEventListener( 'dblclick', this.addRenameListField, false );
+			name.addEventListener( 'dblclick', this.addRenameListField );
 
 			count.textContent = elementCount + ' emotes';
 
 			listLink.setAttribute( 'draggable', 'true' );
-			listLink.addEventListener( 'click', toggleEmoteBlock, false );
-			listLink.addEventListener( 'dragstart', DragAndDrop.dragstartMoveList.bind( DragAndDrop ), false );
+			listLink.addEventListener( 'click', toggleEmoteBlock );
+			listLink.addEventListener( 'dragstart', DragAndDrop.dragstartMoveList.bind( DragAndDrop ) );
 			DragAndDrop.makeDropZone( listLink, DragAndDrop.dropMoveList );
 
 			listLink.append( name, count );
@@ -1823,12 +1903,16 @@
 		 */
 		createMainContainer() {
 			const cfg = GLOBAL.config;
-			const main = document.createElement( 'div' );
 
+			const main = document.createElement( 'div' );
 			main.id = 'mle' + GLOBAL.noise;
 			main.className = 'transition';
-			main.addEventListener( 'mouseover', rememberActiveTextarea, false );
-			main.addEventListener( 'mouseover', mainContainerShow, false );
+			main.addEventListener( 'mouseover', rememberActiveTextarea );
+			main.addEventListener( 'mouseover', mainContainerShow );
+
+			if( !isOldReddit() ) {
+				main.classList.add( 'new-ui' );
+			}
 
 			// Add style for position of main container
 			if( cfg.boxAlign === 'right' ) {
@@ -2057,7 +2141,7 @@
 
 			// Prevent following of the link (what an emote basically is)
 			if( cfg.stopEmoteLinkFollowing ) {
-				emote.addEventListener( 'click', stopEvent, false );
+				emote.addEventListener( 'click', stopEvent );
 			}
 
 			// Display title text
@@ -2140,7 +2224,7 @@
 
 			inputEmote.type = 'text';
 			inputEmote.id = 'addemote' + g.noise;
-			inputEmote.addEventListener( 'keyup', updatePreview, false );
+			inputEmote.addEventListener( 'keyup', updatePreview );
 			g.REF.inputAddEmote = inputEmote;
 
 			preview.id = 'previewaddemote' + g.noise;
@@ -2150,7 +2234,7 @@
 
 			submitEmote.type = 'submit';
 			submitEmote.value = 'save emote';
-			submitEmote.addEventListener( 'click', saveNewEmote, false );
+			submitEmote.addEventListener( 'click', saveNewEmote );
 
 			const wrap = d.createElement( 'div' );
 			wrap.append(
@@ -2181,7 +2265,7 @@
 			const submitList = d.createElement( 'input' );
 			submitList.type = 'submit';
 			submitList.value = 'create new list';
-			submitList.addEventListener( 'click', saveNewList, false );
+			submitList.addEventListener( 'click', saveNewList );
 
 			const wrap = d.createElement( 'div' );
 			wrap.append(
@@ -2205,7 +2289,7 @@
 			const submitDel = document.createElement( 'input' );
 			submitDel.type = 'submit';
 			submitDel.value = 'delete list';
-			submitDel.addEventListener( 'click', deleteList, false );
+			submitDel.addEventListener( 'click', deleteList );
 
 			const wrap = document.createElement( 'div' );
 			wrap.append(
@@ -2256,7 +2340,7 @@
 		 * @param {HTMLElement} node
 		 */
 		preventOverScrolling( node ) {
-			node.addEventListener( 'wheel', ev => this.stopScrolling( ev, node ), false );
+			node.addEventListener( 'wheel', ev => this.stopScrolling( ev, node ) );
 		},
 
 
@@ -2378,7 +2462,7 @@
 			}
 			// ... but not in Opera, so we have to do this the deprecated way
 			else {
-				previewBox.addEventListener( 'DOMNodeInserted', Builder.modifyEmotesDOMEvent.bind( Builder ), false );
+				previewBox.addEventListener( 'DOMNodeInserted', Builder.modifyEmotesDOMEvent.bind( Builder ) );
 			}
 
 			previewBox.classList.add( 'mle-lp-' + base.id );
@@ -2723,9 +2807,9 @@
 		 * @param {Function}     callback Function to call in case of drop.
 		 */
 		makeDropZone( node, callback ) {
-			node.addEventListener( 'dragenter', stopEvent, false );
-			node.addEventListener( 'dragover', stopEvent, false );
-			node.addEventListener( 'drop', callback.bind( this ), false );
+			node.addEventListener( 'dragenter', stopEvent );
+			node.addEventListener( 'dragover', stopEvent );
+			node.addEventListener( 'drop', callback.bind( this ) );
 		},
 
 
@@ -2790,14 +2874,14 @@
 				const item = d.createElement( 'li' );
 				item.className = items[i].className;
 				item.textContent = items[i].text;
-				item.addEventListener( 'click', items[i].onclick.bind( this ), false );
+				item.addEventListener( 'click', items[i].onclick.bind( this ) );
 
 				menu.append( item );
 			}
 
 			// Add listener for context menu (will only be used on emotes)
-			d.body.addEventListener( 'contextmenu', this.show.bind( this ), false );
-			d.body.addEventListener( 'click', this.hide.bind( this ), false );
+			d.body.addEventListener( 'contextmenu', this.show.bind( this ) );
+			d.body.addEventListener( 'click', this.hide.bind( this ) );
 
 			Builder.preventOverScrolling( menu );
 			this.REF.menu = menu;
@@ -2821,7 +2905,7 @@
 				for( const listName in emotes ) {
 					const list = d.createElement( 'li' );
 					list.append( d.createTextNode( listName ) );
-					list.addEventListener( 'click', this.moveEmoteToList.bind( this ), false );
+					list.addEventListener( 'click', this.moveEmoteToList.bind( this ) );
 
 					cont.append( list );
 				}
@@ -2852,7 +2936,7 @@
 				for( const listName in emotes ) {
 					const list = d.createElement( 'li' );
 					list.append( d.createTextNode( listName ) );
-					list.addEventListener( 'click', this.saveEmoteToList.bind( this ), false );
+					list.addEventListener( 'click', this.saveEmoteToList.bind( this ) );
 
 					cont.append( list );
 				}
@@ -3482,7 +3566,7 @@
 				}
 				// Our script is too early. Wait until the DOM has been loaded.
 				else {
-					window.addEventListener( 'DOMContentLoaded', this.initStep1.bind( this ), false );
+					window.addEventListener( 'DOMContentLoaded', this.initStep1.bind( this ) );
 				}
 			}
 		},
