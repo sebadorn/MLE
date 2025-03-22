@@ -102,7 +102,6 @@ const DEFAULT_CONFIG = {
 	revealUnknownEmotes: true,
 	searchGroupEmotes: true, // Group emotes by table/subreddit
 	showEmoteTitleText: false,
-	showTitleConvertURLs: true,
 	showTitleStyleBgColor: 'rgba(255,255,255,0.0)',
 	showTitleStyleBorderColor: 'rgba(255,255,255,0.0)',
 	showTitleStyleColor: '#808080',

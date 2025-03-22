@@ -1998,16 +1998,8 @@
 			}
 
 			let text = document.createElement( 'span' );
-			let evaluated = this.linkifyURLs( emote.title );
-
 			text.className = 'mle-titletext';
-
-			if( emote.title == evaluated ) {
-				text.textContent = evaluated;
-			}
-			else {
-				text.innerHTML = evaluated;
-			}
+			text.textContent = emote.title;
 
 			emote.parentNode.insertBefore( text, emote.nextSibling );
 		},
@@ -2077,27 +2069,6 @@
 			}
 
 			return base;
-		},
-
-
-		/**
-		 * Convert URLs to actual HTML links.
-		 * @param  {String} text String to evaluate.
-		 * @return {String}      Evaluated String.
-		 */
-		linkifyURLs( text ) {
-			if( !GLOBAL.config.showTitleConvertURLs ) {
-				return text;
-			}
-
-			// // Markdown
-			// text = text.replace( /\[(.*)\]\((.+)\)/g, "<a href=\"$2\">$1</a>" );
-
-			// URL only
-			text = text.replace( /([^=][^"])((http|ftp)[s]?:\/\/[^ "']+)/gi, '$1<a href="$2">$2</a>' );
-			text = text.replace( /^((http|ftp)[s]?:\/\/[^ "']+)/gi, '<a href="$1">$1</a>' );
-
-			return text;
 		},
 
 
