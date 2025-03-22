@@ -11,7 +11,7 @@ browser.webRequest.onBeforeSendHeaders.addListener(
 	details => {
 		/** @type {object[]} */
 		const headers = details.requestHeaders || [];
-		const headerIndexMLE = headers.findIndex( header => header.name === 'MLE-Firefox' );
+		const headerIndexMLE = headers.findIndex( header => header.name === 'MLE-Addon-Request' );
 
 		if( headerIndexMLE > -1 ) {
 			headers.splice( headerIndexMLE, 1 );
@@ -406,7 +406,7 @@ const MyBrowser = {
 
 		const xhr = new XMLHttpRequest();
 		xhr.open( method, url, async );
-		xhr.setRequestHeader( 'MLE-Firefox', '1' );
+		xhr.setRequestHeader( 'MLE-Addon-Request', '1' );
 		xhr.onreadystatechange = callback.bind( xhr );
 		xhr.send();
 	},
