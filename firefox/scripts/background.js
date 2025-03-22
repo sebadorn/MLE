@@ -429,7 +429,7 @@ const Updater = {
 		'r/mylittlepony',
 		'r/mlplounge',
 	],
-	xhrUserAgent: 'browser:MLE:2.11.0 (by /u/meinstuhlknarrt)',
+	xhrUserAgent: 'browser:MLE:2.11.1 (by /u/meinstuhlknarrt)',
 	xhrWait: 2000, // [ms] Time to wait between XHR calls
 
 	xhrCurrentTarget: null,

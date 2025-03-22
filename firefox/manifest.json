@@ -7,8 +7,7 @@
 
 	"browser_specific_settings": {
 		"gecko": {
-			"id": "mle@sebadorn.de",
-			"update_url": "%MLE_URL%/updates-firefox.json"
+			"id": "mle@sebadorn.de"
 		}
 	},
 
