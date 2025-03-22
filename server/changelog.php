@@ -28,7 +28,11 @@
 			<a href="https://github.com/sebadorn/MLE">Source code available on GitHub.</a>
 		</li>
 		<li>
-			<h2>2.11.0<span class="date">2025-03-XX</span></h2>
+			<h2>2.11.1<span class="date">2025-03-22</span></h2>
+			<p class="note">Same as 2.11.0. Had to create a new version in order to migrate to hosting on the <a href="https://addons.mozilla.org/firefox/addon/my-little-emotebox/">Firefox Add-On page</a> (AMO).</p>
+		</li>
+		<li>
+			<h2>2.11.0<span class="date">2025-03-22</span></h2>
 			<p class="note">For now there will only be an update for Firefox. For Chrome the addon has to be moved to manifest v3, which requires some additional work.</p>
 			<ul>
 				<li><code class="feat">Feature</code> Support the new Reddit UI (<em>Limitations:</em> Emotes cannot be automatically inserted into the comment editor, and the "Open MLE" button is only added to the top-level comment editor.)</li>

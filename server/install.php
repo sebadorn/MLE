@@ -42,8 +42,9 @@
 
 		<input type="radio" name="browser" id="tab_firefox" hidden />
 		<div class="tab-content firefox">
-			<a class="install_trigger firefox" href="mle-webext.xpi" id="install_firefox">Install MLE in Firefox</a>
-			<p><strong>Install –</strong> Click the button.</p>
+			<a class="install_trigger firefox" href="https://addons.mozilla.org/en-US/firefox/addon/my-little-emotebox/" id="install_firefox">Install MLE from the Firefox Add-Ons page</a>
+			<hr />
+			<p>Download the last self-hosted version to install it manually: <a href="./mle-webext.xpi" download>mle-webext.xpi (v2.11.0)</a><br>Future updates should then theoretically be automatically received from the Firefox store version.</p>
 		</div>
 	</div>
 </section>
