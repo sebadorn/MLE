@@ -54,7 +54,7 @@ const DEFAULT_SUB_EMOTES = {};
 
 // Information that the user won't need to backup
 const DEFAULT_META = {
-	lastSubredditCheck: 0
+	lastSubredditCheck: 0,
 };
 
 
@@ -395,20 +395,22 @@ const MyBrowser = {
 
 
 	/**
-	 * Send a XMLHttpRequest.
-	 * @param {String}   method   POST or GET.
-	 * @param {String}   url      URL to send the request to.
-	 * @param {Boolean}  async    If to make the request async.
-	 * @param {Function} callback Callback function to handle the response.
+	 * Send a HTTP request.
+	 * @param {string} url URL to send the request to.
+	 * @param {string} [method = 'GET']
+	 * @returns {string}
 	 */
-	sendRequest( method, url, async, callback ) {
+	async sendRequest( url, method = 'GET' ) {
 		console.debug( '[MyBrowser.sendRequest]', method, url );
 
-		const xhr = new XMLHttpRequest();
-		xhr.open( method, url, async );
-		xhr.setRequestHeader( 'MLE-Addon-Request', '1' );
-		xhr.onreadystatechange = callback.bind( xhr );
-		xhr.send();
+		const response = await fetch( url, {
+			method: method,
+			headers: {
+				'MLE-Addon-Request': '1',
+			},
+		} );
+
+		return await response.text();
 	},
 
 
@@ -423,8 +425,6 @@ const Updater = {
 
 
 	// Config
-	xhrAsync: true,
-	xhrMethod: 'GET',
 	xhrTargets: [
 		'r/mylittlepony',
 		'r/mlplounge',
@@ -622,7 +622,7 @@ const Updater = {
 	/**
 	 * Get the sub-reddit stylesheet per XHR.
 	 */
-	getCSS() {
+	async getCSS() {
 		if( this.isProgressFinished() ) {
 			this.wrapUp();
 			return;
@@ -633,14 +633,20 @@ const Updater = {
 		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
 		this.xhrProgress++;
 
-		MyBrowser.sendRequest( this.xhrMethod, url, this.xhrAsync, this.handleCSSCallback );
+		try {
+			const responseText = await MyBrowser.sendRequest( url );
+			this.handleCSSCallback( responseText );
+		}
+		catch( err ) {
+			console.error( '[Updater.getCSS]', err );
+		}
 	},
 
 
 	/**
 	 * Get the URLs to the CSS files.
 	 */
-	getCSSURLs() {
+	async getCSSURLs() {
 		// Just getting started. Prepare list for CSS URLs.
 		if( this.xhrProgress === 0 ) {
 			this.xhrTargetsCSS = [];
@@ -658,44 +664,38 @@ const Updater = {
 		// Fetch a small page which uses the subreddit CSS.
 		const url = 'https://old.reddit.com/' + this.xhrCurrentTarget;
 
-		MyBrowser.sendRequest( this.xhrMethod, url, this.xhrAsync, this.getCSSURLsCallback );
+		try {
+			const responseText = await MyBrowser.sendRequest( url );
+			this.getCSSURLsCallback( responseText );
+		}
+		catch( err ) {
+			console.error( '[Updater.getCSSURLs]', err );
+		}
 	},
 
 
 	/**
 	 * Handle the XHR callback for the request for a page from
 	 * which we can extract the CSS URL.
-	 * @param {Boolean} hasReadyState4 Workaround for Firefox.
-	 * @param {String}  responseText   Workaround for Firefox.
+	 * @param {string} responseText
 	 */
-	getCSSURLsCallback( hasReadyState4, responseText ) {
-		let responseContent = '';
+	getCSSURLsCallback( responseText ) {
+		let url = responseText.match( /href="[a-zA-Z0-9/.:\-_+]+" (ref="applied_subreddit_stylesheet")? title="applied_subreddit_stylesheet"/ );
 
-		if( hasReadyState4 === true ) {
-			responseContent = responseText;
-		}
-		else if( this.readyState == 4 ) {
-			responseContent = this.responseText;
+		if( !url ) {
+			console.error( '[Updater.getCSSURLsCallback] No CSS URL found.' );
+			return;
 		}
 
-		if( hasReadyState4 === true || this.readyState == 4 ) {
-			let url = responseContent.match( /href="[a-zA-Z0-9/.:\-_+]+" (ref="applied_subreddit_stylesheet")? title="applied_subreddit_stylesheet"/ );
+		url = url[0];
+		url = url.substr( 6 );
+		url = url.replace( '" ref="applied_subreddit_stylesheet', '' );
+		url = url.replace( '" title="applied_subreddit_stylesheet"', '' );
 
-			if( !url ) {
-				console.error( '[Updater.getCSSURLsCallback] No CSS URL found.' );
-				return;
-			}
+		Updater.xhrTargetsCSS.push( url );
 
-			url = url[0];
-			url = url.substr( 6 );
-			url = url.replace( '" ref="applied_subreddit_stylesheet', '' );
-			url = url.replace( '" title="applied_subreddit_stylesheet"', '' );
-
-			Updater.xhrTargetsCSS.push( url );
-
-			// Get the next CSS URL.
-			setTimeout( () => Updater.getCSSURLs(), Updater.xhrWait );
-		}
+		// Get the next CSS URL.
+		setTimeout( () => Updater.getCSSURLs(), Updater.xhrWait );
 	},
 
 
