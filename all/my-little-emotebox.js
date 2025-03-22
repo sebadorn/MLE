@@ -1933,43 +1933,57 @@
 		 * @param {HTMLElement} form The manage page (container).
 		 */
 		createManagePage( form ) {
+			const row1 = document.createElement( 'tr' );
+			row1.innerHTML = '<th><code>regex:</code></th><td>Use regular expressions.</td>';
+
+			const row2 = document.createElement( 'tr' );
+			row2.innerHTML = '<th><code>alt:</code></th><td>Include alternative names learned from the subreddit stylesheets. For example "a00" will find "ajlie".</td>';
+
+			const row3 = document.createElement( 'tr' );
+			row3.innerHTML = '<th><code>tag:</code></th>' +
+				'<td>Get all emotes with the given tag.<br><span style="font-weight: bold;">Moods:</span> angry, bashful, blank, crazed (derped), evil (malicious), determined, distraught, happy, incredulous, misc, sad, sarcastic (smug), scared, shocked, thoughtful.<br><span style="font-weight: bold;">Ponies:</span> Just use the name (without blanks) or try initials like <code>"ts"</code> for Twilight.</td>';
+
+			const searchTable = document.createElement( 'table' );
+			searchTable.append( row1, row2, row3 );
+
 			form.append(
 				this.mngAreaForNewEmote(),
 				this.mngAreaForNewList(),
 				this.mngAreaForDelList(),
 				this.mngAreaForNote(
 					'Move emotes',
-					'Use Drag&amp;Drop to move emotes.<br />To move it to another list, right-click on it and select “Move to List”.'
+					[
+						'Use Drag&amp;Drop to move emotes.',
+						document.createElement( 'br' ),
+						'To move it to another list, right-click on it and select “Move to List”.',
+					]
 				),
 				this.mngAreaForNote(
 					'Delete emotes',
-					'Right-click on the emote and select “Delete Emote”.'
+					['Right-click on the emote and select “Delete Emote”.']
 				),
 				this.mngAreaForNote(
 					'Move lists',
-					'Use Drag&amp;Drop to move lists. A dragged object will be inserted before the one it was dropped on.'
+					['Use Drag&amp;Drop to move lists. A dragged object will be inserted before the one it was dropped on.']
 				),
 				this.mngAreaForNote(
 					'Rename lists',
-					'Double-click on the list name. Confirm the new name with [Enter].'
+					['Double-click on the list name. Confirm the new name with [Enter].']
 				),
 				this.mngAreaForNote(
 					'Search',
-					'There are additional search modes. Set one of the following as prefix:<table>' +
-					'<tr><th><code>regex:</code></th><td>Use regular expressions.</td></tr>' +
-					'<tr><th><code>alt:</code></th><td>Include alternative names learned from the subreddit stylesheets. For example "a00" will find "ajlie".</td></tr>' +
-					'<tr><th><code>tag:</code></th><td>Get all emotes with the given tag.<br />' +
-					'<span style="font-weight: bold;">Moods:</span> angry, bashful, blank, crazed (derped), evil (malicious), determined, distraught, happy, incredulous, misc, sad, sarcastic (smug), scared, shocked, thoughtful.<br />' +
-					'<span style="font-weight: bold;">Ponies:</span> Just use the name (without blanks) or try initials like <code>"ts"</code> for Twilight.</td></tr>' +
-					'</table>'
+					[
+						'There are additional search modes. Set one of the following as prefix:',
+						searchTable,
+					]
 				),
 				this.mngAreaForNote(
 					'Backups',
-					'Please back up your emotes and config from time to time. You can export those on the options page and then copy&amp;paste them into a text file.'
+					['Please back up your emotes and config from time to time. You can export those on the options page and then copy&amp;paste them into a text file.']
 				),
 				this.mngAreaForNote(
 					'Did you know?',
-					'You can move this window. Just grab it close to its border.'
+					['You can move this window. Just grab it close to its border.']
 				),
 			);
 
@@ -2276,12 +2290,12 @@
 		/**
 		 * Create manage area with contains just a hint.
 		 * @param {String} title
-		 * @param {String} text
+		 * @param {(HTMLElement|string)[]} nodes
 		 * @returns {HTMLElement}
 		 */
-		mngAreaForNote( title, text ) {
+		mngAreaForNote( title, nodes ) {
 			const note = document.createElement( 'div' );
-			note.innerHTML = text;
+			note.append( ...nodes );
 
 			const wrap = document.createElement( 'div' );
 			wrap.append( this.createLabel( title ), note );
