@@ -35,10 +35,7 @@
 	],
 
 	"background": {
-		"scripts": [
-			"includes/mle-codes.js",
-			"scripts/background.js"
-		]
+		"service_worker": "scripts/background.js"
 	},
 
 	"options_ui": {
@@ -47,6 +44,7 @@
 	},
 
 	"permissions": [
+		"alarms",
 		"storage",
 		"webRequest",
 		"webRequestBlocking"
