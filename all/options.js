@@ -38,7 +38,7 @@ function exportEmotes() {
 function forceUpdate( ev ) {
 	// Disable button until page reload to avoid
 	// multiple updates in a short time interval.
-	ev.target.removeEventListener( 'click', forceUpdate, false );
+	ev.target.removeEventListener( 'click', forceUpdate );
 	ev.target.setAttribute( 'readonly', 'readonly' );
 
 	sendMessage( { task: BG_TASK.UPDATE_CSS } );
@@ -274,7 +274,7 @@ function registerEventSettingChanged() {
 		if( select.hasAttribute( 'data-meta' ) ) {
 			continue;
 		}
-		select.addEventListener( 'change', saveSetting, false );
+		select.addEventListener( 'change', saveSetting );
 
 		// Select currently set <option>
 		for( let j = 0; j < select.options.length; j++ ) {
@@ -291,7 +291,7 @@ function registerEventSettingChanged() {
 		if( chkbox.hasAttribute( 'data-meta' ) ) {
 			continue;
 		}
-		chkbox.addEventListener( 'change', saveSetting, false );
+		chkbox.addEventListener( 'change', saveSetting );
 		chkbox.checked = CONFIG[chkbox.id];
 	}
 
@@ -302,7 +302,7 @@ function registerEventSettingChanged() {
 		if( nmbr.hasAttribute( 'data-meta' ) ) {
 			continue;
 		}
-		nmbr.addEventListener( 'change', saveSetting, false );
+		nmbr.addEventListener( 'change', saveSetting );
 		nmbr.value = CONFIG[nmbr.id];
 	}
 
@@ -313,22 +313,22 @@ function registerEventSettingChanged() {
 		if( txt.hasAttribute( 'data-meta' ) ) {
 			continue;
 		}
-		txt.addEventListener( 'change', saveSetting, false );
+		txt.addEventListener( 'change', saveSetting );
 		txt.value = CONFIG[txt.id];
 	}
 
 	// Force stylesheet update
-	forceUpdateBtn.addEventListener( 'click', forceUpdate, false );
+	forceUpdateBtn.addEventListener( 'click', forceUpdate );
 
 	// export/import/reset
 	// Emotes
-	exportEmotesBtn.addEventListener( 'click', exportEmotes, false );
-	importEmotesBtn.addEventListener( 'click', importEmotes, false );
-	resetEmotesBtn.addEventListener( 'click', resetEmotes, false );
+	exportEmotesBtn.addEventListener( 'click', exportEmotes );
+	importEmotesBtn.addEventListener( 'click', importEmotes );
+	resetEmotesBtn.addEventListener( 'click', resetEmotes );
 	// Config
-	exportCfg.addEventListener( 'click', exportConfig, false );
-	importCfg.addEventListener( 'click', importConfig, false );
-	resetCfg.addEventListener( 'click', resetConfig, false );
+	exportCfg.addEventListener( 'click', exportConfig );
+	importCfg.addEventListener( 'click', importConfig );
+	resetCfg.addEventListener( 'click', resetConfig );
 }
 
 
@@ -339,7 +339,7 @@ function registerEventToggleNav() {
 	let nav = document.querySelectorAll( 'nav label' );
 
 	for( let i = 0; i < nav.length; i++ ) {
-		nav[i].addEventListener( 'click', toggleNav, false );
+		nav[i].addEventListener( 'click', toggleNav );
 	}
 }
 
@@ -574,5 +574,5 @@ if( document.body ) {
 	init();
 }
 else {
-	window.addEventListener( 'DOMContentLoaded', init, false );
+	window.addEventListener( 'DOMContentLoaded', init );
 }
