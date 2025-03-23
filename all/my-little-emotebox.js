@@ -66,6 +66,19 @@
 
 
 	/**
+	 *
+	 * @returns {object}
+	 */
+	function addon() {
+		if( typeof browser === 'undefined' ) {
+			return chrome;
+		}
+
+		return browser;
+	}
+
+
+	/**
 	 * Callback function for the MutationObserver.
 	 * @param {MutationRecord} mutations
 	 */
@@ -600,16 +613,9 @@
 	 * @param {Object} msg Message to send.
 	 */
 	function sendMessage( msg ) {
-		// Firefox (WebExt)
-		if( typeof browser !== 'undefined' ) {
-			browser.runtime.sendMessage( msg ).then( function( response ) {
-				response && handleBackgroundMessages( { data: response } );
-			} );
-		}
-		// Chrome
-		else if( typeof chrome !== 'undefined' ) {
-			chrome.runtime.sendMessage( msg, handleBackgroundMessages );
-		}
+		addon().runtime.sendMessage( msg ).then( response => {
+			response && handleBackgroundMessages( { data: response } );
+		} ).catch( err => console.error( '[sendMessage]', err ) );
 	}
 
 
@@ -3465,8 +3471,7 @@
 
 
 	/**
-	 * Setting things up. Getting ready for the show.
-	 * Init object will be deleted after everything has been loaded from the storage.
+	 * Setting things up.
 	 * @see  handleBackgroundMessages
 	 * @type {Object}
 	 */
@@ -3527,14 +3532,7 @@
 		 * Register for messages from the background process.
 		 */
 		registerForBackgroundMessages() {
-			// Firefox
-			if( typeof browser !== 'undefined' ) {
-				browser.runtime.onMessage.addListener( handleBackgroundMessages );
-			}
-			// Chrome
-			else if( typeof chrome !== 'undefined' ) {
-				chrome.runtime.onMessage.addListener( handleBackgroundMessages );
-			}
+			addon().runtime.onMessage.addListener( handleBackgroundMessages );
 		},
 
 
