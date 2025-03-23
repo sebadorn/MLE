@@ -2,7 +2,7 @@
 	"name": "My Little Emotebox",
 	"version": "%MLE_VERSION%",
 	"manifest_version": 3,
-	"description": "An easy way to insert and manage emotes.",
+	"description": "An easy way to insert and manage emotes on Reddit.",
 	"homepage_url": "%MLE_URL%/",
 
 	"browser_specific_settings": {
@@ -44,10 +44,7 @@
 	},
 
 	"permissions": [
-		"alarms",
-		"storage",
-		"webRequest",
-		"webRequestBlocking"
+		"storage"
 	],
 
 	"host_permissions": [
