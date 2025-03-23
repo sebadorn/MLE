@@ -42,12 +42,4 @@ module.exports = [
 			],
 		},
 	},
-	{
-		files: ['server/*.js'],
-		languageOptions: {
-			globals: {
-				InstallTrigger: true,
-			},
-		},
-	},
 ];

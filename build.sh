@@ -29,38 +29,15 @@ function build_chrome {
 	fi
 
 	mkdir -p "$OUT_DIR"
-	cp 'chrome/manifest.json' 'manifest_tmp.json'
 
-	set_version_and_url 'chrome/manifest.json'
-	$CHROME \
-		--pack-extension="$ABSOLUTE_PATH/chrome/" \
-		--pack-extension-key="$ABSOLUTE_PATH/chrome-private-key-mle.pem"
-
-	mv 'manifest_tmp.json' 'chrome/manifest.json'
-	mv 'chrome.crx' "$OUT_DIR/mle.crx"
-	cp 'server/updates-chrome-template.xml' "$OUT_DIR/updates-chrome.xml"
-
-	set_version_and_url "$OUT_DIR/updates-chrome.xml"
-}
-
-
-function build_chrome_store {
-	OUT_DIR='build/chrome_store'
-
-	if [ -d "$OUT_DIR" ]; then
-		rm -r "$OUT_DIR"
-	fi
-
-	mkdir -p "$OUT_DIR"
 	cd 'chrome/'
 	cp 'manifest.json' '../manifest_tmp.json'
 
 	set_version_and_url 'manifest.json'
-	sed -i 's/\t"update_url".*//g' 'manifest.json'
-	zip -r "../$OUT_DIR/mle-chrome.zip" *
+	zip -r -FS "../$OUT_DIR/mle-chrome-webext.zip" *
+	unzip "../$OUT_DIR/mle-chrome-webext.zip" -d "../$OUT_DIR/addon/"
 
 	mv '../manifest_tmp.json' 'manifest.json'
-	cd '..'
 }
 
 
@@ -78,6 +55,7 @@ function build_firefox {
 
 	set_version_and_url 'manifest.json'
 	zip -r -FS "../$OUT_DIR/mle-ff-webext.zip" *
+	unzip "../$OUT_DIR/mle-ff-webext.zip" -d "../$OUT_DIR/addon/"
 
 	mv '../manifest_tmp.json' 'manifest.json'
 	cp '../server/updates-firefox-template.json' "../$OUT_DIR/updates-firefox.json"
@@ -96,7 +74,7 @@ function build_page {
 
 if [ $# -lt 2 ]; then
 	echo 'Not enough arguments provided.'
-	echo 'First argument: all | chrome | chrome_store | firefox | page'
+	echo 'First argument: all | chrome | firefox | page'
 	echo 'Second argument: version'
 	exit
 fi
@@ -104,12 +82,10 @@ fi
 
 if [ "$BROWSER" == 'all' ]; then
 	build_chrome
-	build_chrome_store
 	build_firefox
+	build_page
 elif [ "$BROWSER" == 'chrome' ]; then
 	build_chrome
-elif [ "$BROWSER" == 'chrome_store' ]; then
-	build_chrome_store
 elif [ "$BROWSER" == 'firefox' ]; then
 	build_firefox
 elif [ "$BROWSER" == 'page' ]; then
