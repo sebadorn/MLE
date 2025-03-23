@@ -30,14 +30,13 @@ function build_chrome {
 
 	mkdir -p "$OUT_DIR"
 
-	cd 'chrome/'
-	cp 'manifest.json' '../manifest_tmp.json'
+	cp -r 'chrome/' "$OUT_DIR/addon"
+	cd "$OUT_DIR/addon"
 
 	set_version_and_url 'manifest.json'
-	zip -r -FS "../$OUT_DIR/mle-chrome-webext.zip" *
-	unzip "../$OUT_DIR/mle-chrome-webext.zip" -d "../$OUT_DIR/addon/"
+	zip -r -FS '../mle-chrome-webext.zip' *
 
-	mv '../manifest_tmp.json' 'manifest.json'
+	cd -
 }
 
 
@@ -50,16 +49,13 @@ function build_firefox {
 
 	mkdir -p "$OUT_DIR"
 
-	cd 'firefox/'
-	cp 'manifest.json' '../manifest_tmp.json'
+	cp -r 'firefox/' "$OUT_DIR/addon"
+	cd "$OUT_DIR/addon"
 
 	set_version_and_url 'manifest.json'
-	zip -r -FS "../$OUT_DIR/mle-ff-webext.zip" *
-	unzip "../$OUT_DIR/mle-ff-webext.zip" -d "../$OUT_DIR/addon/"
+	zip -r -FS '../mle-firefox-webext.zip' *
 
-	mv '../manifest_tmp.json' 'manifest.json'
-	cp '../server/updates-firefox-template.json' "../$OUT_DIR/updates-firefox.json"
-	set_version_and_url "../$OUT_DIR/updates-firefox.json"
+	cd -
 }
 
 
