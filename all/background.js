@@ -30,43 +30,6 @@ function addon() {
 }
 
 
-// Set an individual User-Agent for our XMLHttpRequests.
-addon().webRequest.onBeforeSendHeaders.addListener(
-	/**
-	 * Modify user-agent
-	 * @param {BlockingResponse} details
-	 * @returns {BlockingResponse}
-	 */
-	details => {
-		/** @type {object[]} */
-		const headers = details.requestHeaders || [];
-		const headerIndexMLE = headers.findIndex( header => header.name === 'MLE-Addon-Request' );
-
-		if( headerIndexMLE > -1 ) {
-			headers.splice( headerIndexMLE, 1 );
-
-			for( let i = 0; i < headers.length; i++ ) {
-				const header = headers[i];
-
-				if( header.name.toLowerCase() === 'user-agent' ) {
-					header.value = Updater.xhrUserAgent;
-					break;
-				}
-			}
-		}
-
-		return details;
-	},
-	// filter
-	{
-		urls: ['*://*/*'],
-		types: ['xmlhttprequest'],
-	},
-	// extraInfoSpec
-	['requestHeaders', 'blocking']
-);
-
-
 // Keys
 const PREF = {
 	CONFIG: 'mle.config',
@@ -420,12 +383,7 @@ const MyBrowser = {
 	async sendRequest( url, method = 'GET' ) {
 		console.debug( '[MyBrowser.sendRequest]', method, url );
 
-		const response = await fetch( url, {
-			method: method,
-			headers: {
-				'MLE-Addon-Request': '1',
-			},
-		} );
+		const response = await fetch( url, { method } );
 
 		return await response.text();
 	},
