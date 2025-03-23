@@ -39,6 +39,7 @@ const PREF = {
 	META: 'mle.meta',
 	SUBREDDIT_CSS: 'mle.subreddit.css',
 	SUBREDDIT_EMOTES: 'mle.subreddit.emotes',
+	TABS: 'mle.tabs',
 };
 
 
@@ -246,8 +247,8 @@ const MyBrowser = {
 		updateObject( config, DEFAULT_CONFIG, PREF.CONFIG );
 		updateObject( meta, DEFAULT_META, PREF.META );
 
-		await addon().storage.local.set( PREF.CONFIG_CURRENT, config );
-		await addon().storage.local.set( PREF.EMOTES_CURRENT, config );
+		storageSet( PREF.CONFIG_CURRENT, config );
+		storageSet( PREF.EMOTES_CURRENT, emotes );
 
 		this.response.config = config;
 		this.response.emotes = emotes;
@@ -290,11 +291,12 @@ const MyBrowser = {
 		};
 
 		// Remember this tab in which MLE is running
-		if( this.tabs.indexOf( sender.tab.id ) < 0 ) {
+		if( !this.tabs.includes( sender.tab.id ) ) {
 			this.tabs.push( sender.tab.id );
+			storageSet( PREF.TABS, this.tabs );
 		}
 
-		addon().tabs.onRemoved.addListener( this.onTabRemove.bind( this ) );
+		addon().tabs.onRemoved.addListener( this.onTabRemove );
 
 		addon().storage.local.get()
 			.then( this.handleLoadedItems.bind( packet ) )
@@ -311,11 +313,14 @@ const MyBrowser = {
 	 * @param {Number} tabId ID of the removed tab.
 	 * @param {Object} info
 	 */
-	onTabRemove( tabId, _info ) {
-		const idx = this.tabs.indexOf( tabId );
+	onTabRemove( tabId, info ) {
+		console.debug( '[MyBrowser.onTabRemove]', tabId, info );
+
+		const idx = MyBrowser.tabs.indexOf( tabId );
 
 		if( idx >= 0 ) {
-			this.tabs.splice( idx, 1 );
+			MyBrowser.tabs.splice( idx, 1 );
+			storageSet( PREF.TABS, MyBrowser.tabs );
 		}
 	},
 
@@ -363,7 +368,7 @@ const MyBrowser = {
 	 * @param {String} val String as JSON.
 	 */
 	save( key, val ) {
-		console.debug( `[MyBrowser.save] Saving for "${key}" string with length ${val.length}...` );
+		console.debug( `[MyBrowser.save] Saving "${key}" string with length ${val.length}...` );
 
 		const saveObj = {};
 		saveObj[key] = val;
@@ -394,22 +399,15 @@ const MyBrowser = {
 
 /**
  * Getting the sub-reddit CSS and extracting the emotes.
- * @type {Object}
  */
 const Updater = {
 
 
 	// Config
-	xhrTargets: [
+	subreddits: [
 		'r/mylittlepony',
 		'r/mlplounge',
 	],
-	xhrUserAgent: 'browser:MLE:2.11.1 (by /u/meinstuhlknarrt)',
-	xhrWait: 2000, // [ms] Time to wait between XHR calls
-
-	xhrCurrentTarget: null,
-	xhrProgress: 0,
-	xhrTargetsCSS: [],
 
 	// If true, the Last-Modified header will be ignored.
 	// Will be reset to false at the end of the update process.
@@ -421,9 +419,6 @@ const Updater = {
 	linkStart: 'a[href|="/',
 	linkStartReverse: 'a[href^="/r"]',
 	tableCodeRegex: /^[abcefgh][0-9]{2}$/i,
-
-	emoteCSS: {},
-	emotes: {},
 
 
 	/**
@@ -441,9 +436,7 @@ const Updater = {
 		}
 
 		if( Date.now() - meta.lastSubredditCheck >= config.intervalToCheckCSS ) {
-			this.emoteCSS = css;
-			this.emotes = emotes;
-			this.getCSSURLs();
+			this.getAndParseCSS( emotes, css );
 		}
 	},
 
@@ -454,7 +447,7 @@ const Updater = {
 	 * @param  {String} css Stylesheet.
 	 * @return {Object}     Emotes ordered by table.
 	 */
-	extractEmotesStep1( css ) {
+	_extractEmotesStep1( css ) {
 		let cssCopy = css;
 		let emoteCSS = [];
 		let needleImage = 'background-image';
@@ -462,15 +455,13 @@ const Updater = {
 		let needleTransform = 'transform';
 		let selectors = [];
 
-
 		// CSS code for reversing emotes
 
-		let rCSS = this.getReverseEmotesCSS( css );
+		let rCSS = this._getReverseEmotesCSS( css );
 
 		if( rCSS !== false ) {
 			emoteCSS.push( rCSS );
 		}
-
 
 		while( true ) {
 			let idxImage = cssCopy.indexOf( needleImage );
@@ -529,7 +520,7 @@ const Updater = {
 
 			// Get the rest of the relevant CSS part
 			eCSS = eCSS.reverse().join( '' );
-			eCSS += this.getRestOfCSS( cssCopy, idx );
+			eCSS += this._getRestOfCSS( cssCopy, idx );
 			emoteCSS.push( eCSS );
 
 			if( !ignoreSelectors ) {
@@ -538,21 +529,21 @@ const Updater = {
 			}
 
 			// Remove the CSS part we just processed
-			cssCopy = cssCopy.substr( idx + needleLength );
+			cssCopy = cssCopy.substring( idx + needleLength );
 		}
 
-
-		this.emotes[this.xhrCurrentTarget] = selectors;
-		this.emoteCSS[this.xhrCurrentTarget] = emoteCSS;
+		return [selectors, emoteCSS];
 	},
 
 
 	/**
 	 * Extract the emote names.
+	 * @private
+	 * @param {string[]} emotesCurrent
+	 * @param {string}   cssCurrent
+	 * @returns {(string[]|string)[]}
 	 */
-	extractEmotesStep2() {
-		let emotesCurrent = this.emotes[this.xhrCurrentTarget];
-		let cssCurrent = this.emoteCSS[this.xhrCurrentTarget];
+	_extractEmotesStep2( emotesCurrent, cssCurrent, isPlounge ) {
 		let emotes = [];
 		let idx = -1;
 
@@ -578,10 +569,7 @@ const Updater = {
 					// Ignore table-like Plounge emotes. There is no dedicated
 					// table list for Plounge emotes in MLE, so we would only
 					// end up with duplicated entries.
-					if(
-						this.xhrCurrentTarget != 'r/mlplounge' ||
-						emote.match( /^r?pl[0-9]{2}$/ ) === null
-					) {
+					if( !isPlounge || emote.match( /^r?pl[0-9]{2}$/ ) === null ) {
 						subEmoteList.push( emote );
 					}
 				}
@@ -593,63 +581,64 @@ const Updater = {
 			}
 		}
 
-		this.emoteCSS[this.xhrCurrentTarget] = this.removeNonEmoteCSS( cssCurrent );
-		this.emotes[this.xhrCurrentTarget] = emotes;
-	},
-
-
-	/**
-	 * Get the sub-reddit stylesheet per XHR.
-	 */
-	async getCSS() {
-		if( this.isProgressFinished() ) {
-			this.wrapUp();
-			return;
-		}
-
-		const url = this.xhrTargetsCSS[this.xhrProgress];
-
-		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
-		this.xhrProgress++;
-
-		try {
-			const responseText = await MyBrowser.sendRequest( url );
-			this.handleCSSCallback( responseText );
-		}
-		catch( err ) {
-			console.error( '[Updater.getCSS]', err );
-		}
+		return [emotes, this._removeNonEmoteCSS( cssCurrent )];
 	},
 
 
 	/**
 	 * Get the URLs to the CSS files.
+	 * @param {object?} currentEmotes
+	 * @param {object?} currentCSS
 	 */
-	async getCSSURLs() {
-		// Just getting started. Prepare list for CSS URLs.
-		if( this.xhrProgress === 0 ) {
-			this.xhrTargetsCSS = [];
-		}
-		// We have all CSS URLs. Proceed with requesting the CSS files.
-		else if( this.xhrProgress == this.xhrTargets.length ) {
-			this.xhrProgress = 0;
-			this.getCSS();
-			return;
+	async getAndParseCSS( currentEmotes, currentCSS ) {
+		// Only process the stylesheet if something changed
+		// since the last check or it is a forced update.
+		const meta = await storageGet( PREF.META, { fallback: DEFAULT_META, json: true } );
+
+		const resultEmotes = currentEmotes || {};
+		const resultCSS = currentCSS || {};
+		let hadChanges = false;
+
+		const processCSSToEmotes = async ( subreddit, css ) => {
+			let emotes = [];
+
+			// Process CSS to emotes
+			[emotes, css] = this._extractEmotesStep1( css );
+			[emotes, css] = this._extractEmotesStep2( emotes, css, subreddit === 'r/mlplounge' );
+			emotes = this._removeReverseEmotes( emotes );
+			emotes = this._groupSameEmotes( emotes, css );
+
+			return [emotes, css]
+		};
+
+		for( let i = 0; i < this.subreddits.length; i++ ) {
+			// Wait between requests
+			if( i > 0 ) {
+				await new Promise( r => setTimeout( r, 1500 ) );
+			}
+
+			const subreddit = this.subreddits[i];
+			const url = 'https://old.reddit.com/' + subreddit;
+
+			const pageHTML = await MyBrowser.sendRequest( url );
+			const cssURL = this._getCSSURLFromPage( pageHTML );
+			const response = await fetch( cssURL );
+
+			if( response.headers.get( 'Content-Type' ) === 'text/css' ) {
+				const lastModified = Date.parse( response.headers.get( 'Last-Modified' ) );
+
+				if( this.forceUpdate || lastModified >= meta.lastSubredditCheck ) {
+					const css = await response.text();
+					let [emotes, processedCSS] = processCSSToEmotes( subreddit, css );
+					resultEmotes[subreddit] = emotes;
+					resultCSS[subreddit] = processedCSS;
+
+					hadChanges = true;
+				}
+			}
 		}
 
-		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
-		this.xhrProgress++;
-
-		// Fetch a small page which uses the subreddit CSS.
-		const url = 'https://old.reddit.com/' + this.xhrCurrentTarget;
-
-		try {
-			const responseText = await MyBrowser.sendRequest( url );
-			this.getCSSURLsCallback( responseText );
-		}
-		catch( err ) {
-			console.error( '[Updater.getCSSURLs]', err );
-		}
+		await this._wrapUp( hadChanges, resultEmotes, resultCSS );
 	},
 
 
@@ -657,13 +646,14 @@ const Updater = {
 	 * Handle the XHR callback for the request for a page from
 	 * which we can extract the CSS URL.
 	 * @param {string} responseText
+	 * @returns {string}
 	 */
-	getCSSURLsCallback( responseText ) {
+	_getCSSURLFromPage( responseText ) {
 		const match = responseText.match( /href="[a-zA-Z0-9/.:\-_+]+" (ref="applied_subreddit_stylesheet")? title="applied_subreddit_stylesheet"/ );
 
 		if( !match ) {
-			console.error( '[Updater.getCSSURLsCallback] No CSS URL found.' );
-			return;
+			console.error( '[Updater._getCSSURLFromPage] No CSS URL found.' );
+			return null;
 		}
 
 		let url = match[0];
@@ -671,10 +661,7 @@ const Updater = {
 		url = url.replace( '" ref="applied_subreddit_stylesheet', '' );
 		url = url.replace( '" title="applied_subreddit_stylesheet"', '' );
 
-		Updater.xhrTargetsCSS.push( url );
-
-		// Get the next CSS URL.
-		setTimeout( () => Updater.getCSSURLs(), Updater.xhrWait );
+		return url;
 	},
 
 
@@ -685,7 +672,7 @@ const Updater = {
 	 * @param  {Number} idx     Index of the found needle.
 	 * @return {String}         Extracted CSS.
 	 */
-	getRestOfCSS( cssCopy, idx ) {
+	_getRestOfCSS( cssCopy, idx ) {
 		let css = '';
 
 		for( let i = idx + 1; i < cssCopy.length; i++ ) {
@@ -705,7 +692,7 @@ const Updater = {
 	 * @param  {String}         css The CSS.
 	 * @return {String|Boolean}     The relevant CSS part or false if nothing could be found.
 	 */
-	getReverseEmotesCSS( css ) {
+	_getReverseEmotesCSS( css ) {
 		let rCSS = false;
 		let idxReverse = css.indexOf( this.linkStartReverse );
 
@@ -722,15 +709,18 @@ const Updater = {
 	/**
 	 * Group emotes that show the same image but have different names.
 	 * This is kind of unstable since it depends on the CSS authors' style not to change.
+	 * @private
+	 * @param {string[][]} emotesCurrent
+	 * @param {string}     css
+	 * @returns {string[][]}
 	 */
-	groupSameEmotes() {
-		let emotesCurrent = this.emotes[this.xhrCurrentTarget];
+	_groupSameEmotes( emotesCurrent, css ) {
 		let newEmoteList = [];
 		let nonTableEmotes = [];
 
 
 		// Get a list of lists with all the emotes that share the same background position
-		let emotesCurrentCSS = this.emoteCSS[this.xhrCurrentTarget].split( '\n' );
+		let emotesCurrentCSS = css.split( '\n' );
 		let lineEmotes = [];
 
 		for( let i = 0; i < emotesCurrentCSS.length; i++ ) {
@@ -740,9 +730,9 @@ const Updater = {
 				continue;
 			}
 
-			line = line.substr( 0, line.indexOf( '{' ) ) + ',';
+			line = line.substring( 0, line.indexOf( '{' ) ) + ',';
 			line = line.replace( /a\[href\|="\/([a-zA-Z0-9-_]+)"\],/g, '$1::' );
-			line = line.substr( 0, line.length - 2 );
+			line = line.substring( 0, line.length - 2 );
 			lineEmotes.push( line.split( '::' ) );
 		}
 
@@ -800,7 +790,7 @@ const Updater = {
 				let belongsToTable = false;
 
 				for( let rem = 0; rem < group.length; rem++ ) {
-					if( !belongsToTable && this.isTableCode( group[rem] ) ) {
+					if( !belongsToTable && this._isTableCode( group[rem] ) ) {
 						belongsToTable = true;
 					}
 					ecCopy.splice( ecCopy.indexOf( group[rem] ), 1 );
@@ -832,74 +822,7 @@ const Updater = {
 			newEmoteList.push( [noDoubles] );
 		}
 
-		this.emotes[this.xhrCurrentTarget] = newEmoteList;
-	},
-
-
-	/**
-	 * After receiving the stylesheet, start extracting the emotes.
-	 * @param {String} responseText Response to the request.
-	 * @param {Number} lastModified A timestamp when the stylesheet has been last modified.
-	 *                              (At least according to what the server tells us.)
-	 * @param {String} contentType  Content-Type of the received resource. We need "text/css".
-	 */
-	async handleCSS( responseText, lastModified, contentType ) {
-		// Don't process if it isn't CSS.
-		if( contentType === 'text/css' ) {
-			// Only process the stylesheet if something changed since the last check
-			// or it is a forced update.
-			const meta = await addon().storage.local.get( PREF.META ) || DEFAULT_META;
-
-			if( this.forceUpdate || lastModified >= meta.lastSubredditCheck ) {
-				// Create key for subreddit, if not already existent
-				if( !Object.prototype.hasOwnProperty.call( this.emoteCSS, this.xhrCurrentTarget ) ) {
-					this.emoteCSS[this.xhrCurrentTarget] = [];
-				}
-				if( !Object.prototype.hasOwnProperty.call( this.emotes, this.xhrCurrentTarget ) ) {
-					this.emotes[this.xhrCurrentTarget] = [];
-				}
-
-				// Process CSS to emotes
-				this.extractEmotesStep1( responseText );
-				this.extractEmotesStep2();
-				this.removeReverseEmotes();
-				this.groupSameEmotes();
-			}
-		}
-
-		// Get next subreddit CSS.
-		// The reddit API guidelines say:
-		// Not more than 1 request every 2 seconds.
-		if( !this.isProgressFinished() ) {
-			setTimeout( () => this.getCSS(), this.xhrWait );
-		}
-		else {
-			this.getCSS();
-		}
-	},
-
-
-	/**
-	 * After receiving the stylesheet, start extracting the emotes.
-	 * (Callback function for browser who use XMLHttpRequest.)
-	 * @param {Boolean} hasReadyState4
-	 * @param {String}  responseText
-	 * @param {Number}  lastModified
-	 * @param {String}  contentType
-	 */
-	handleCSSCallback( hasReadyState4, responseText, lastModified, contentType ) {
-		// Firefox
-		if( hasReadyState4 === true ) {
-			Updater.handleCSS( responseText, lastModified, contentType );
-		}
-		// The rest
-		else if( this.readyState == 4 ) {
-			lastModified = this.getResponseHeader( 'Last-Modified' );
-			contentType = this.getResponseHeader( 'Content-Type' );
-
-			lastModified = Date.parse( lastModified );
-			Updater.handleCSS( this.responseText, lastModified, contentType );
-		}
+		return newEmoteList;
 	},
 
 
@@ -908,9 +831,9 @@ const Updater = {
 	 * @param  {Array<String>} group Emote and its names.
 	 * @return {String}              Table name of the emote or false if it cannot be identified.
 	 */
-	identifyTableOfEmoteGroup( group ) {
+	_identifyTableOfEmoteGroup( group ) {
 		for( let i = group.length - 1; i >= 0; i-- ) {
-			if( this.isTableCode( group[i] ) ) {
+			if( this._isTableCode( group[i] ) ) {
 				return group[i][0].toUpperCase();
 			}
 		}
@@ -920,20 +843,11 @@ const Updater = {
 
 
 	/**
-	 * Check if all XHR targets have been used.
-	 * @return {Boolean} True if no more XHR calls will be made, false otherwise.
-	 */
-	isProgressFinished() {
-		return this.xhrProgress >= this.xhrTargets.length;
-	},
-
-
-	/**
 	 * Checks if a given emote is in table code form, for example "a02".
 	 * @param  {String}  emote Emote name.
 	 * @return {Boolean}       True if the emote is in table code form, false otherwise.
 	 */
-	isTableCode( emote ) {
+	_isTableCode( emote ) {
 		return emote.match( this.tableCodeRegex ) !== null;
 	},
 
@@ -943,9 +857,9 @@ const Updater = {
 	 * with our lists. Or create the list if it doesn't exist yet.
 	 * @returns {object}
 	 */
-	async mergeSubredditEmotesIntoLists() {
-		const cfg = await addon().storage.local.get( PREF.CONFIG_CURRENT );
-		const currentEmotes = await addon().storage.local.get( PREF.EMOTES_CURRENT );
+	async _mergeSubredditEmotesIntoLists() {
+		const cfg = await storageGet( PREF.CONFIG_CURRENT );
+		const currentEmotes = await storageGet( PREF.EMOTES_CURRENT );
 
 		const r_mlp = this.emotes['r/mylittlepony'];
 		const r_plounge = this.emotes['r/mlplounge'];
@@ -957,7 +871,7 @@ const Updater = {
 
 			for( let j = 0; j < emoteCluster.length; j++ ) {
 				let group = emoteCluster[j];
-				let table = this.identifyTableOfEmoteGroup( group );
+				let table = this._identifyTableOfEmoteGroup( group );
 
 				if( table === false ) {
 					continue;
@@ -1002,7 +916,7 @@ const Updater = {
 				let add = false;
 
 				for( let k = 0; k < group.length; k++ ) {
-					if( group.length > 1 && this.isTableCode( group[k] ) ) {
+					if( group.length > 1 && this._isTableCode( group[k] ) ) {
 						continue;
 					}
 					if( currentEmotes[table].indexOf( group[k] ) >= 0 ) {
@@ -1026,7 +940,7 @@ const Updater = {
 
 			for( let j = 0; j < emoteCluster.length; j++ ) {
 				let group = emoteCluster[j];
-				let table = this.identifyTableOfEmoteGroup( group );
+				let table = this._identifyTableOfEmoteGroup( group );
 
 				if( table !== false ) {
 					continue;
@@ -1053,7 +967,7 @@ const Updater = {
 	 * @param  {Array<String>} css
 	 * @return {String}
 	 */
-	removeNonEmoteCSS( css ) {
+	_removeNonEmoteCSS( css ) {
 		let purgedCSS = [];
 
 		for( let i = 0; i < css.length; i++ ) {
@@ -1091,9 +1005,11 @@ const Updater = {
 
 	/**
 	 * Remove the emotes which are simply mirrored versions of others.
+	 * @private
+	 * @param {string[][]} emotesCurrent
+	 * @returns {string[][]}
 	 */
-	removeReverseEmotes() {
-		let emotesCurrent = this.emotes[this.xhrCurrentTarget];
+	_removeReverseEmotes( emotesCurrent ) {
 		let flatCopy = [];
 		let newEmoteList = [];
 
@@ -1111,49 +1027,61 @@ const Updater = {
 
 				// If the emote doesn't start with "r" or does, but the
 				// part after the first "r" isn't a known emote: keep it
-				if( emote[0] != 'r' || flatCopy.indexOf( emote.substr( 1 ) ) == -1 ) {
+				if( emote[0] != 'r' || !flatCopy.includes( emote.substring( 1 ) ) ) {
 					newEmoteList[i].push( emote );
 				}
 			}
 		}
 
-		// Save the new emote list and fitler out now empty sub-lists.
-		this.emotes[this.xhrCurrentTarget] = [];
+		// Save the new emote list and filter out now empty sub-lists.
+		const newList = [];
 
 		for( let i = 0; i < newEmoteList.length; i++ ) {
 			if( newEmoteList[i].length > 0 ) {
-				this.emotes[this.xhrCurrentTarget].push( newEmoteList[i].slice( 0 ) );
+				newList.push( newEmoteList[i].slice( 0 ) );
 			}
 		}
+
+		return newList;
 	},
 
 
 	/**
 	 * Called at the end of updating ALL subreddit CSS.
 	 * Saves the emotes and CSS. Resets counter.
+	 * @param {boolean} hadChanges
+	 * @param {object}  resultEmotes
+	 * @param {object}  resultCSS
 	 */
-	async wrapUp() {
-		const meta = await addon().storage.local.get( PREF.META ) || DEFAULT_META;
+	async _wrapUp( hadChanges, resultEmotes, resultCSS ) {
+		console.debug( '[Updater._wrapUp]', hadChanges, resultEmotes, resultCSS );
+
+		const meta = await storageGet( PREF.META, { fallback: DEFAULT_META, json: true } );
 		meta.lastSubredditCheck = Date.now();
 		saveToStorage( PREF.META, meta );
 
-		let flagUpdateSuccess = true;
+		if( hadChanges ) {
+			let flagUpdateSuccess = true;
 
-		for( let i = 0; i < this.xhrTargets.length; i++ ) {
-			if(
-				!Object.prototype.hasOwnProperty.call( this.emotes, this.xhrTargets[i] ) ||
-				this.emotes[this.xhrTargets[i]].length === 0
-			) {
-				flagUpdateSuccess = false;
+			for( let i = 0; i < this.subreddits.length; i++ ) {
+				const subreddit = this.subreddits[i];
+
+				if( !resultEmotes[subreddit] || resultEmotes[subreddit].length === 0 ) {
+					flagUpdateSuccess = false;
+				}
+			}
+
+			if( flagUpdateSuccess ) {
+				saveToStorage( PREF.SUBREDDIT_CSS, resultCSS );
+				saveToStorage( PREF.SUBREDDIT_EMOTES, resultEmotes );
+
+				const currentEmotes = await this._mergeSubredditEmotesIntoLists();
+				saveToStorage( PREF.EMOTES, currentEmotes );
+				await storageSet( PREF.EMOTES_CURRENT, currentEmotes );
 			}
 		}
-
-		if( flagUpdateSuccess ) {
-			saveToStorage( PREF.SUBREDDIT_CSS, this.emoteCSS );
-			saveToStorage( PREF.SUBREDDIT_EMOTES, this.emotes );
-
-			const currentEmotes = await this.mergeSubredditEmotesIntoLists();
-			saveToStorage( PREF.EMOTES, currentEmotes );
+		else {
+			console.debug( '[Updater._wrapUp] No changes to save.' );
 		}
 
 		if( this.forceUpdate ) {
@@ -1167,9 +1095,6 @@ const Updater = {
 
 		this.forceUpdate = false;
 		this.forceSource = null;
-		this.emoteCSS = {};
-		this.emotes = {};
-		this.xhrProgress = 0;
 	},
 
 
@@ -1183,6 +1108,8 @@ const Updater = {
  * @param {object} sender
  */
 async function handleMessage( ev, sender ) {
+	console.debug( '[handleMessage]', ev, sender );
+
 	let response = {};
 	let data = ev.data || ev;
 	let source = sender || ev.source;
@@ -1197,11 +1124,12 @@ async function handleMessage( ev, sender ) {
 	switch( data.task ) {
 		case BG_TASK.UPDATE_EMOTES:
 			{
-				const currentEmotes = await addon().storage.local.get( PREF.EMOTES_CURRENT );
+				const currentEmotes = await storageGet( PREF.EMOTES_CURRENT );
 
 				if( currentEmotes ) {
 					mergeEmotesWithUpdate( currentEmotes, data.update );
 					response = saveToStorage( PREF.EMOTES, currentEmotes );
+					await storageSet( PREF.EMOTES_CURRENT, currentEmotes );
 				}
 				else {
 					console.error( '[handleMessage] (UPDATE_EMOTES) PREF.EMOTES_CURRENT is empty:', currentEmotes );
@@ -1214,7 +1142,7 @@ async function handleMessage( ev, sender ) {
 			break;
 
 		case BG_TASK.UPDATE_LIST_ORDER:
-			await addon().storage.local.set( PREF.EMOTES_CURRENT, data.update );
+			await storageSet( PREF.EMOTES_CURRENT, data.update );
 			saveToStorage( PREF.EMOTES, data.update );
 
 			response.update = data.update;
@@ -1224,11 +1152,11 @@ async function handleMessage( ev, sender ) {
 		case BG_TASK.UPDATE_LIST_NAME:
 			{
 				const u = data.update;
-				let currentEmotes = await addon().storage.local.get( PREF.EMOTES_CURRENT );
+				let currentEmotes = await storageGet( PREF.EMOTES_CURRENT );
 				currentEmotes = changeListName( currentEmotes, u.oldName, u.newName );
 
 				saveToStorage( PREF.EMOTES, currentEmotes );
-				await addon().storage.local.set( PREF.EMOTES_CURRENT, currentEmotes );
+				await storageSet( PREF.EMOTES_CURRENT, currentEmotes );
 
 				response.update = u;
 				broadcast = true;
@@ -1237,11 +1165,11 @@ async function handleMessage( ev, sender ) {
 
 		case BG_TASK.UPDATE_LIST_DELETE:
 			{
-				let currentEmotes = await addon().storage.local.get( PREF.EMOTES_CURRENT );
+				let currentEmotes = await storageGet( PREF.EMOTES_CURRENT );
 				delete currentEmotes[data.update.deleteList];
 
 				saveToStorage( PREF.EMOTES, currentEmotes );
-				await addon().storage.local.set( PREF.EMOTES_CURRENT, currentEmotes );
+				await storageSet( PREF.EMOTES_CURRENT, currentEmotes );
 
 				response.deleteList = data.update.deleteList;
 				broadcast = true;
@@ -1254,7 +1182,7 @@ async function handleMessage( ev, sender ) {
 
 		case BG_TASK.SAVE_EMOTES:
 			{
-				const currentEmotes = await addon().storage.local.get( PREF.EMOTES_CURRENT );
+				const currentEmotes = await storageGet( PREF.EMOTES_CURRENT );
 
 				// Currently we have more than 1 list, but the update is empty.
 				// This is too suspicious and shouldn't happen. Don't do it.
@@ -1264,27 +1192,37 @@ async function handleMessage( ev, sender ) {
 				}
 
 				response = saveToStorage( PREF.EMOTES, data.emotes );
-				await addon().storage.local.set( PREF.EMOTES_CURRENT, currentEmotes );
+				await storageSet( PREF.EMOTES_CURRENT, currentEmotes );
 			}
 			break;
 
 		case BG_TASK.SAVE_CONFIG:
-			{
-				let currentConfig = await addon().storage.local.get( PREF.CONFIG_CURRENT );
+			try {
+				let currentConfig = await storageGet( PREF.CONFIG_CURRENT );
+
+				if( !currentConfig ) {
+					currentConfig = await storageGet( PREF.CONFIG, { fallback: DEFAULT_CONFIG, json: true } );
+				}
+
 				currentConfig = mergeWithConfig( currentConfig, data.config || data.update );
 				response = saveToStorage( PREF.CONFIG, currentConfig );
+				await storageSet( PREF.CONFIG_CURRENT, currentConfig );
 				response.config = currentConfig;
+			}
+			catch( err ) {
+				console.error( '[handleMessage] SAVE_CONFIG', err );
+				return;
 			}
 			break;
 
 		case BG_TASK.RESET_CONFIG:
 			saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
-			await addon().storage.local.set( PREF.CONFIG_CURRENT, DEFAULT_CONFIG );
+			await storageSet( PREF.CONFIG_CURRENT, DEFAULT_CONFIG );
 			break;
 
 		case BG_TASK.RESET_EMOTES:
 			saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
-			await addon().storage.local.get( PREF.EMOTES_CURRENT, DEFAULT_EMOTES );
+			await storageSet( PREF.EMOTES_CURRENT, DEFAULT_EMOTES );
 			break;
 
 		case BG_TASK.OPEN_OPTIONS:
@@ -1294,7 +1232,7 @@ async function handleMessage( ev, sender ) {
 		case BG_TASK.UPDATE_CSS:
 			Updater.forceUpdate = true;
 			Updater.forceSource = source;
-			Updater.getCSSURLs();
+			Updater.getAndParseCSS();
 			return;
 
 		default:
@@ -1376,31 +1314,27 @@ function mergeEmotesWithUpdate( currentEmotes, emotes ) {
  * So only changes are overwritten and all other values are preserved.
  * Unknown config keys in obj will be removed!
  * @param  {object} currentConfig
- * @param  {object} obj
+ * @param  {object} update
  * @return {object}
  */
-function mergeWithConfig( currentConfig, obj ) {
-	let obj_new = {};
+function mergeWithConfig( currentConfig, update ) {
+	let merged = {};
 
-	if( !currentConfig ) {
-		loadConfigAndEmotes( {} );
-	}
-
-	// Remove unknown config keys
-	for( const key in obj ) {
+	// Only add known config keys
+	for( const key in update ) {
 		if( Object.prototype.hasOwnProperty.call( currentConfig, key ) ) {
-			obj_new[key] = obj[key];
+			merged[key] = update[key];
 		}
 	}
 
 	// Add missing config keys
 	for( const key in currentConfig ) {
-		if( !Object.prototype.hasOwnProperty.call( obj_new, key ) ) {
-			obj_new[key] = currentConfig[key];
+		if( !Object.prototype.hasOwnProperty.call( merged, key ) ) {
+			merged[key] = currentConfig[key];
 		}
 	}
 
-	return obj_new;
+	return merged;
 }
 
 
@@ -1431,23 +1365,57 @@ function saveDefaultToStorage( key, obj ) {
  * @return {object}     Contains key "success" with a boolean value.
  */
 function saveToStorage( key, obj ) {
-	let obj_json;
+	let objAsJSON = null;
 
 	if( !obj ) {
 		return { success: false };
 	}
 
 	try {
-		obj_json = JSON.stringify( obj );
+		objAsJSON = JSON.stringify( obj );
 	}
 	catch( err ) {
 		console.error( '[saveToStorage]', err );
 		return { success: false };
 	}
 
-	MyBrowser.save( key, obj_json );
+	MyBrowser.save( key, objAsJSON );
 
 	return { success: true };
+}
+
+
+/**
+ *
+ * @param {string}  key
+ * @param {object?} options
+ * @param {*}       options.fallback
+ * @param {boolean} options.json
+ * @returns {*}
+ */
+async function storageGet( key, options ) {
+	let value = await addon().storage.local.get( key )[key];
+
+	if( typeof value === 'undefined' ) {
+		value = options?.fallback;
+	}
+
+	if( options?.json === true && typeof value === 'string' ) {
+		value = JSON.parse( value );
+	}
+
+	return value;
+}
+
+
+/**
+ *
+ * @param {string} key
+ * @param {*} value
+ * @returns {*}
+ */
+async function storageSet( key, value ) {
+	return await addon().storage.local.set( { [key]: value } );
 }
 
 
