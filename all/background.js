@@ -379,21 +379,6 @@ const MyBrowser = {
 	},
 
 
-	/**
-	 * Send a HTTP request.
-	 * @param {string} url URL to send the request to.
-	 * @param {string} [method = 'GET']
-	 * @returns {Promise<string>}
-	 */
-	async sendRequest( url, method = 'GET' ) {
-		console.debug( '[MyBrowser.sendRequest]', method, url );
-
-		const response = await fetch( url, { method } );
-
-		return await response.text();
-	},
-
-
 };
 
 
@@ -438,6 +423,79 @@ const Updater = {
 		if( Date.now() - meta.lastSubredditCheck >= config.intervalToCheckCSS ) {
 			this.getAndParseCSS( emotes, css );
 		}
+	},
+
+
+	/**
+	 * Get the URLs to the CSS files.
+	 * @param {object?} currentEmotes
+	 * @param {object?} currentCSS
+	 */
+	async getAndParseCSS( currentEmotes, currentCSS ) {
+		console.debug( '[Updater.getAndParseCSS]' );
+
+		// Only process the stylesheet if something changed
+		// since the last check or it is a forced update.
+		const meta = await storageGet( PREF.META, { fallback: DEFAULT_META, json: true } );
+
+		const resultEmotes = currentEmotes || {};
+		const resultCSS = currentCSS || {};
+		let hadChanges = false;
+
+		const processCSSToEmotes = async ( subreddit, css ) => {
+			let emotes = [];
+
+			// Process CSS to emotes
+			[emotes, css] = this._extractEmotesStep1( css );
+			[emotes, css] = this._extractEmotesStep2( emotes, css, subreddit === 'r/mlplounge' );
+			emotes = this._removeReverseEmotes( emotes );
+			emotes = this._groupSameEmotes( emotes, css );
+
+			return [emotes, css]
+		};
+
+		for( let i = 0; i < this.subreddits.length; i++ ) {
+			// Wait between requests
+			if( i > 0 ) {
+				await new Promise( r => setTimeout( r, 1500 ) );
+			}
+
+			const subreddit = this.subreddits[i];
+			const pageURL = 'https://old.reddit.com/' + subreddit;
+
+			console.debug( '[Updater.getAndParseCSS] Subreddit:', subreddit );
+
+			const resHTML = await fetch( pageURL );
+			const pageHTML = await resHTML.text();
+
+			const cssURL = this._getCSSURLFromPage( pageHTML );
+			console.debug( '[Updater.getAndParseCSS] Custom CSS URL is:', cssURL );
+
+			const resCSS = await fetch( cssURL );
+			const contentType = resCSS.headers.get( 'Content-Type' );
+
+			if( contentType === 'text/css' ) {
+				const lastModified = Date.parse( resCSS.headers.get( 'Last-Modified' ) );
+
+				if( this.forceUpdate || lastModified >= meta.lastSubredditCheck ) {
+					const css = await resCSS.text();
+					let [emotes, processedCSS] = processCSSToEmotes( subreddit, css );
+					resultEmotes[subreddit] = emotes;
+					resultCSS[subreddit] = processedCSS;
+					console.debug( '[Updater.getAndParseCSS] Added emotes and CSS.' );
+
+					hadChanges = true;
+				}
+				else {
+					console.debug( `[Updater.getAndParseCSS] No changes: ${lastModified} < ${meta.lastSubredditCheck}` );
+				}
+			}
+			else {
+				console.warn( '[Updater.getAndParseCSS] Content-Type of CSS was not "text/css":', contentType );
+			}
+		}
+
+		await this._wrapUp( hadChanges, resultEmotes, resultCSS );
 	},
 
 
@@ -582,63 +640,6 @@ const Updater = {
 		}
 
 		return [emotes, this._removeNonEmoteCSS( cssCurrent )];
-	},
-
-
-	/**
-	 * Get the URLs to the CSS files.
-	 * @param {object?} currentEmotes
-	 * @param {object?} currentCSS
-	 */
-	async getAndParseCSS( currentEmotes, currentCSS ) {
-		// Only process the stylesheet if something changed
-		// since the last check or it is a forced update.
-		const meta = await storageGet( PREF.META, { fallback: DEFAULT_META, json: true } );
-
-		const resultEmotes = currentEmotes || {};
-		const resultCSS = currentCSS || {};
-		let hadChanges = false;
-
-		const processCSSToEmotes = async ( subreddit, css ) => {
-			let emotes = [];
-
-			// Process CSS to emotes
-			[emotes, css] = this._extractEmotesStep1( css );
-			[emotes, css] = this._extractEmotesStep2( emotes, css, subreddit === 'r/mlplounge' );
-			emotes = this._removeReverseEmotes( emotes );
-			emotes = this._groupSameEmotes( emotes, css );
-
-			return [emotes, css]
-		};
-
-		for( let i = 0; i < this.subreddits.length; i++ ) {
-			// Wait between requests
-			if( i > 0 ) {
-				await new Promise( r => setTimeout( r, 1500 ) );
-			}
-
-			const subreddit = this.subreddits[i];
-			const url = 'https://old.reddit.com/' + subreddit;
-
-			const pageHTML = await MyBrowser.sendRequest( url );
-			const cssURL = this._getCSSURLFromPage( pageHTML );
-			const response = await fetch( cssURL );
-
-			if( response.headers.get( 'Content-Type' ) === 'text/css' ) {
-				const lastModified = Date.parse( response.headers.get( 'Last-Modified' ) );
-
-				if( this.forceUpdate || lastModified >= meta.lastSubredditCheck ) {
-					const css = await response.text();
-					let [emotes, processedCSS] = processCSSToEmotes( subreddit, css );
-					resultEmotes[subreddit] = emotes;
-					resultCSS[subreddit] = processedCSS;
-
-					hadChanges = true;
-				}
-			}
-		}
-
-		await this._wrapUp( hadChanges, resultEmotes, resultCSS );
 	},
 
 
@@ -1397,6 +1398,7 @@ async function storageGet( key, options ) {
 	let value = await addon().storage.local.get( key )[key];
 
 	if( typeof value === 'undefined' ) {
+		console.warn( `[storageGet] No value for "${key}"` );
 		value = options?.fallback;
 	}
 
