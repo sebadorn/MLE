@@ -299,15 +299,12 @@ async function getMeta() {
 const MyBrowser = {
 
 
-	tabs: [],
-
-
 	/**
 	 * Broadcast a message to everything extension related.
-	 * @param {Object} sender
-	 * @param {Object} msg
+	 * @param {object} sender
+	 * @param {object} msg
 	 */
-	broadcast( sender, msg ) {
+	async broadcast( sender, msg ) {
 		console.debug( '[MyBrowser.broadcast]', sender, msg );
 
 		const makeCb = sender => {
@@ -318,12 +315,16 @@ const MyBrowser = {
 			};
 		};
 
-		for( let i = 0; i < this.tabs.length; i++ ) {
-			if( sender && sender.tab.id == this.tabs[i] ) {
+		const tabs = await storageGet( PREF.TABS, { fallback: [] } );
+
+		for( let i = 0; i < tabs.length; i++ ) {
+			const tabId = tabs[i];
+
+			if( sender?.tab?.id == tabId ) {
 				continue;
 			}
 
-			addon().tabs.sendMessage( this.tabs[i], msg )
+			addon().tabs.sendMessage( tabId, msg )
 				.then( makeCb( sender ) )
 				.catch( err => console.error( '[MyBrowser.broadcast]', err ) );
 		}
@@ -379,10 +380,12 @@ const MyBrowser = {
 			sender: sender,
 		};
 
+		const tabs = await storageGet( PREF.TABS, { fallback: [] } );
+
 		// Remember this tab in which MLE is running
-		if( !this.tabs.includes( sender.tab.id ) ) {
-			this.tabs.push( sender.tab.id );
-			await storageSet( PREF.TABS, this.tabs );
+		if( !tabs.includes( sender.tab.id ) ) {
+			tabs.push( sender.tab.id );
+			await storageSet( PREF.TABS, tabs );
 		}
 
 		addon().tabs.onRemoved.addListener( this.onTabRemove );
@@ -410,17 +413,18 @@ const MyBrowser = {
 
 	/**
 	 * Called when a tab is closed.
-	 * @param {Number} tabId ID of the removed tab.
-	 * @param {Object} info
+	 * @param {number} tabId ID of the removed tab.
+	 * @param {object} info
 	 */
-	onTabRemove( tabId, info ) {
+	async onTabRemove( tabId, info ) {
 		console.debug( '[MyBrowser.onTabRemove]', tabId, info );
 
-		const idx = MyBrowser.tabs.indexOf( tabId );
+		const tabs = await storageGet( PREF.TABS, { fallback: [] } );
+		const idx = tabs.indexOf( tabId );
 
 		if( idx >= 0 ) {
-			MyBrowser.tabs.splice( idx, 1 );
-			storageSet( PREF.TABS, MyBrowser.tabs );
+			tabs.splice( idx, 1 );
+			await storageSet( PREF.TABS, tabs );
 		}
 	},
 
