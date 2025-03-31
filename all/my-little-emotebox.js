@@ -1274,7 +1274,9 @@
 				'#mle% input,#mle% select,#mle% textarea':
 						`background-color: #fff; border-radius: 0; color: #000; font-family: ${fontFamily}; font-size: 13px; outline: none;`,
 				'#mle% .mle-topbar':
-						'display: none; left: 0; position: absolute; top: -1px; z-index: 10;',
+						'display: none; left: 0; pointer-events: none; position: absolute; top: -1px; z-index: 10;',
+				'#mle% .mle-topbar > *':
+						'pointer-events: all;',
 				// Inactive state
 				'#mle%':
 						`background-color: ${cfg.boxBgColor}; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; color: #202020; position: fixed; z-index: ' + zIndex + '; width: ${cfg.boxWidthMinimized}px;`,
@@ -1285,7 +1287,7 @@
 						`width: ${cfg.boxWidth}px; height: ${cfg.boxHeight}px; padding: 36px 10px 10px; z-index: 10000;`,
 				// Dragging bars
 				'.mle-dragbar':
-						'display: none; position: absolute;',
+						'cursor: move; display: none; position: absolute;',
 				'.mle-dragbar0': // left
 						'height: 100%; left: 0; top: 0; width: 10px;',
 				'.mle-dragbar1': // right
