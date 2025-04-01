@@ -87,6 +87,17 @@ function handleBackgroundMessages( ev ) {
 			showMsg( 'Force update finished.', 'info' );
 			break;
 
+		case BG_TASK.OPEN_OPTIONS:
+		case BG_TASK.RESET_CONFIG:
+		case BG_TASK.RESET_EMOTES:
+		case BG_TASK.SAVE_EMOTES:
+		case BG_TASK.UPDATE_EMOTES:
+		case BG_TASK.UPDATE_LIST_DELETE:
+		case BG_TASK.UPDATE_LIST_NAME:
+		case BG_TASK.UPDATE_LIST_ORDER:
+			console.debug( '[handleBackgroundMessages] Nothing to do for task:', data.task );
+			break;
+
 		default:
 			console.warn( '[handleBackgroundMessages] Unknown task:', data.task );
 	}

@@ -62,6 +62,7 @@
 		sub_css: null,
 		// Emotes found in the stylesheets
 		sub_emotes: null,
+		taskQueue: {},
 	};
 
 
@@ -177,8 +178,8 @@
 
 	/**
 	 * Delete an emote from a list.
-	 * @param {String} emote
-	 * @param {String} list
+	 * @param {string} emote
+	 * @param {string} list
 	 */
 	function deleteEmote( emote, list ) {
 		const g = GLOBAL;
@@ -432,7 +433,7 @@
 	 */
 	function isEmote( node ) {
 		// Emotes inside the BPM window
-		if( node.parentNode.id == 'bpm-sb-results' ) {
+		if( node.parentNode?.id === 'bpm-sb-results' ) {
 			return !!node.getAttribute( 'data-emote' );
 		}
 
@@ -800,15 +801,15 @@
 
 	/**
 	 * Save the given emote to the given list.
-	 * @param {String} emote
-	 * @param {String} list
+	 * @param {string} emote
+	 * @param {string} list
 	 */
 	function saveEmote( emote, list ) {
 		const g = GLOBAL;
 
 		// Ignore empty
 		if( emote.length === 0 ) {
-			showMsg( 'That ain\'t no emote, sugarcube.' );
+			showMsg( "That ain't no emote, sugarcube." );
 			return;
 		}
 
@@ -827,13 +828,14 @@
 			showMsg( 'This emote is already in the list.' );
 			return;
 		}
+
 		// Don't save mirrored ones either
 		if( emote[0] == 'r' && g.emotes[list].indexOf( emote.substring( 1 ) ) > -1 ) {
 			showMsg( 'This emote is a mirrored version of one already in the list.' );
 			return;
 		}
 
-		let update = {};
+		const update = {};
 
 		g.emotes[list].push( emote );
 		update[list] = g.emotes[list];
@@ -849,14 +851,31 @@
 
 	/**
 	 * Saves emotes/lists to the storage.
-	 * @param {Integer} task   BG_TASK.
-	 * @param {Object}  update Change to update.
+	 * @param {number} task   BG_TASK.
+	 * @param {object} update Change to update.
 	 */
 	function saveChangesToStorage( task, update ) {
-		sendMessage( {
-			task: task,
-			update: update,
-		} );
+		GLOBAL.taskQueue[task] = GLOBAL.taskQueue[task] || { task: task, update: update };
+		const queue = GLOBAL.taskQueue[task];
+
+		if( update ) {
+			for( const key in update ) {
+				queue.update[key] = update[key];
+			}
+
+			console.debug( '[saveChangesToStorage] Updated queue data to:', queue, 'added:', update );
+		}
+
+		if( typeof queue.timeout !== 'undefined' ) {
+			console.debug( '[saveChangesToStorage] Queue with timeout already exists.' );
+			return;
+		}
+
+		queue.timeout = setTimeout( () => {
+			console.debug( '[saveChangesToStorage] Timeout, sending message now:', queue );
+			sendMessage( { task: queue.task, update: queue.update } );
+			delete GLOBAL.taskQueue[queue.task];
+		}, 500 );
 	}
 
 
@@ -2846,17 +2865,17 @@
 				{
 					className: 'out',
 					text: 'Save Emote',
-					onclick: this.itemActionSaveEmote,
+					onclick: this.itemActionSaveEmote.bind( this ),
 				},
 				{
 					className: 'in',
 					text: 'Delete Emote',
-					onclick: this.itemActionDeleteEmote,
+					onclick: this.itemActionDeleteEmote.bind( this ),
 				},
 				{
 					className: 'in',
 					text: 'Move to List',
-					onclick: this.itemActionMoveEmote,
+					onclick: this.itemActionMoveEmote.bind( this ),
 				},
 			];
 
@@ -2864,17 +2883,18 @@
 
 			// Add items to menu
 			for( let i = 0; i < items.length; i++ ) {
+				const itemData = items[i];
 				const item = d.createElement( 'li' );
-				item.className = items[i].className;
-				item.textContent = items[i].text;
-				item.addEventListener( 'click', items[i].onclick.bind( this ) );
+				item.className = itemData.className;
+				item.textContent = itemData.text;
+				item.addEventListener( 'click', ev => itemData.onclick( ev ) );
 
 				menu.append( item );
 			}
 
 			// Add listener for context menu (will only be used on emotes)
-			d.body.addEventListener( 'contextmenu', this.show.bind( this ) );
-			d.body.addEventListener( 'click', this.hide.bind( this ) );
+			d.body.addEventListener( 'contextmenu', ev => this.show( ev ) );
+			d.body.addEventListener( 'click', _ev => this.hide() );
 
 			Builder.preventOverScrolling( menu );
 			this.REF.menu = menu;
@@ -3143,7 +3163,7 @@
 
 			// Click occured in emote box.
 			// This changes some of the available options.
-			if( ev.target.parentNode.classList.contains( 'mle-block' ) ) {
+			if( ev.target.parentNode.classList.contains( 'mle-block' + GLOBAL.noise ) ) {
 				this.REF.menu.classList.add( 'in-box' );
 			}
 			else {
