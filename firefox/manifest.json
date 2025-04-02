@@ -35,7 +35,7 @@
 	],
 
 	"background": {
-		"service_worker": "scripts/background.js"
+		"scripts": ["scripts/background.js"]
 	},
 
 	"options_ui": {
