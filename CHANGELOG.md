@@ -5,6 +5,7 @@
 
 * `Feature` Add-on is now using Manifest V3.
 * `Fix` Context menu to delete or move emote did not show in emote box.
+* `Fix` Options page could lose data because of messages meant for the background script.
 * `Misc` Removed more permissions.
 * `Misc` Cleaned up code for CSS updater.
 
