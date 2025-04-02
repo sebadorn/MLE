@@ -298,12 +298,17 @@
 			return;
 		}
 
+		if( data.from !== 'background' ) {
+			console.debug( '[handleBackgroundMessage] Message did not come from background, ignore in content.' );
+			return;
+		}
+
 		switch( data.task ) {
 			case BG_TASK.LOAD:
-				g.config = data.config;
-				g.emotes = data.emotes;
-				g.sub_css = data.sub_css;
-				g.sub_emotes = data.sub_emotes;
+				g.config = data.config || g.config;
+				g.emotes = data.emotes || g.emotes;
+				g.sub_css = data.sub_css || g.sub_css;
+				g.sub_emotes = data.sub_emotes || g.sub_emotes;
 
 				Init.initStep2();
 				break;
@@ -316,17 +321,21 @@
 				break;
 
 			case BG_TASK.UPDATE_EMOTES:
-				mergeEmotesWithUpdate( data.update );
-				Builder.updateLists( data.update );
+				if( data.update ) {
+					mergeEmotesWithUpdate( data.update );
+					Builder.updateLists( data.update );
+				}
 				break;
 
 			case BG_TASK.UPDATE_LIST_ORDER:
-				g.emotes = data.update;
-				Builder.updateListOrder( g.emotes );
+				if( data.update ) {
+					g.emotes = data.update;
+					Builder.updateListOrder( g.emotes );
+				}
 				break;
 
 			case BG_TASK.UPDATE_LIST_NAME:
-				{
+				if( data.update ) {
 					let u = data.update;
 					g.emotes[u.newName] = g.emotes[u.oldName].slice( 0 );
 					delete g.emotes[u.oldName];
@@ -335,8 +344,10 @@
 				break;
 
 			case BG_TASK.UPDATE_LIST_DELETE:
-				delete g.emotes[data.deleteList];
-				Builder.removeList( data.deleteList );
+				if( data.deleteList ) {
+					delete g.emotes[data.deleteList];
+					Builder.removeList( data.deleteList );
+				}
 				break;
 		}
 	}
@@ -611,9 +622,11 @@
 
 	/**
 	 * Send a message to the background process.
-	 * @param {Object} msg Message to send.
+	 * @param {object} msg Message to send.
 	 */
 	function sendMessage( msg ) {
+		msg.from = 'content';
+
 		addon().runtime.sendMessage( msg ).then( response => {
 			response && handleBackgroundMessages( { data: response } );
 		} ).catch( err => console.error( '[sendMessage]', err ) );
@@ -3503,6 +3516,8 @@
 		// Hostnames where this extension should be active.
 		ALLOWED_HOSTNAMES: ['reddit.com'],
 
+		isDone: false,
+
 
 		/**
 		 * Starting point.
@@ -3519,9 +3534,16 @@
 		 * Called after preferences have been loaded from the background script.
 		 */
 		initStep2() {
+			if( Init.isDone ) {
+				console.warn( '[Init.initStep2] Already done. Should not be called again.' );
+				return;
+			}
+
 			Builder.addCSS();
 			Builder.addHTML();
 			Builder.modifyAllOnPageEmotes();
+
+			Init.isDone = true;
 		},
 
 

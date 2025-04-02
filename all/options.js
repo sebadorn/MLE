@@ -69,17 +69,22 @@ function handleBackgroundMessages( ev ) {
 		return;
 	}
 
+	if( data.from === 'content' ) {
+		console.debug( '[handleBackgroundMessage] Message came from content script, ignore as not relevant for options.' );
+		return;
+	}
+
 	switch( data.task ) {
 		case BG_TASK.LOAD:
-			CONFIG = data.config;
-			EMOTES = data.emotes;
-			META = data.meta;
+			CONFIG = data.config || CONFIG;
+			EMOTES = data.emotes || EMOTES;
+			META = data.meta || META;
 			init2();
 			break;
 
 		case BG_TASK.SAVE_CONFIG:
 			if( data.success ) {
-				CONFIG = data.config;
+				CONFIG = data.config || CONFIG;
 			}
 			break;
 
@@ -244,6 +249,8 @@ function loadConfig() {
  * @param {Object} msg Message to send.
  */
 function sendMessage( msg ) {
+	msg.from = 'options';
+
 	console.debug( '[sendMessage]', msg );
 
 	// Firefox

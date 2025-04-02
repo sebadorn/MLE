@@ -305,6 +305,8 @@ const MyBrowser = {
 	 * @param {object} msg
 	 */
 	async broadcast( sender, msg ) {
+		msg.from = 'background';
+
 		console.debug( '[MyBrowser.broadcast]', sender, msg );
 
 		const makeCb = sender => {
@@ -374,6 +376,8 @@ const MyBrowser = {
 	 * @return {Promise<object>} response
 	 */
 	async loadConfigAndEmotes( response, sender, loadMeta ) {
+		response.from = 'background';
+
 		const packet = {
 			loadMeta: loadMeta,
 			response: response,
@@ -1177,8 +1181,8 @@ const Updater = {
 		}
 
 		if( this.forceUpdate ) {
-			let response = { task: BG_TASK.UPDATE_CSS };
-			let promise = addon().tabs.sendMessage( this.forceSource.tab.id, response );
+			const response = { task: BG_TASK.UPDATE_CSS, from: 'background' };
+			const promise = addon().tabs.sendMessage( this.forceSource.tab.id, response );
 			promise.then(
 				null,
 				err => console.error( err ),
