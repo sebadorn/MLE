@@ -1,60 +1,39 @@
 'use strict';
 
 
-// Set an individual User-Agent for our XMLHttpRequests.
-browser.webRequest.onBeforeSendHeaders.addListener(
-	/**
-	 * Modify user-agent
-	 * @param {BlockingResponse} details
-	 * @returns {BlockingResponse}
-	 */
-	details => {
-		/** @type {object[]} */
-		const headers = details.requestHeaders || [];
-		const headerIndexMLE = headers.findIndex( header => header.name === 'MLE-Addon-Request' );
-
-		if( headerIndexMLE > -1 ) {
-			headers.splice( headerIndexMLE, 1 );
-
-			for( let i = 0; i < headers.length; i++ ) {
-				const header = headers[i];
-
-				if( header.name.toLowerCase() === 'user-agent' ) {
-					header.value = Updater.xhrUserAgent;
-					break;
-				}
-			}
-		}
-
-		return details;
-	},
-	// filter
-	{
-		urls: ['*://*/*'],
-		types: ['xmlhttprequest'],
-	},
-	// extraInfoSpec
-	['requestHeaders', 'blocking']
-);
+// eslint-disable-next-line no-redeclare
+const BG_TASK = {
+	LOAD: 1,
+	SAVE_CONFIG: 2,
+	SAVE_EMOTES: 3,
+	RESET_CONFIG: 4,
+	RESET_EMOTES: 5,
+	OPEN_OPTIONS: 6,
+	UPDATE_EMOTES: 7,
+	UPDATE_LIST_ORDER: 8,
+	UPDATE_LIST_NAME: 9,
+	UPDATE_LIST_DELETE: 10,
+	UPDATE_CSS: 11,
+};
 
 
 // Keys
 const PREF = {
-	CONFIG: 'mle.config',
-	EMOTES: 'mle.emotes',
-	META: 'mle.meta',
+	CONFIG_OLD: 'mle.config', // old: value was saved as JSON
+	CONFIG: 'mle.config.obj', // new: value saved as object
+	EMOTES_OLD: 'mle.emotes',
+	EMOTES: 'mle.emotes.obj',
+	META_OLD: 'mle.meta',
+	META: 'mle.meta.obj',
 	SUBREDDIT_CSS: 'mle.subreddit.css',
 	SUBREDDIT_EMOTES: 'mle.subreddit.emotes',
+	TABS: 'mle.tabs',
 };
-
-
-const DEFAULT_SUB_CSS = {};
-const DEFAULT_SUB_EMOTES = {};
 
 
 // Information that the user won't need to backup
 const DEFAULT_META = {
-	lastSubredditCheck: 0
+	lastSubredditCheck: 0,
 };
 
 
@@ -192,29 +171,142 @@ const DEFAULT_EMOTES = {
 	],
 };
 
-let CURRENT_CONFIG = null;
-let CURRENT_EMOTES = null;
-let META = null;
-let SUBREDDIT_CSS = null;
-let SUBREDDIT_EMOTES = null;
+
+/**
+ *
+ * @returns {object}
+ */
+function addon() {
+	if( typeof browser === 'undefined' ) {
+		return chrome;
+	}
+
+	return browser;
+}
 
 
 /**
- * Browser namespace for Firefox.
- * @type {object}
+ *
+ * @param {string}  key
+ * @param {object?} options
+ * @param {*}       options.fallback
+ * @param {boolean} options.json
+ * @returns {Promise<*>}
  */
+async function storageGet( key, options ) {
+	let value = ( await addon().storage.local.get( key ) )[key];
+
+	if( typeof value === 'undefined' || value === null ) {
+		console.warn( `[storageGet] No value for "${key}"`, value );
+		value = options?.fallback;
+	}
+
+	if( options?.json === true && typeof value === 'string' ) {
+		value = JSON.parse( value );
+	}
+
+	return value;
+}
+
+
+/**
+ *
+ * @param {string}  key
+ * @param {*}       value
+ * @param {object?} options
+ * @param {boolean} options.json
+ * @returns {Promise<boolean>} True on success, false otherwise.
+ */
+async function storageSet( key, value, options ) {
+	if( options?.json === true && typeof value !== 'string' ) {
+		try {
+			value = JSON.stringify( value );
+		}
+		catch( err ) {
+			console.error( '[storageSet] For key:', key, err, 'Value was:', value );
+			return false;
+		}
+	}
+
+	try {
+		await addon().storage.local.set( { [key]: value } );
+	}
+	catch( err ) {
+		console.error( '[storageSet]', err );
+		return false;
+	}
+
+	console.debug( '[storageSet] Set', key );
+
+	return true;
+}
+
+
+/**
+ *
+ * @returns {Promise<object>}
+ */
+async function getConfig() {
+	let config = await storageGet( PREF.CONFIG );
+
+	// Check if old config (JSON string) exists and migrate to new format,
+	// or just set the default config as config.
+	if( !config ) {
+		config = await storageGet( PREF.CONFIG_OLD, { fallback: DEFAULT_CONFIG, json: true } );
+		await storageSet( PREF.CONFIG, config );
+	}
+
+	return config;
+}
+
+
+/**
+ *
+ * @returns {Promise<object>}
+ */
+async function getEmotes() {
+	let emotes = await storageGet( PREF.EMOTES );
+
+	// Check if old emotes (JSON string) exists and migrate to new format,
+	// or just set the default emotes as value.
+	if( !emotes ) {
+		emotes = await storageGet( PREF.EMOTES_OLD, { fallback: DEFAULT_EMOTES, json: true } );
+		await storageSet( PREF.EMOTES, emotes );
+	}
+
+	return emotes;
+}
+
+
+/**
+ *
+ * @returns {Promise<object>}
+ */
+async function getMeta() {
+	let meta = await storageGet( PREF.META );
+
+	// Check if old meta (JSON string) exists and migrate to new format,
+	// or just set the default meta as value.
+	if( !meta ) {
+		meta = await storageGet( PREF.META_OLD, { fallback: DEFAULT_META, json: true } );
+		await storageSet( PREF.META, meta );
+	}
+
+	return meta;
+}
+
+
 const MyBrowser = {
-
-
-	tabs: [],
 
 
 	/**
 	 * Broadcast a message to everything extension related.
-	 * @param {Object} sender
-	 * @param {Object} msg
+	 * @param {object} sender
+	 * @param {object} msg
 	 */
-	broadcast( sender, msg ) {
+	async broadcast( sender, msg ) {
+		msg.from = 'background';
+
 		console.debug( '[MyBrowser.broadcast]', sender, msg );
 
 		const makeCb = sender => {
@@ -225,12 +317,16 @@ const MyBrowser = {
 			};
 		};
 
-		for( let i = 0; i < this.tabs.length; i++ ) {
-			if( sender && sender.tab.id == this.tabs[i] ) {
+		const tabs = await storageGet( PREF.TABS, { fallback: [] } );
+
+		for( let i = 0; i < tabs.length; i++ ) {
+			const tabId = tabs[i];
+
+			if( sender?.tab?.id == tabId ) {
 				continue;
 			}
 
-			browser.tabs.sendMessage( this.tabs[i], msg )
+			addon().tabs.sendMessage( tabId, msg )
 				.then( makeCb( sender ) )
 				.catch( err => console.error( '[MyBrowser.broadcast]', err ) );
 		}
@@ -240,102 +336,99 @@ const MyBrowser = {
 	/**
 	 * Handle the items loaded from the storage.
 	 * (this == binded object with variables)
-	 * @param {Object} items Loaded items in key/value pairs.
+	 * @param {object} packet
+	 * @param {object} items Loaded items in key/value pairs.
 	 */
-	handleLoadedItems( items ) {
-		CURRENT_CONFIG = !items[PREF.CONFIG] ?
-			saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG ) :
-			JSON.parse( items[PREF.CONFIG] );
+	async handleLoadedItems( packet, items ) {
+		const config = await getConfig();
+		const emotes = await getEmotes();
+		const meta = await getMeta();
 
-		CURRENT_EMOTES = !items[PREF.EMOTES] ?
-			saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES ) :
-			JSON.parse( items[PREF.EMOTES] );
-
-		META = !items[PREF.META] ?
-			saveDefaultToStorage( PREF.META, DEFAULT_META ) :
-			JSON.parse( items[PREF.META] );
-
-		SUBREDDIT_CSS = !items[PREF.SUBREDDIT_CSS] ?
-			saveDefaultToStorage( PREF.SUBREDDIT_CSS, DEFAULT_SUB_CSS ) :
+		const subredditCSS = !items[PREF.SUBREDDIT_CSS] ?
+			await saveDefaultToStorage( PREF.SUBREDDIT_CSS, {} ) :
 			JSON.parse( items[PREF.SUBREDDIT_CSS] );
 
-		SUBREDDIT_EMOTES = !items[PREF.SUBREDDIT_EMOTES] ?
-			saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, DEFAULT_SUB_EMOTES ) :
+		const subredditEmotes = !items[PREF.SUBREDDIT_EMOTES] ?
+			await saveDefaultToStorage( PREF.SUBREDDIT_EMOTES, {} ) :
 			JSON.parse( items[PREF.SUBREDDIT_EMOTES] );
 
-		updateObject( CURRENT_CONFIG, DEFAULT_CONFIG, PREF.CONFIG );
-		updateObject( META, DEFAULT_META, PREF.META );
+		await updateObject( config, DEFAULT_CONFIG, PREF.CONFIG );
+		await updateObject( meta, DEFAULT_META, PREF.META );
 
-		this.response.config = CURRENT_CONFIG;
-		this.response.emotes = CURRENT_EMOTES;
-		this.response.sub_css = SUBREDDIT_CSS;
-		this.response.sub_emotes = SUBREDDIT_EMOTES;
+		packet.response.config = config;
+		packet.response.emotes = emotes;
+		packet.response.sub_css = subredditCSS;
+		packet.response.sub_emotes = subredditEmotes;
 
-		if( this.loadMeta ) {
-			this.response.meta = META;
+		if( packet.loadMeta ) {
+			packet.response.meta = meta;
 		}
 
-		// It's ugly to place that function call here.
-		// But THANKS TO CHROME that's the way it has to be.
-		// Unless I come up with a good way to refactor this.
-		Updater.check();
-
-		// Send loaded items to the tab that sent the request.
-		if( this.sender ) {
-			const cb = response => {
-				if( response ) {
-					handleMessage( { data: response }, this.sender );
-				}
-			};
-
-			browser.tabs.sendMessage( this.sender.tab.id, this.response )
-				.then( cb )
-				.catch( err => console.error( '[MyBrowser.handleLoadedItems] Send to:', this.sender, err ) );
-		}
+		setTimeout( () => Updater.check( meta, config, subredditCSS, subredditEmotes ), 0 );
 	},
 
 
 	/**
 	 * Load config and emotes.
-	 * @param  {Object}  response Response object that will get send to the content script.
-	 * @param  {Object}  sender   Sender of message. Used to send response.
-	 * @param  {Boolean} loadMeta True, if META data shall be included in the response.
-	 * @return {Object}  response
+	 * @param  {object}  response Response object that will get send to the content script.
+	 * @param  {object}  sender   Sender of message. Used to send response.
+	 * @param  {boolean} loadMeta True, if META data shall be included in the response.
+	 * @return {Promise<object>} response
 	 */
-	loadConfigAndEmotes( response, sender, loadMeta ) {
+	async loadConfigAndEmotes( response, sender, loadMeta ) {
+		response.from = 'background';
+
 		const packet = {
 			loadMeta: loadMeta,
 			response: response,
 			sender: sender,
 		};
 
+		const tabs = await storageGet( PREF.TABS, { fallback: [] } );
+
 		// Remember this tab in which MLE is running
-		if( this.tabs.indexOf( sender.tab.id ) < 0 ) {
-			this.tabs.push( sender.tab.id );
+		if( !tabs.includes( sender.tab.id ) ) {
+			tabs.push( sender.tab.id );
+			await storageSet( PREF.TABS, tabs );
 		}
 
-		browser.tabs.onRemoved.addListener( this.onTabRemove.bind( this ) );
+		addon().tabs.onRemoved.addListener( this.onTabRemove );
 
-		browser.storage.local.get()
-			.then( this.handleLoadedItems.bind( packet ) )
-			.catch( err => console.error( '[MyBrowser.loadConfigAndEmotes]', err ) );
+		try {
+			const items = await addon().storage.local.get();
+			await this.handleLoadedItems( packet, items );
 
-		// Response unaltered.
-		// Actual response happens in this.handleLoadedItems.
+			// Send loaded items to the tab that sent the request.
+			if( packet.sender ) {
+				const response = await addon().tabs.sendMessage( packet.sender.tab.id, packet.response );
+
+				if( response ) {
+					handleMessage( { data: response }, packet.sender );
+				}
+			}
+		}
+		catch( err ) {
+			console.error( '[MyBrowser.loadConfigAndEmotes]', err );
+		}
+
 		return response;
 	},
 
 
 	/**
 	 * Called when a tab is closed.
-	 * @param {Number} tabId ID of the removed tab.
-	 * @param {Object} info
+	 * @param {number} tabId ID of the removed tab.
+	 * @param {object} info
 	 */
-	onTabRemove( tabId, _info ) {
-		const idx = this.tabs.indexOf( tabId );
+	async onTabRemove( tabId, info ) {
+		console.debug( '[MyBrowser.onTabRemove]', tabId, info );
+
+		const tabs = await storageGet( PREF.TABS, { fallback: [] } );
+		const idx = tabs.indexOf( tabId );
 
 		if( idx >= 0 ) {
-			this.tabs.splice( idx, 1 );
+			tabs.splice( idx, 1 );
+			await storageSet( PREF.TABS, tabs );
 		}
 	},
 
@@ -345,35 +438,22 @@ const MyBrowser = {
 	 */
 	openOptions() {
 		const create = {
-			url: browser.runtime.getURL( 'options.html' ),
+			url: addon().runtime.getURL( 'options.html' ),
 			active: true,
 		};
 
-		browser.tabs.create( create )
+		addon().tabs.create( create )
 			.catch( err => console.error( '[MyBrowser.openOptions]', err ) );
 	},
 
 
 	/**
 	 * Register a function to handle messaging between pages.
-	 * @param {Function} handler
 	 */
-	registerMessageHandler( handler ) {
-		browser.runtime.onMessage.addListener( ( msg, sender, sendResponse ) => {
-			handler( { data: msg }, sender, sendResponse );
+	registerMessageHandler() {
+		addon().runtime.onMessage.addListener( ( msg, sender, sendResponse ) => {
+			handleMessage( { data: msg }, sender, sendResponse );
 		} );
-	},
-
-
-	/**
-	 * Send a response to a page that previously send a message.
-	 * THIS IS JUST A DUMMY FUNCTION.
-	 * @see   BrowserChrome.loadConfigAndEmotes()
-	 * @param {Object} _source
-	 * @param {Object} _msg
-	 */
-	respond( _source, _msg ) {
-		// pass
 	},
 
 
@@ -383,32 +463,14 @@ const MyBrowser = {
 	 * @param {String} val String as JSON.
 	 */
 	save( key, val ) {
-		console.debug( `[MyBrowser.save] Saving for "${key}" string with length ${val.length}...` );
+		console.debug( `[MyBrowser.save] Saving "${key}" string with length ${val.length}...` );
 
 		const saveObj = {};
 		saveObj[key] = val;
 
-		browser.storage.local.set( saveObj )
+		addon().storage.local.set( { [key]: val } )
 			.then( () => console.debug( '[MyBrowser.save] Success' ) )
 			.catch( err => console.error( '[MyBrowser.save]', err ) );
-	},
-
-
-	/**
-	 * Send a XMLHttpRequest.
-	 * @param {String}   method   POST or GET.
-	 * @param {String}   url      URL to send the request to.
-	 * @param {Boolean}  async    If to make the request async.
-	 * @param {Function} callback Callback function to handle the response.
-	 */
-	sendRequest( method, url, async, callback ) {
-		console.debug( '[MyBrowser.sendRequest]', method, url );
-
-		const xhr = new XMLHttpRequest();
-		xhr.open( method, url, async );
-		xhr.setRequestHeader( 'MLE-Addon-Request', '1' );
-		xhr.onreadystatechange = callback.bind( xhr );
-		xhr.send();
 	},
 
 
@@ -417,24 +479,15 @@ const MyBrowser = {
 
 /**
  * Getting the sub-reddit CSS and extracting the emotes.
- * @type {Object}
  */
 const Updater = {
 
 
 	// Config
-	xhrAsync: true,
-	xhrMethod: 'GET',
-	xhrTargets: [
+	subreddits: [
 		'r/mylittlepony',
 		'r/mlplounge',
 	],
-	xhrUserAgent: 'browser:MLE:2.11.1 (by /u/meinstuhlknarrt)',
-	xhrWait: 2000, // [ms] Time to wait between XHR calls
-
-	xhrCurrentTarget: null,
-	xhrProgress: 0,
-	xhrTargetsCSS: [],
 
 	// If true, the Last-Modified header will be ignored.
 	// Will be reset to false at the end of the update process.
@@ -447,25 +500,97 @@ const Updater = {
 	linkStartReverse: 'a[href^="/r"]',
 	tableCodeRegex: /^[abcefgh][0-9]{2}$/i,
 
-	emoteCSS: {},
-	emotes: {},
-
 
 	/**
 	 * Check if it is time for scheduled update
 	 * and start the process if it is the case.
+	 * @param {object} meta
+	 * @param {object} config
+	 * @param {object} css
+	 * @param {object} emotes
 	 */
-	check() {
+	check( meta, config, css, emotes ) {
 		// Less than zero means automatic checks are disabled
-		if( META.lastSubredditCheck < 0 ) {
+		if( meta.lastSubredditCheck < 0 ) {
 			return;
 		}
 
-		if( Date.now() - META.lastSubredditCheck >= CURRENT_CONFIG.intervalToCheckCSS ) {
-			this.emoteCSS = SUBREDDIT_CSS;
-			this.emotes = SUBREDDIT_EMOTES;
-			this.getCSSURLs();
+		if( Date.now() - meta.lastSubredditCheck >= config.intervalToCheckCSS ) {
+			this.getAndParseCSS( emotes, css );
 		}
+	},
+
+
+	/**
+	 * Get the URLs to the CSS files.
+	 * @param {object?} currentEmotes
+	 * @param {object?} currentCSS
+	 */
+	async getAndParseCSS( currentEmotes, currentCSS ) {
+		console.debug( '[Updater.getAndParseCSS]' );
+
+		const meta = await getMeta();
+
+		const resultEmotes = currentEmotes || {};
+		const resultCSS = currentCSS || {};
+		let hadChanges = false;
+
+		const processCSSToEmotes = ( subreddit, css ) => {
+			let emotes = [];
+
+			// Process CSS to emotes
+			[emotes, css] = this._extractEmotesStep1( css );
+			[emotes, css] = this._extractEmotesStep2( emotes, css, subreddit === 'r/mlplounge' );
+			emotes = this._removeReverseEmotes( emotes );
+			emotes = this._groupSameEmotes( emotes, css );
+
+			return [emotes, css]
+		};
+
+		for( let i = 0; i < this.subreddits.length; i++ ) {
+			// Wait between requests
+			if( i > 0 ) {
+				await new Promise( r => setTimeout( r, 1500 ) );
+			}
+
+			const subreddit = this.subreddits[i];
+			const pageURL = 'https://old.reddit.com/' + subreddit;
+
+			console.debug( '[Updater.getAndParseCSS] Subreddit:', subreddit );
+
+			const resHTML = await fetch( pageURL );
+			const pageHTML = await resHTML.text();
+
+			const cssURL = this._getCSSURLFromPage( pageHTML );
+			console.debug( '[Updater.getAndParseCSS] Custom CSS URL is:', cssURL );
+
+			const resCSS = await fetch( cssURL );
+			const contentType = resCSS.headers.get( 'Content-Type' );
+
+			if( contentType === 'text/css' ) {
+				const lastModified = Date.parse( resCSS.headers.get( 'Last-Modified' ) );
+
+				// Only process the stylesheet if something changed
+				// since the last check or it is a forced update.
+				if( this.forceUpdate || lastModified >= meta.lastSubredditCheck ) {
+					const css = await resCSS.text();
+					let [emotes, processedCSS] = processCSSToEmotes( subreddit, css );
+					resultEmotes[subreddit] = emotes;
+					resultCSS[subreddit] = processedCSS;
+					console.debug( '[Updater.getAndParseCSS] Added emotes and CSS.' );
+
+					hadChanges = true;
+				}
+				else {
+					console.debug( `[Updater.getAndParseCSS] No changes: ${lastModified} < ${meta.lastSubredditCheck}` );
+				}
+			}
+			else {
+				console.warn( '[Updater.getAndParseCSS] Content-Type of CSS was not "text/css":', contentType );
+			}
+		}
+
+		await this._wrapUp( hadChanges, resultEmotes, resultCSS );
 	},
 
 
@@ -475,7 +600,7 @@ const Updater = {
 	 * @param  {String} css Stylesheet.
 	 * @return {Object}     Emotes ordered by table.
 	 */
-	extractEmotesStep1( css ) {
+	_extractEmotesStep1( css ) {
 		let cssCopy = css;
 		let emoteCSS = [];
 		let needleImage = 'background-image';
@@ -483,15 +608,13 @@ const Updater = {
 		let needleTransform = 'transform';
 		let selectors = [];
 
-
 		// CSS code for reversing emotes
 
-		let rCSS = this.getReverseEmotesCSS( css );
+		let rCSS = this._getReverseEmotesCSS( css );
 
 		if( rCSS !== false ) {
 			emoteCSS.push( rCSS );
 		}
-
 
 		while( true ) {
 			let idxImage = cssCopy.indexOf( needleImage );
@@ -550,7 +673,7 @@ const Updater = {
 
 			// Get the rest of the relevant CSS part
 			eCSS = eCSS.reverse().join( '' );
-			eCSS += this.getRestOfCSS( cssCopy, idx );
+			eCSS += this._getRestOfCSS( cssCopy, idx );
 			emoteCSS.push( eCSS );
 
 			if( !ignoreSelectors ) {
@@ -559,21 +682,21 @@ const Updater = {
 			}
 
 			// Remove the CSS part we just processed
-			cssCopy = cssCopy.substr( idx + needleLength );
+			cssCopy = cssCopy.substring( idx + needleLength );
 		}
 
-
-		this.emotes[this.xhrCurrentTarget] = selectors;
-		this.emoteCSS[this.xhrCurrentTarget] = emoteCSS;
+		return [selectors, emoteCSS];
 	},
 
 
 	/**
 	 * Extract the emote names.
+	 * @private
+	 * @param {string[]} emotesCurrent
+	 * @param {string}   cssCurrent
+	 * @returns {(string[]|string)[]}
 	 */
-	extractEmotesStep2() {
-		let emotesCurrent = this.emotes[this.xhrCurrentTarget];
-		let cssCurrent = this.emoteCSS[this.xhrCurrentTarget];
+	_extractEmotesStep2( emotesCurrent, cssCurrent, isPlounge ) {
 		let emotes = [];
 		let idx = -1;
 
@@ -599,10 +722,7 @@ const Updater = {
 					// Ignore table-like Plounge emotes. There is no dedicated
 					// table list for Plounge emotes in MLE, so we would only
 					// end up with duplicated entries.
-					if(
-						this.xhrCurrentTarget != 'r/mlplounge' ||
-						emote.match( /^r?pl[0-9]{2}$/ ) === null
-					) {
+					if( !isPlounge || emote.match( /^r?pl[0-9]{2}$/ ) === null ) {
 						subEmoteList.push( emote );
 					}
 				}
@@ -614,88 +734,30 @@ const Updater = {
 			}
 		}
 
-		this.emoteCSS[this.xhrCurrentTarget] = this.removeNonEmoteCSS( cssCurrent );
-		this.emotes[this.xhrCurrentTarget] = emotes;
-	},
-
-
-	/**
-	 * Get the sub-reddit stylesheet per XHR.
-	 */
-	getCSS() {
-		if( this.isProgressFinished() ) {
-			this.wrapUp();
-			return;
-		}
-
-		let url = this.xhrTargetsCSS[this.xhrProgress];
-
-		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
-		this.xhrProgress++;
-
-		MyBrowser.sendRequest( this.xhrMethod, url, this.xhrAsync, this.handleCSSCallback );
-	},
-
-
-	/**
-	 * Get the URLs to the CSS files.
-	 */
-	getCSSURLs() {
-		// Just getting started. Prepare list for CSS URLs.
-		if( this.xhrProgress === 0 ) {
-			this.xhrTargetsCSS = [];
-		}
-		// We have all CSS URLs. Proceed with requesting the CSS files.
-		else if( this.xhrProgress == this.xhrTargets.length ) {
-			this.xhrProgress = 0;
-			this.getCSS();
-			return;
-		}
-
-		this.xhrCurrentTarget = this.xhrTargets[this.xhrProgress];
-		this.xhrProgress++;
-
-		// Fetch a small page which uses the subreddit CSS.
-		const url = 'https://old.reddit.com/' + this.xhrCurrentTarget;
-
-		MyBrowser.sendRequest( this.xhrMethod, url, this.xhrAsync, this.getCSSURLsCallback );
+		return [emotes, this._removeNonEmoteCSS( cssCurrent )];
 	},
 
 
 	/**
 	 * Handle the XHR callback for the request for a page from
 	 * which we can extract the CSS URL.
-	 * @param {Boolean} hasReadyState4 Workaround for Firefox.
-	 * @param {String}  responseText   Workaround for Firefox.
+	 * @param {string} responseText
+	 * @returns {string}
 	 */
-	getCSSURLsCallback( hasReadyState4, responseText ) {
-		let responseContent = '';
+	_getCSSURLFromPage( responseText ) {
+		const match = responseText.match( /href="[a-zA-Z0-9/.:\-_+]+" (ref="applied_subreddit_stylesheet")? title="applied_subreddit_stylesheet"/ );
 
-		if( hasReadyState4 === true ) {
-			responseContent = responseText;
-		}
-		else if( this.readyState == 4 ) {
-			responseContent = this.responseText;
+		if( !match ) {
+			console.error( '[Updater._getCSSURLFromPage] No CSS URL found.' );
+			return null;
 		}
 
-		if( hasReadyState4 === true || this.readyState == 4 ) {
-			let url = responseContent.match( /href="[a-zA-Z0-9/.:\-_+]+" (ref="applied_subreddit_stylesheet")? title="applied_subreddit_stylesheet"/ );
+		let url = match[0];
+		url = url.substring( 6 );
+		url = url.replace( '" ref="applied_subreddit_stylesheet', '' );
+		url = url.replace( '" title="applied_subreddit_stylesheet"', '' );
 
-			if( !url ) {
-				console.error( '[Updater.getCSSURLsCallback] No CSS URL found.' );
-				return;
-			}
-
-			url = url[0];
-			url = url.substr( 6 );
-			url = url.replace( '" ref="applied_subreddit_stylesheet', '' );
-			url = url.replace( '" title="applied_subreddit_stylesheet"', '' );
-
-			Updater.xhrTargetsCSS.push( url );
-
-			// Get the next CSS URL.
-			setTimeout( () => Updater.getCSSURLs(), Updater.xhrWait );
-		}
+		return url;
 	},
 
 
@@ -706,7 +768,7 @@ const Updater = {
 	 * @param  {Number} idx     Index of the found needle.
 	 * @return {String}         Extracted CSS.
 	 */
-	getRestOfCSS( cssCopy, idx ) {
+	_getRestOfCSS( cssCopy, idx ) {
 		let css = '';
 
 		for( let i = idx + 1; i < cssCopy.length; i++ ) {
@@ -726,7 +788,7 @@ const Updater = {
 	 * @param  {String}         css The CSS.
 	 * @return {String|Boolean}     The relevant CSS part or false if nothing could be found.
 	 */
-	getReverseEmotesCSS( css ) {
+	_getReverseEmotesCSS( css ) {
 		let rCSS = false;
 		let idxReverse = css.indexOf( this.linkStartReverse );
 
@@ -743,15 +805,18 @@ const Updater = {
 	/**
 	 * Group emotes that show the same image but have different names.
 	 * This is kind of unstable since it depends on the CSS authors' style not to change.
+	 * @private
+	 * @param {string[][]} emotesCurrent
+	 * @param {string}     css
+	 * @returns {string[][]}
 	 */
-	groupSameEmotes() {
-		let emotesCurrent = this.emotes[this.xhrCurrentTarget];
+	_groupSameEmotes( emotesCurrent, css ) {
 		let newEmoteList = [];
 		let nonTableEmotes = [];
 
 
 		// Get a list of lists with all the emotes that share the same background position
-		let emotesCurrentCSS = this.emoteCSS[this.xhrCurrentTarget].split( '\n' );
+		let emotesCurrentCSS = css.split( '\n' );
 		let lineEmotes = [];
 
 		for( let i = 0; i < emotesCurrentCSS.length; i++ ) {
@@ -761,9 +826,9 @@ const Updater = {
 				continue;
 			}
 
-			line = line.substr( 0, line.indexOf( '{' ) ) + ',';
+			line = line.substring( 0, line.indexOf( '{' ) ) + ',';
 			line = line.replace( /a\[href\|="\/([a-zA-Z0-9-_]+)"\],/g, '$1::' );
-			line = line.substr( 0, line.length - 2 );
+			line = line.substring( 0, line.length - 2 );
 			lineEmotes.push( line.split( '::' ) );
 		}
 
@@ -821,7 +886,7 @@ const Updater = {
 				let belongsToTable = false;
 
 				for( let rem = 0; rem < group.length; rem++ ) {
-					if( !belongsToTable && this.isTableCode( group[rem] ) ) {
+					if( !belongsToTable && this._isTableCode( group[rem] ) ) {
 						belongsToTable = true;
 					}
 					ecCopy.splice( ecCopy.indexOf( group[rem] ), 1 );
@@ -853,72 +918,7 @@ const Updater = {
 			newEmoteList.push( [noDoubles] );
 		}
 
-		this.emotes[this.xhrCurrentTarget] = newEmoteList;
-	},
-
-
-	/**
-	 * After receiving the stylesheet, start extracting the emotes.
-	 * @param {String} responseText Response to the request.
-	 * @param {Number} lastModified A timestamp when the stylesheet has been last modified.
-	 *                              (At least according to what the server tells us.)
-	 * @param {String} contentType  Content-Type of the received resource. We need "text/css".
-	 */
-	handleCSS( responseText, lastModified, contentType ) {
-		// Don't process if it isn't CSS.
-		if( contentType === 'text/css' ) {
-			// Only process the stylesheet if something changed since the last check
-			// or it is a forced update.
-			if( this.forceUpdate || lastModified >= META.lastSubredditCheck ) {
-				// Create key for subreddit, if not already existent
-				if( !Object.prototype.hasOwnProperty.call( this.emoteCSS, this.xhrCurrentTarget ) ) {
-					this.emoteCSS[this.xhrCurrentTarget] = [];
-				}
-				if( !Object.prototype.hasOwnProperty.call( this.emotes, this.xhrCurrentTarget ) ) {
-					this.emotes[this.xhrCurrentTarget] = [];
-				}
-
-				// Process CSS to emotes
-				this.extractEmotesStep1( responseText );
-				this.extractEmotesStep2();
-				this.removeReverseEmotes();
-				this.groupSameEmotes();
-			}
-		}
-
-		// Get next subreddit CSS.
-		// The reddit API guidelines say:
-		// Not more than 1 request every 2 seconds.
-		if( !this.isProgressFinished() ) {
-			setTimeout( ev => this.getCSS( ev ), this.xhrWait );
-		}
-		else {
-			this.getCSS();
-		}
-	},
-
-
-	/**
-	 * After receiving the stylesheet, start extracting the emotes.
-	 * (Callback function for browser who use XMLHttpRequest.)
-	 * @param {Boolean} hasReadyState4
-	 * @param {String}  responseText
-	 * @param {Number}  lastModified
-	 * @param {String}  contentType
-	 */
-	handleCSSCallback( hasReadyState4, responseText, lastModified, contentType ) {
-		// Firefox
-		if( hasReadyState4 === true ) {
-			Updater.handleCSS( responseText, lastModified, contentType );
-		}
-		// The rest
-		else if( this.readyState == 4 ) {
-			lastModified = this.getResponseHeader( 'Last-Modified' );
-			contentType = this.getResponseHeader( 'Content-Type' );
-
-			lastModified = Date.parse( lastModified );
-			Updater.handleCSS( this.responseText, lastModified, contentType );
-		}
+		return newEmoteList;
 	},
 
 
@@ -927,9 +927,9 @@ const Updater = {
 	 * @param  {Array<String>} group Emote and its names.
 	 * @return {String}              Table name of the emote or false if it cannot be identified.
 	 */
-	identifyTableOfEmoteGroup( group ) {
+	_identifyTableOfEmoteGroup( group ) {
 		for( let i = group.length - 1; i >= 0; i-- ) {
-			if( this.isTableCode( group[i] ) ) {
+			if( this._isTableCode( group[i] ) ) {
 				return group[i][0].toUpperCase();
 			}
 		}
@@ -939,20 +939,11 @@ const Updater = {
 
 
 	/**
-	 * Check if all XHR targets have been used.
-	 * @return {Boolean} True if no more XHR calls will be made, false otherwise.
-	 */
-	isProgressFinished() {
-		return this.xhrProgress >= this.xhrTargets.length;
-	},
-
-
-	/**
 	 * Checks if a given emote is in table code form, for example "a02".
 	 * @param  {String}  emote Emote name.
 	 * @return {Boolean}       True if the emote is in table code form, false otherwise.
 	 */
-	isTableCode( emote ) {
+	_isTableCode( emote ) {
 		return emote.match( this.tableCodeRegex ) !== null;
 	},
 
@@ -960,11 +951,15 @@ const Updater = {
 	/**
 	 * Merge the emotes extracted from the subreddit stylesheets
 	 * with our lists. Or create the list if it doesn't exist yet.
+	 * @param {object} emotes
+	 * @returns {object}
 	 */
-	mergeSubredditEmotesIntoLists() {
-		const cfg = CURRENT_CONFIG;
-		const r_mlp = this.emotes['r/mylittlepony'];
-		const r_plounge = this.emotes['r/mlplounge'];
+	async _mergeSubredditEmotesIntoLists( emotes ) {
+		const cfg = await getConfig();
+		const currentEmotes = await getEmotes();
+
+		const r_mlp = emotes['r/mylittlepony'];
+		const r_plounge = emotes['r/mlplounge'];
 
 		// r/mylittlepony
 		// Different tables to take care of.
@@ -973,7 +968,7 @@ const Updater = {
 
 			for( let j = 0; j < emoteCluster.length; j++ ) {
 				let group = emoteCluster[j];
-				let table = this.identifyTableOfEmoteGroup( group );
+				let table = this._identifyTableOfEmoteGroup( group );
 
 				if( table === false ) {
 					continue;
@@ -1010,18 +1005,18 @@ const Updater = {
 				}
 
 				// Create table if not there anymore
-				if( !Object.prototype.hasOwnProperty.call( CURRENT_EMOTES, table ) ) {
-					CURRENT_EMOTES[table] = [];
+				if( !Object.prototype.hasOwnProperty.call( currentEmotes, table ) ) {
+					currentEmotes[table] = [];
 				}
 
 				// Add emote to the table if not in there already
 				let add = false;
 
 				for( let k = 0; k < group.length; k++ ) {
-					if( group.length > 1 && this.isTableCode( group[k] ) ) {
+					if( group.length > 1 && this._isTableCode( group[k] ) ) {
 						continue;
 					}
-					if( CURRENT_EMOTES[table].indexOf( group[k] ) >= 0 ) {
+					if( currentEmotes[table].indexOf( group[k] ) >= 0 ) {
 						add = false;
 						break;
 					}
@@ -1030,7 +1025,7 @@ const Updater = {
 					}
 				}
 				if( add !== false ) {
-					CURRENT_EMOTES[table].push( add );
+					currentEmotes[table].push( add );
 				}
 			}
 		}
@@ -1042,23 +1037,25 @@ const Updater = {
 
 			for( let j = 0; j < emoteCluster.length; j++ ) {
 				let group = emoteCluster[j];
-				let table = this.identifyTableOfEmoteGroup( group );
+				let table = this._identifyTableOfEmoteGroup( group );
 
 				if( table !== false ) {
 					continue;
 				}
 
-				if( !Object.prototype.hasOwnProperty.call( CURRENT_EMOTES, cfg.listNamePlounge ) ) {
-					CURRENT_EMOTES[cfg.listNamePlounge] = [];
+				if( !Object.prototype.hasOwnProperty.call( currentEmotes, cfg.listNamePlounge ) ) {
+					currentEmotes[cfg.listNamePlounge] = [];
 				}
 
 				for( let k = 0; k < group.length; k++ ) {
-					if( CURRENT_EMOTES[cfg.listNamePlounge].indexOf( group[k] ) < 0 ) {
-						CURRENT_EMOTES[cfg.listNamePlounge].push( group[k] );
+					if( currentEmotes[cfg.listNamePlounge].indexOf( group[k] ) < 0 ) {
+						currentEmotes[cfg.listNamePlounge].push( group[k] );
 					}
 				}
 			}
 		}
+
+		return currentEmotes;
 	},
 
 
@@ -1067,7 +1064,7 @@ const Updater = {
 	 * @param  {Array<String>} css
 	 * @return {String}
 	 */
-	removeNonEmoteCSS( css ) {
+	_removeNonEmoteCSS( css ) {
 		let purgedCSS = [];
 
 		for( let i = 0; i < css.length; i++ ) {
@@ -1105,9 +1102,11 @@ const Updater = {
 
 	/**
 	 * Remove the emotes which are simply mirrored versions of others.
+	 * @private
+	 * @param {string[][]} emotesCurrent
+	 * @returns {string[][]}
 	 */
-	removeReverseEmotes() {
-		let emotesCurrent = this.emotes[this.xhrCurrentTarget];
+	_removeReverseEmotes( emotesCurrent ) {
 		let flatCopy = [];
 		let newEmoteList = [];
 
@@ -1125,66 +1124,73 @@ const Updater = {
 
 				// If the emote doesn't start with "r" or does, but the
 				// part after the first "r" isn't a known emote: keep it
-				if( emote[0] != 'r' || flatCopy.indexOf( emote.substr( 1 ) ) == -1 ) {
+				if( emote[0] != 'r' || !flatCopy.includes( emote.substring( 1 ) ) ) {
 					newEmoteList[i].push( emote );
 				}
 			}
 		}
 
-		// Save the new emote list and fitler out now empty sub-lists.
-		this.emotes[this.xhrCurrentTarget] = [];
+		// Save the new emote list and filter out now empty sub-lists.
+		const newList = [];
 
 		for( let i = 0; i < newEmoteList.length; i++ ) {
 			if( newEmoteList[i].length > 0 ) {
-				this.emotes[this.xhrCurrentTarget].push( newEmoteList[i].slice( 0 ) );
+				newList.push( newEmoteList[i].slice( 0 ) );
 			}
 		}
+
+		return newList;
 	},
 
 
 	/**
 	 * Called at the end of updating ALL subreddit CSS.
 	 * Saves the emotes and CSS. Resets counter.
+	 * @param {boolean} hadChanges
+	 * @param {object}  resultEmotes
+	 * @param {object}  resultCSS
 	 */
-	wrapUp() {
-		META.lastSubredditCheck = Date.now();
-		saveToStorage( PREF.META, META );
+	async _wrapUp( hadChanges, resultEmotes, resultCSS ) {
+		console.debug( '[Updater._wrapUp]', hadChanges, resultEmotes, resultCSS );
 
-		let flagUpdateSuccess = true;
+		const meta = await getMeta();
+		meta.lastSubredditCheck = Date.now();
+		await storageSet( PREF.META, meta );
 
-		for( let i = 0; i < this.xhrTargets.length; i++ ) {
-			if(
-				!Object.prototype.hasOwnProperty.call( this.emotes, this.xhrTargets[i] ) ||
-				this.emotes[this.xhrTargets[i]].length === 0
-			) {
-				flagUpdateSuccess = false;
+		if( hadChanges ) {
+			let flagUpdateSuccess = true;
+
+			for( let i = 0; i < this.subreddits.length; i++ ) {
+				const subreddit = this.subreddits[i];
+
+				if( !resultEmotes[subreddit] || resultEmotes[subreddit].length === 0 ) {
+					flagUpdateSuccess = false;
+				}
+			}
+
+			if( flagUpdateSuccess ) {
+				await storageSet( PREF.SUBREDDIT_CSS, resultCSS, { json: true } );
+				await storageSet( PREF.SUBREDDIT_EMOTES, resultEmotes, { json: true } );
+
+				const currentEmotes = await this._mergeSubredditEmotesIntoLists( resultEmotes );
+				await storageSet( PREF.EMOTES, currentEmotes );
 			}
 		}
-
-		if( flagUpdateSuccess ) {
-			saveToStorage( PREF.SUBREDDIT_CSS, this.emoteCSS );
-			saveToStorage( PREF.SUBREDDIT_EMOTES, this.emotes );
-
-			this.mergeSubredditEmotesIntoLists();
-			saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
+		else {
+			console.debug( '[Updater._wrapUp] No changes to save.' );
 		}
 
 		if( this.forceUpdate ) {
-			let response = { task: BG_TASK.UPDATE_CSS };
-			let promise = browser.tabs.sendMessage( this.forceSource.tab.id, response );
+			const response = { task: BG_TASK.UPDATE_CSS, from: 'background' };
+			const promise = addon().tabs.sendMessage( this.forceSource.tab.id, response );
 			promise.then(
 				null,
-				function( err ) {
-					console.error( err );
-				}
+				err => console.error( err ),
 			);
 		}
 
 		this.forceUpdate = false;
 		this.forceSource = null;
-		this.emoteCSS = {};
-		this.emotes = {};
-		this.xhrProgress = 0;
 	},
 
 
@@ -1195,13 +1201,14 @@ const Updater = {
 /**
  * Receive message from inline script and answer back.
  * @param {Event}  ev
- * @param {Object} sender (Chrome and Firefox only)
- * @param {Object} sendResponse (Chrome only)
+ * @param {object} sender
  */
-function handleMessage( ev, sender, _sendResponse ) {
+async function handleMessage( ev, sender ) {
+	console.debug( '[handleMessage]', ev, sender );
+
 	let response = {};
-	let data = ev.data ? ev.data : ev;
-	let source = sender ? sender : ev.source;
+	let data = ev.data || ev;
+	let source = sender || ev.source;
 	let broadcast = false;
 
 	// Only handle messages which come with a set task.
@@ -1212,68 +1219,80 @@ function handleMessage( ev, sender, _sendResponse ) {
 
 	switch( data.task ) {
 		case BG_TASK.UPDATE_EMOTES:
-			mergeEmotesWithUpdate( data.update );
-			response = saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
-
-			response.update = data.update;
-			broadcast = true;
+			{
+				const currentEmotes = await getEmotes();
+				mergeEmotesWithUpdate( currentEmotes, data.update );
+				response.success = await storageSet( PREF.EMOTES, currentEmotes );
+				response.update = data.update;
+				broadcast = true;
+			}
 			break;
 
 		case BG_TASK.UPDATE_LIST_ORDER:
-			CURRENT_EMOTES = data.update;
-			saveToStorage( PREF.EMOTES, data.update );
-
+			response.success = await storageSet( PREF.EMOTES, data.update );
 			response.update = data.update;
 			broadcast = true;
 			break;
 
 		case BG_TASK.UPDATE_LIST_NAME:
 			{
-				let u = data.update;
-				changeListName( u.oldName, u.newName );
-				saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
+				const u = data.update;
+				let currentEmotes = await getEmotes();
+				currentEmotes = changeListName( currentEmotes, u.oldName, u.newName );
+				response.success = await storageSet( PREF.EMOTES, currentEmotes );
 				response.update = u;
 				broadcast = true;
 			}
 			break;
 
 		case BG_TASK.UPDATE_LIST_DELETE:
-			delete CURRENT_EMOTES[data.update.deleteList];
-			saveToStorage( PREF.EMOTES, CURRENT_EMOTES );
-
-			response.deleteList = data.update.deleteList;
-			broadcast = true;
+			{
+				let currentEmotes = await getEmotes();
+				delete currentEmotes[data.update.deleteList];
+				response.success = await storageSet( PREF.EMOTES, currentEmotes );
+				response.deleteList = data.update.deleteList;
+				broadcast = true;
+			}
 			break;
 
 		case BG_TASK.LOAD:
-			response = loadConfigAndEmotes( { task: data.task }, source, !!data.loadMeta );
+			response = await loadConfigAndEmotes( { task: data.task }, source, !!data.loadMeta );
 			break;
 
 		case BG_TASK.SAVE_EMOTES:
-			// Currently we have more than 1 list, but the update is empty.
-			// This is too suspicious and shouldn't happen. Don't do it.
-			if( CURRENT_EMOTES.length >= 2 && data.emotes.length <= 0 ) {
-				response.success = false;
-				break;
+			{
+				const currentEmotes = await getEmotes();
+
+				// Currently we have more than 1 list, but the update is empty.
+				// This is too suspicious and shouldn't happen. Don't do it.
+				if( currentEmotes.length >= 2 && data.emotes.length <= 0 ) {
+					response.success = false;
+					break;
+				}
+
+				response.success = await storageSet( PREF.EMOTES, data.emotes );
 			}
-			response = saveToStorage( PREF.EMOTES, data.emotes );
 			break;
 
 		case BG_TASK.SAVE_CONFIG:
-			{
-				let config = data.config || data.update;
-				CURRENT_CONFIG = mergeWithConfig( config );
-				response = saveToStorage( PREF.CONFIG, CURRENT_CONFIG );
-				response.config = CURRENT_CONFIG;
+			try {
+				let currentConfig = await getConfig();
+				currentConfig = mergeWithConfig( currentConfig, data.config || data.update );
+				response.success = await storageSet( PREF.CONFIG, currentConfig );
+				response.config = currentConfig;
+			}
+			catch( err ) {
+				console.error( '[handleMessage] SAVE_CONFIG', err );
+				return;
 			}
 			break;
 
 		case BG_TASK.RESET_CONFIG:
-			saveDefaultToStorage( PREF.CONFIG, DEFAULT_CONFIG );
+			response.success = await storageSet( PREF.CONFIG, DEFAULT_CONFIG );
 			break;
 
 		case BG_TASK.RESET_EMOTES:
-			saveDefaultToStorage( PREF.EMOTES, DEFAULT_EMOTES );
+			response.success = await storageSet( PREF.EMOTES, DEFAULT_EMOTES );
 			break;
 
 		case BG_TASK.OPEN_OPTIONS:
@@ -1283,7 +1302,7 @@ function handleMessage( ev, sender, _sendResponse ) {
 		case BG_TASK.UPDATE_CSS:
 			Updater.forceUpdate = true;
 			Updater.forceSource = source;
-			Updater.getCSSURLs();
+			Updater.getAndParseCSS();
 			return;
 
 		default:
@@ -1296,30 +1315,29 @@ function handleMessage( ev, sender, _sendResponse ) {
 	if( broadcast ) {
 		MyBrowser.broadcast( source, response );
 	}
-	else {
-		MyBrowser.respond( source, response );
-	}
 }
 
 
 /**
  * Change the name of a list while keeping the order.
- * @param {String} oldName Current name of the list.
- * @param {String} newName New name for the list.
+ * @param {object} emotes
+ * @param {string} oldName Current name of the list.
+ * @param {string} newName New name for the list.
+ * @returns {object}
  */
-function changeListName( oldName, newName ) {
+function changeListName( emotes, oldName, newName ) {
 	let emotesNew = {};
 
-	for( const key in CURRENT_EMOTES ) {
+	for( const key in emotes ) {
 		if( key == oldName ) {
-			emotesNew[newName] = CURRENT_EMOTES[key];
+			emotesNew[newName] = emotes[key];
 		}
 		else {
-			emotesNew[key] = CURRENT_EMOTES[key];
+			emotesNew[key] = emotes[key];
 		}
 	}
 
-	CURRENT_EMOTES = emotesNew;
+	return emotesNew;
 }
 
 
@@ -1330,13 +1348,13 @@ function changeListName( oldName, newName ) {
  * @param  {Boolean} loadMeta True, if META data shall be included in the response.
  * @return {Object}           Response with the loaded config and emotes.
  */
-function loadConfigAndEmotes( response, sender, loadMeta ) {
+async function loadConfigAndEmotes( response, sender, loadMeta ) {
 	if( !response ) {
 		response = {};
 	}
 
 	try {
-		response = MyBrowser.loadConfigAndEmotes( response, sender, loadMeta );
+		response = await MyBrowser.loadConfigAndEmotes( response, sender, loadMeta );
 	}
 	catch( err ) {
 		console.error( '[loadConfigAndEmotes] Background process: Could not load preferences.', err );
@@ -1348,12 +1366,12 @@ function loadConfigAndEmotes( response, sender, loadMeta ) {
 
 /**
  * Merge the currently loaded emotes with the update.
- * @param  {Object} emotes  Changed lists with their emotes.
- * @return {Object} Updated emote lists.
+ * @param {object} currentEmotes
+ * @param {object} emotes  Changed lists with their emotes.
  */
-function mergeEmotesWithUpdate( emotes ) {
+function mergeEmotesWithUpdate( currentEmotes, emotes ) {
 	for( const key in emotes ) {
-		CURRENT_EMOTES[key] = emotes[key];
+		currentEmotes[key] = emotes[key];
 	}
 }
 
@@ -1362,44 +1380,41 @@ function mergeEmotesWithUpdate( emotes ) {
  * Merge the config obj with the current config.
  * So only changes are overwritten and all other values are preserved.
  * Unknown config keys in obj will be removed!
- * @param  {Object} obj
- * @return {Object}
+ * @param {object} currentConfig
+ * @param {object} update
+ * @return {object}
  */
-function mergeWithConfig( obj ) {
-	let obj_new = {};
+function mergeWithConfig( currentConfig, update ) {
+	let merged = {};
 
-	if( !CURRENT_CONFIG ) {
-		loadConfigAndEmotes( {} );
-	}
-
-	// Remove unknown config keys
-	for( const key in obj ) {
-		if( Object.prototype.hasOwnProperty.call( CURRENT_CONFIG, key ) ) {
-			obj_new[key] = obj[key];
+	// Only add known config keys
+	for( const key in update ) {
+		if( Object.prototype.hasOwnProperty.call( currentConfig, key ) ) {
+			merged[key] = update[key];
 		}
 	}
 
 	// Add missing config keys
-	for( const key in CURRENT_CONFIG ) {
-		if( !Object.prototype.hasOwnProperty.call( obj_new, key ) ) {
-			obj_new[key] = CURRENT_CONFIG[key];
+	for( const key in currentConfig ) {
+		if( !Object.prototype.hasOwnProperty.call( merged, key ) ) {
+			merged[key] = currentConfig[key];
 		}
 	}
 
-	return obj_new;
+	return merged;
 }
 
 
 /**
  * Save a default value to the extension storage.
- * @param  {Number} key Key to save the object under.
- * @param  {Object} obj Default value to save.
- * @return {Object}     Default value. Same as parameter "obj".
+ * @param  {number} key Key to save the object under.
+ * @param  {object} obj Default value to save.
+ * @return {Promise<object>} Default value. Same as parameter "obj".
  */
-function saveDefaultToStorage( key, obj ) {
-	const r = saveToStorage( key, obj );
+async function saveDefaultToStorage( key, obj ) {
+	const success = await storageSet( key, obj );
 
-	if( r.success ) {
+	if( success ) {
 		console.debug( `[saveDefaultToStorage] Background process: "${key}" not in extension preferences yet. Created default.` );
 	}
 	else {
@@ -1411,50 +1426,23 @@ function saveDefaultToStorage( key, obj ) {
 
 
 /**
- * Save to the extension storage.
- * @param  {Number} key Key to save the object under.
- * @param  {Object} obj Object to save.
- * @return {Object}     Contains key "success" with a boolean value.
- */
-function saveToStorage( key, obj ) {
-	let obj_json;
-
-	if( !obj ) {
-		return { success: false };
-	}
-
-	try {
-		obj_json = JSON.stringify( obj );
-	}
-	catch( err ) {
-		console.error( '[saveToStorage]', err );
-		return { success: false };
-	}
-
-	MyBrowser.save( key, obj_json );
-
-	return { success: true };
-}
-
-
-/**
  * Update the currently stored object in case of newly added keys/values.
- * @param  {Object} current       The object as it is currently stored (not JSON).
- * @param  {Object} defaultValues The default state of the object.
- * @param  {String} storageKey    The storage key to save it under.
- * @return {Object}               The updated object.
+ * @param  {object} current       The object as it is currently stored (not JSON).
+ * @param  {object} defaultValues The default state of the object.
+ * @param  {string} storageKey    The storage key to save it under.
+ * @return {Promise<object>} The updated object.
  */
-function updateObject( current, defaultValues, storageKey ) {
+async function updateObject( current, defaultValues, storageKey ) {
 	for( const key in defaultValues ) {
 		if( !Object.prototype.hasOwnProperty.call( current, key ) ) {
 			current[key] = defaultValues[key];
 		}
 	}
 
-	saveToStorage( storageKey, current );
+	await storageSet( storageKey, current );
 
 	return current;
 }
 
 
-MyBrowser.registerMessageHandler( handleMessage );
+MyBrowser.registerMessageHandler();

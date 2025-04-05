@@ -5,7 +5,7 @@ let CONFIG = null;
 let EMOTES = null;
 let META = null;
 
-let OPT_CFG = {
+const OPT_CFG = {
 	INIT_DONE: false,
 	MSG_TIMEOUT: 8000, // [ms]
 };
@@ -47,7 +47,8 @@ function forceUpdate( ev ) {
 
 /**
  * Get the value of the currently selected <option>.
- * @param {DOMElement} select
+ * @param {HTMLSelectElement} select
+ * @returns {string}
  */
 function getOptionValue( select ) {
 	return select.options[select.selectedIndex].value;
@@ -61,29 +62,45 @@ function getOptionValue( select ) {
 function handleBackgroundMessages( ev ) {
 	console.debug( '[handleBackgroundMessages]', ev );
 
-	let data = ev.data ? ev.data : ev;
+	const data = ev.data ? ev.data : ev;
 
 	if( !data.task ) {
 		console.warn( "[handleBackgroundMessages] Message from background process didn't contain the handled task." );
 		return;
 	}
 
+	if( data.from === 'content' ) {
+		console.debug( '[handleBackgroundMessage] Message came from content script, ignore as not relevant for options.' );
+		return;
+	}
+
 	switch( data.task ) {
 		case BG_TASK.LOAD:
-			CONFIG = data.config;
-			EMOTES = data.emotes;
-			META = data.meta;
+			CONFIG = data.config || CONFIG;
+			EMOTES = data.emotes || EMOTES;
+			META = data.meta || META;
 			init2();
 			break;
 
 		case BG_TASK.SAVE_CONFIG:
 			if( data.success ) {
-				CONFIG = data.config;
+				CONFIG = data.config || CONFIG;
 			}
 			break;
 
 		case BG_TASK.UPDATE_CSS:
 			showMsg( 'Force update finished.', 'info' );
+			break;
+
+		case BG_TASK.OPEN_OPTIONS:
+		case BG_TASK.RESET_CONFIG:
+		case BG_TASK.RESET_EMOTES:
+		case BG_TASK.SAVE_EMOTES:
+		case BG_TASK.UPDATE_EMOTES:
+		case BG_TASK.UPDATE_LIST_DELETE:
+		case BG_TASK.UPDATE_LIST_NAME:
+		case BG_TASK.UPDATE_LIST_ORDER:
+			console.debug( '[handleBackgroundMessages] Nothing to do for task:', data.task );
 			break;
 
 		default:
@@ -110,7 +127,7 @@ function importConfig() {
 
 	if( cfg.length === 0 ) {
 		showMsg( 'Nothing to import.', 'err' );
-		console.error( 'MyLittleEmotebox: Nothing to import.' );
+		console.error( '[importConfig] Nothing to import.' );
 		return;
 	}
 
@@ -119,8 +136,7 @@ function importConfig() {
 	}
 	catch( err ) {
 		showMsg( ['Input not parsable as JSON.', 'Config remains unchanged.'], 'err' );
-		console.error( 'MyLittleEmotebox: Could not parse input as JSON.' );
-		console.error( err );
+		console.error( '[importConfig] Could not parse input as JSON.', err );
 		return;
 	}
 
@@ -151,8 +167,7 @@ function importEmotes() {
 	}
 	catch( err ) {
 		showMsg( ['Input not parsable as JSON.', 'Emotes remain unchanged.'], 'err' );
-		console.error( 'MyLittleEmotebox: Could not JSON-parse import.' );
-		console.error( err );
+		console.error( '[importEmotes] Could not JSON-parse import.', err );
 		return;
 	}
 
@@ -234,6 +249,8 @@ function loadConfig() {
  * @param {Object} msg Message to send.
  */
 function sendMessage( msg ) {
+	msg.from = 'options';
+
 	console.debug( '[sendMessage]', msg );
 
 	// Firefox
@@ -244,7 +261,9 @@ function sendMessage( msg ) {
 	}
 	// Chrome
 	else if( typeof chrome !== 'undefined' ) {
-		chrome.runtime.sendMessage( msg, handleBackgroundMessages );
+		chrome.runtime.sendMessage( msg )
+			.then( res => res && handleBackgroundMessages( { data: res } ) )
+			.catch( err => console.error( '[sendMessage]', err ) );
 	}
 }
 
@@ -356,7 +375,7 @@ function registerForBackgroundMessages() {
 	}
 	// Chrome
 	else if( typeof chrome !== 'undefined' ) {
-		chrome.runtime.onMessage.addListener( handleBackgroundMessages );
+		chrome.runtime.onMessage.addListener( msg => handleBackgroundMessages( { data: msg } ) );
 	}
 }
 
@@ -410,12 +429,12 @@ function saveEmotes( emotes ) {
 
 /**
  * Get the config value of a changed <input>.
- * @param  {Event}   ev
- * @return {mixed}      String, boolean or integer.
- * @throws {Boolean}    If no valid config value can be extracted.
+ * @param {Event} ev
+ * @returns {boolean|number|string}
+ * @throws {boolean} If no valid config value can be extracted.
  */
 function saveHandleInput( ev ) {
-	let cfgName = ev.target.id;
+	const cfgName = ev.target.id;
 	let val = null;
 
 	switch( ev.target.type ) {
@@ -450,8 +469,8 @@ function saveHandleInput( ev ) {
 
 /**
  * Get the config value of a changed <select>.
- * @param  {Event} ev
- * @return {mixed}    String or boolean.
+ * @param {Event} ev
+ * @returns {boolean|string}
  */
 function saveHandleSelect( ev ) {
 	let val = getOptionValue( ev.target );
@@ -459,6 +478,7 @@ function saveHandleSelect( ev ) {
 	if( ev.target.id == 'ctxMenu' ) {
 		val = ( val == 'true' );
 	}
+
 	return val;
 }
 

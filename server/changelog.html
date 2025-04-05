@@ -4,21 +4,19 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="robots" content="noindex" />
-	<title>My Little Emotebox – A browser extension for Chrome, Firefox and Opera</title>
-	<meta name="author" content="meinstuhlknarrt" />
+	<title>My Little Emotebox – A browser extension for Chrome and Firefox</title>
 	<link rel="shortcut icon" href="MLE_32.png" />
-	<link rel="stylesheet" href="mle.css" />
-	<link rel="chrome-webstore-item" href="https://chrome.google.com/webstore/detail/akkkkifniibnnabhagkppchajlbaggbp">
-	<script src="mle.js"></script>
+	<link rel="stylesheet" href="mle.css?v=1" />
+	<script src="mle.js?v=1"></script>
 </head>
 <body>
 
 <h1>My Little Emotebox<sup id="version"></sup></h1>
 
 <nav class="main">
-	<a href="index.php">Features</a>
-	<a href="install.php">Install</a>
-	<a href="changelog.php" class="active">Changelog</a>
+	<a href="index.html">Features</a>
+	<a href="install.html">Install</a>
+	<a href="changelog.html" class="active">Changelog</a>
 </nav>
 
 
@@ -28,12 +26,23 @@
 			<a href="https://github.com/sebadorn/MLE">Source code available on GitHub.</a>
 		</li>
 		<li>
+			<h2>2.12.0<span class="date">2025-04-03</span></h2>
+			<p class="note">Now also available on the <a href="https://chromewebstore.google.com/detail/my-little-emotebox/akkkkifniibnnabhagkppchajlbaggbp">Chrome Web Store</a> (unlisted).</p>
+			<ul>
+				<li><code class="feat">Feature</code> Add-on is now using Manifest V3.</li>
+				<li><code class="fix">Fix</code> Context menu to delete or move emote did not show in emote box.</li>
+				<li><code class="fix">Fix</code> Options page could lose data because of messages meant for the background script.</li>
+				<li><code class="misc">Misc</code> Removed more permissions.</li>
+				<li><code class="misc">Misc</code> Cleaned up code for CSS updater.</li>
+			</ul>
+		</li>
+		<li>
 			<h2>2.11.1<span class="date">2025-03-22</span></h2>
 			<p class="note">Same as 2.11.0. Had to create a new version in order to migrate to hosting on the <a href="https://addons.mozilla.org/firefox/addon/my-little-emotebox/">Firefox Add-On page</a> (AMO).</p>
 		</li>
 		<li>
 			<h2>2.11.0<span class="date">2025-03-22</span></h2>
-			<p class="note">For now there will only be an update for Firefox. For Chrome the addon has to be moved to manifest v3, which requires some additional work.</p>
+			<p class="note">For now there will only be an update for Firefox. For Chrome the add-on has to be moved to manifest v3, which requires some additional work.</p>
 			<ul>
 				<li><code class="feat">Feature</code> Support the new Reddit UI (<em>Limitations:</em> Emotes cannot be automatically inserted into the comment editor, and the "Open MLE" button is only added to the top-level comment editor.)</li>
 				<li><code class="feat">Feature</code> Showing the emote code in the top bar of the MLE window so it can be copied. Especially relevant for use in the new Reddit UI where automatically inserting the code does not work.</li>

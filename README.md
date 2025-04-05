@@ -12,9 +12,9 @@ The directory `all/` is where I store all the files that are shared cross-browse
 
 ## Build it
 
-In order to build the browser extensions I wrote the *build.sh* script. It takes two parameters; one for the browser (all, chrome, firefox) and one for the version (for example "2.11.0"). Example:
+In order to build the browser extensions I wrote the *build.sh* script. It takes two parameters; one for the browser (all, chrome, firefox) and one for the version (for example "2.12.0"). Example:
 
-    ./build.sh firefox 2.11.0
+    ./build.sh firefox 2.12.0
 
 There are some variables inside of some files, that will be replaced while building the extension:
 
@@ -24,11 +24,9 @@ There are some variables inside of some files, that will be replaced while build
 
 ### Chrome
 
-You can build a Chrome extension right from the Chrome extensions page. (*Developer mode* has to be checked.) The first time you create the Chrome MLE extension, a PEM file will be generated, which stores a private key for this extension. DO NOT SHARE THIS FILE. There's a reason it's called *private* key.
+The build script created a ZIP file for the extension. For validation and signing this has to be uploaded to the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole/).
 
-On every following build you have to provide this PEM file. Command line style it looks like this:
-
-    google-chrome --pack-extension=Chrome/ --pack-extension-key=chrome-private-key-mle.pem
+Uploaded builds can then also be downloaded as `.crx` file under "Build -> Package".
 
 
 ### Firefox

@@ -62,7 +62,21 @@
 		sub_css: null,
 		// Emotes found in the stylesheets
 		sub_emotes: null,
+		taskQueue: {},
 	};
+
+
+	/**
+	 *
+	 * @returns {object}
+	 */
+	function addon() {
+		if( typeof browser === 'undefined' ) {
+			return chrome;
+		}
+
+		return browser;
+	}
 
 
 	/**
@@ -164,8 +178,8 @@
 
 	/**
 	 * Delete an emote from a list.
-	 * @param {String} emote
-	 * @param {String} list
+	 * @param {string} emote
+	 * @param {string} list
 	 */
 	function deleteEmote( emote, list ) {
 		const g = GLOBAL;
@@ -284,12 +298,17 @@
 			return;
 		}
 
+		if( data.from !== 'background' ) {
+			console.debug( '[handleBackgroundMessage] Message did not come from background, ignore in content.' );
+			return;
+		}
+
 		switch( data.task ) {
 			case BG_TASK.LOAD:
-				g.config = data.config;
-				g.emotes = data.emotes;
-				g.sub_css = data.sub_css;
-				g.sub_emotes = data.sub_emotes;
+				g.config = data.config || g.config;
+				g.emotes = data.emotes || g.emotes;
+				g.sub_css = data.sub_css || g.sub_css;
+				g.sub_emotes = data.sub_emotes || g.sub_emotes;
 
 				Init.initStep2();
 				break;
@@ -302,17 +321,21 @@
 				break;
 
 			case BG_TASK.UPDATE_EMOTES:
-				mergeEmotesWithUpdate( data.update );
-				Builder.updateLists( data.update );
+				if( data.update ) {
+					mergeEmotesWithUpdate( data.update );
+					Builder.updateLists( data.update );
+				}
 				break;
 
 			case BG_TASK.UPDATE_LIST_ORDER:
-				g.emotes = data.update;
-				Builder.updateListOrder( g.emotes );
+				if( data.update ) {
+					g.emotes = data.update;
+					Builder.updateListOrder( g.emotes );
+				}
 				break;
 
 			case BG_TASK.UPDATE_LIST_NAME:
-				{
+				if( data.update ) {
 					let u = data.update;
 					g.emotes[u.newName] = g.emotes[u.oldName].slice( 0 );
 					delete g.emotes[u.oldName];
@@ -321,8 +344,10 @@
 				break;
 
 			case BG_TASK.UPDATE_LIST_DELETE:
-				delete g.emotes[data.deleteList];
-				Builder.removeList( data.deleteList );
+				if( data.deleteList ) {
+					delete g.emotes[data.deleteList];
+					Builder.removeList( data.deleteList );
+				}
 				break;
 		}
 	}
@@ -419,7 +444,7 @@
 	 */
 	function isEmote( node ) {
 		// Emotes inside the BPM window
-		if( node.parentNode.id == 'bpm-sb-results' ) {
+		if( node.parentNode?.id === 'bpm-sb-results' ) {
 			return !!node.getAttribute( 'data-emote' );
 		}
 
@@ -597,19 +622,14 @@
 
 	/**
 	 * Send a message to the background process.
-	 * @param {Object} msg Message to send.
+	 * @param {object} msg Message to send.
 	 */
 	function sendMessage( msg ) {
-		// Firefox (WebExt)
-		if( typeof browser !== 'undefined' ) {
-			browser.runtime.sendMessage( msg ).then( function( response ) {
-				response && handleBackgroundMessages( { data: response } );
-			} );
-		}
-		// Chrome
-		else if( typeof chrome !== 'undefined' ) {
-			chrome.runtime.sendMessage( msg, handleBackgroundMessages );
-		}
+		msg.from = 'content';
+
+		addon().runtime.sendMessage( msg ).then( response => {
+			response && handleBackgroundMessages( { data: response } );
+		} ).catch( err => console.error( '[sendMessage]', err ) );
 	}
 
 
@@ -794,15 +814,15 @@
 
 	/**
 	 * Save the given emote to the given list.
-	 * @param {String} emote
-	 * @param {String} list
+	 * @param {string} emote
+	 * @param {string} list
 	 */
 	function saveEmote( emote, list ) {
 		const g = GLOBAL;
 
 		// Ignore empty
 		if( emote.length === 0 ) {
-			showMsg( 'That ain\'t no emote, sugarcube.' );
+			showMsg( "That ain't no emote, sugarcube." );
 			return;
 		}
 
@@ -821,13 +841,14 @@
 			showMsg( 'This emote is already in the list.' );
 			return;
 		}
+
 		// Don't save mirrored ones either
 		if( emote[0] == 'r' && g.emotes[list].indexOf( emote.substring( 1 ) ) > -1 ) {
 			showMsg( 'This emote is a mirrored version of one already in the list.' );
 			return;
 		}
 
-		let update = {};
+		const update = {};
 
 		g.emotes[list].push( emote );
 		update[list] = g.emotes[list];
@@ -843,14 +864,31 @@
 
 	/**
 	 * Saves emotes/lists to the storage.
-	 * @param {Integer} task   BG_TASK.
-	 * @param {Object}  update Change to update.
+	 * @param {number} task   BG_TASK.
+	 * @param {object} update Change to update.
 	 */
 	function saveChangesToStorage( task, update ) {
-		sendMessage( {
-			task: task,
-			update: update,
-		} );
+		GLOBAL.taskQueue[task] = GLOBAL.taskQueue[task] || { task: task, update: update };
+		const queue = GLOBAL.taskQueue[task];
+
+		if( update ) {
+			for( const key in update ) {
+				queue.update[key] = update[key];
+			}
+
+			console.debug( '[saveChangesToStorage] Updated queue data to:', queue, 'added:', update );
+		}
+
+		if( typeof queue.timeout !== 'undefined' ) {
+			console.debug( '[saveChangesToStorage] Queue with timeout already exists.' );
+			return;
+		}
+
+		queue.timeout = setTimeout( () => {
+			console.debug( '[saveChangesToStorage] Timeout, sending message now:', queue );
+			sendMessage( { task: queue.task, update: queue.update } );
+			delete GLOBAL.taskQueue[queue.task];
+		}, 500 );
 	}
 
 
@@ -1268,7 +1306,9 @@
 				'#mle% input,#mle% select,#mle% textarea':
 						`background-color: #fff; border-radius: 0; color: #000; font-family: ${fontFamily}; font-size: 13px; outline: none;`,
 				'#mle% .mle-topbar':
-						'display: none; left: 0; position: absolute; top: -1px; z-index: 10;',
+						'display: none; left: 0; pointer-events: none; position: absolute; top: -1px; z-index: 10;',
+				'#mle% .mle-topbar > *':
+						'pointer-events: all;',
 				// Inactive state
 				'#mle%':
 						`background-color: ${cfg.boxBgColor}; border: 1px solid #d0d0d0; border-radius: 2px; box-sizing: border-box; color: #202020; position: fixed; z-index: ' + zIndex + '; width: ${cfg.boxWidthMinimized}px;`,
@@ -1279,7 +1319,7 @@
 						`width: ${cfg.boxWidth}px; height: ${cfg.boxHeight}px; padding: 36px 10px 10px; z-index: 10000;`,
 				// Dragging bars
 				'.mle-dragbar':
-						'display: none; position: absolute;',
+						'cursor: move; display: none; position: absolute;',
 				'.mle-dragbar0': // left
 						'height: 100%; left: 0; top: 0; width: 10px;',
 				'.mle-dragbar1': // right
@@ -2838,17 +2878,17 @@
 				{
 					className: 'out',
 					text: 'Save Emote',
-					onclick: this.itemActionSaveEmote,
+					onclick: this.itemActionSaveEmote.bind( this ),
 				},
 				{
 					className: 'in',
 					text: 'Delete Emote',
-					onclick: this.itemActionDeleteEmote,
+					onclick: this.itemActionDeleteEmote.bind( this ),
 				},
 				{
 					className: 'in',
 					text: 'Move to List',
-					onclick: this.itemActionMoveEmote,
+					onclick: this.itemActionMoveEmote.bind( this ),
 				},
 			];
 
@@ -2856,17 +2896,18 @@
 
 			// Add items to menu
 			for( let i = 0; i < items.length; i++ ) {
+				const itemData = items[i];
 				const item = d.createElement( 'li' );
-				item.className = items[i].className;
-				item.textContent = items[i].text;
-				item.addEventListener( 'click', items[i].onclick.bind( this ) );
+				item.className = itemData.className;
+				item.textContent = itemData.text;
+				item.addEventListener( 'click', ev => itemData.onclick( ev ) );
 
 				menu.append( item );
 			}
 
 			// Add listener for context menu (will only be used on emotes)
-			d.body.addEventListener( 'contextmenu', this.show.bind( this ) );
-			d.body.addEventListener( 'click', this.hide.bind( this ) );
+			d.body.addEventListener( 'contextmenu', ev => this.show( ev ) );
+			d.body.addEventListener( 'click', _ev => this.hide() );
 
 			Builder.preventOverScrolling( menu );
 			this.REF.menu = menu;
@@ -3135,7 +3176,7 @@
 
 			// Click occured in emote box.
 			// This changes some of the available options.
-			if( ev.target.parentNode.classList.contains( 'mle-block' ) ) {
+			if( ev.target.parentNode.classList.contains( 'mle-block' + GLOBAL.noise ) ) {
 				this.REF.menu.classList.add( 'in-box' );
 			}
 			else {
@@ -3465,8 +3506,7 @@
 
 
 	/**
-	 * Setting things up. Getting ready for the show.
-	 * Init object will be deleted after everything has been loaded from the storage.
+	 * Setting things up.
 	 * @see  handleBackgroundMessages
 	 * @type {Object}
 	 */
@@ -3475,6 +3515,8 @@
 
 		// Hostnames where this extension should be active.
 		ALLOWED_HOSTNAMES: ['reddit.com'],
+
+		isDone: false,
 
 
 		/**
@@ -3492,9 +3534,16 @@
 		 * Called after preferences have been loaded from the background script.
 		 */
 		initStep2() {
+			if( Init.isDone ) {
+				console.warn( '[Init.initStep2] Already done. Should not be called again.' );
+				return;
+			}
+
 			Builder.addCSS();
 			Builder.addHTML();
 			Builder.modifyAllOnPageEmotes();
+
+			Init.isDone = true;
 		},
 
 
@@ -3527,14 +3576,7 @@
 		 * Register for messages from the background process.
 		 */
 		registerForBackgroundMessages() {
-			// Firefox
-			if( typeof browser !== 'undefined' ) {
-				browser.runtime.onMessage.addListener( handleBackgroundMessages );
-			}
-			// Chrome
-			else if( typeof chrome !== 'undefined' ) {
-				chrome.runtime.onMessage.addListener( handleBackgroundMessages );
-			}
+			addon().runtime.onMessage.addListener( handleBackgroundMessages );
 		},
 
 

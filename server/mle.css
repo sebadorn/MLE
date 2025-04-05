@@ -309,7 +309,6 @@ nav.tabs label[for="tab_opera"] {
 	font-family: "Open Sans", Arial, sans-serif;
 	font-size: 100%;
 	font-weight: 700;
-	margin-bottom: 16px;
 	padding: 9px 13px;
 	text-align: center;
 }
@@ -328,9 +327,8 @@ nav.tabs label[for="tab_opera"] {
 	border-color: #D96A19;
 }
 
-.install_trigger.opera {
-	background-color: #CB141A;
-	border-color: #CB141A;
+.install_trigger + p {
+	margin-top: 16px;
 }
 
 
@@ -368,7 +366,7 @@ nav.tabs label[for="tab_opera"] {
 
 	.changelog li li {
 		border: 0;
-		padding: 6px 0;
+		padding: 4px 0;
 	}
 
 	.changelog code {

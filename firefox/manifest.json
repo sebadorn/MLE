@@ -1,8 +1,8 @@
 {
 	"name": "My Little Emotebox",
 	"version": "%MLE_VERSION%",
-	"manifest_version": 2,
-	"description": "An easy way to insert and manage emotes.",
+	"manifest_version": 3,
+	"description": "An easy way to insert and manage emotes on Reddit.",
 	"homepage_url": "%MLE_URL%/",
 
 	"browser_specific_settings": {
@@ -35,10 +35,7 @@
 	],
 
 	"background": {
-		"scripts": [
-			"includes/mle-codes.js",
-			"scripts/background.js"
-		]
+		"scripts": ["scripts/background.js"]
 	},
 
 	"options_ui": {
@@ -47,9 +44,10 @@
 	},
 
 	"permissions": [
-		"storage",
-		"webRequest",
-		"webRequestBlocking",
+		"storage"
+	],
+
+	"host_permissions": [
 		"http://reddit.com/",
 		"http://*.reddit.com/",
 		"https://reddit.com/",
