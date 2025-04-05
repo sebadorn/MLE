@@ -1,7 +1,9 @@
 # Changelog
 
 
-## 2.12.0 (WIP)
+## 2.12.0 (2025-04-03)
+
+Now also available on the [Chrome Web Store](https://chromewebstore.google.com/detail/my-little-emotebox/akkkkifniibnnabhagkppchajlbaggbp) (unlisted).
 
 * `Feature` Add-on is now using Manifest V3.
 * `Fix` Context menu to delete or move emote did not show in emote box.
